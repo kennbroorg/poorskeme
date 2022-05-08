@@ -1,0 +1,200 @@
+<nb-card size="large">
+    <nb-card-body style="overflow: hidden;">
+
+        <div *ngIf="loading">
+            <!-- LOADING
+            <div id="cube"></div> -->
+            <div class="cubecontainer">
+                <div class="cube">
+                    <div class="side side1" [ngClass]="process ? 'activated': 'inactivated'">
+                    <div class="face" [ngClass]="process ? 'activated': 'inactivated'"></div>
+                    </div>
+                    <div class="side side2" [ngClass]="process ? 'activated': 'inactivated'">
+                    <div class="face" [ngClass]="process ? 'activated': 'inactivated'"></div>
+                    </div>
+                    <div class="side side3" [ngClass]="process ? 'activated': 'inactivated'">
+                    <div class="face" [ngClass]="process ? 'activated': 'inactivated'"></div>
+                    </div>
+                    <div class="side side4" [ngClass]="process ? 'activated': 'inactivated'">
+                    <div class="face" [ngClass]="process ? 'activated': 'inactivated'"></div>
+                    </div>
+                    <div class="side side5" [ngClass]="process ? 'activated': 'inactivated'">
+                    <div class="face" [ngClass]="process ? 'activated': 'inactivated'"></div>
+                    </div>
+                    <div class="side side6" [ngClass]="process ? 'activated': 'inactivated'">
+                    <div class="face" [ngClass]="process ? 'activated': 'inactivated'"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div *ngIf="!loading">
+            <div class="row">
+                <div class="col-md-12">
+                    <nb-card class="board-1" (click)="open(dialog)">
+                        <p class="lead" style="font-weight: 700; cursor: pointer;">{{detail['address']}}</p>
+                    </nb-card>
+                </div>
+
+                <div class="col-md-5">
+                    <nb-card class="board-1">
+                        <p class="lead">{{detail['fdate']}}</p>
+                    </nb-card>
+                </div>
+                <div class="col-md-2">
+                        <p class="lead">-</p>
+                </div>
+                <div class="col-md-5">
+                    <nb-card class="board-1">
+                        <p class="lead">{{detail['ldate']}}</p>
+                    </nb-card>
+                </div>
+
+                <div class="col-md-12">
+
+                    <nb-flip-card>
+                        <nb-card-front>
+
+                            <nb-card class="board-1" style="overflow: hidden; height: 200px;">
+                                <div class="row">
+                                    <div class="col-md-6" style="text-align: center;">
+                                        <div style="padding-top: 17px; padding-bottom: 5px;"><strong>Deposit</strong></div>
+                                        <div class="sep-right">Tokens: {{detail['from_sum']}}</div>
+                                        <div class="sep-right">Transfers: {{detail['from_count']}}</div>
+                                    </div>
+                                    <div class="col-md-6" style="text-align: center;">
+                                        <div style="padding-top: 17px; padding-bottom: 5px;"><strong>Withdraw</strong></div>
+                                        <div class="sep-left">Tokens: {{detail['to_sum']}}</div>
+                                        <div class="sep-left">Transfers: {{detail['to_count']}}</div>
+                                    </div>
+                                    <div class="col-md-12" style="display: flex; align-items: center; justify-content: center; margin-top: 10px;">
+                                        <div *ngIf="percent >= 0" class="circle" style="background: #D17808;">{{percent}} %</div>
+                                        <div *ngIf="percent < 0" class="circle" style="background: #D13608;">{{percent}} %</div>
+                                    </div>
+                                </div>
+                            </nb-card>
+
+                        </nb-card-front>
+                        <nb-card-back>
+
+                            <!-- <nb-card class="board-1" style="padding-top: 10px; overflow: hidden; height: 200px;"> -->
+                            <nb-card class="board-1" style="overflow: hidden; height: 200px;">
+                                <ngx-charts-advanced-pie-chart
+                                    style="padding-left: 30px;"
+                                    [scheme]="colorScheme"
+                                    [results]="sum"
+                                    >
+                                </ngx-charts-advanced-pie-chart>
+                            </nb-card>
+
+                        </nb-card-back>
+                    </nb-flip-card>
+
+                </div>
+
+                <div class="col-md-12" style="overflow: hidden;">
+                    <div #areachart style="padding: 0px; margin: 0px; padding-top: 20px; overflow: hidden;">
+                        <ngx-charts-area-chart
+                            [view]="view"
+                            [scheme]="colorScheme"
+                            [results]="detail['trans_vol']"
+                            [showGridLines]="false"
+                            [xAxis]="true"
+                            [timeline]="true"
+                        >
+                        </ngx-charts-area-chart>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </nb-card-body>
+</nb-card>
+
+
+<ng-template #dialog let-data let-ref="dialogRef">
+
+    <nb-card class="trans" style="width: 600px; height: 600px;">
+        <nb-card-header>
+            Transfer Details
+        </nb-card-header>
+        <nb-card-body style="scrollbar-color: rgba(0, 0, 0, 0.7) rgba(0, 0, 0, 0.1); scrollbar-width: thin;">
+        <!-- <nb-card-body> -->
+
+
+
+          <!-- <ngx-datatable
+            #tableTrans
+            class="bootstrap expandable"
+            [rows]="details['moves']"
+            [loadingIndicator]="loadingIndicator"
+            columnMode="force"
+            [reorderable]="reorderable"
+            rowHeight="auto"
+            headerHeight="auto"
+            summaryRow="true"
+            summaryPosition="bottom"
+            summaryHeight="auto"
+            [rowIdentity]="getId"
+          > -->
+
+            <div class="row">
+                <div class="col-md-12">
+
+                    <ngx-datatable
+                        #tableTrans
+                        class="bootstrap fullscreen"
+                        [rows]="detail['moves']"
+                        columnMode="force"
+                        [headerHeight]="50"
+                        [footerHeight]="50"
+                    >
+
+                        <!-- <ngx-datatable-column name="Date" prop="date"></ngx-datatable-column> -->
+                        <ngx-datatable-column
+                        name="Date" prop="date"
+                        title="Date"
+                        [resizeable]="false"
+                        [sortable]="true"
+                        [draggable]="false"
+                        ></ngx-datatable-column>
+
+                        <ngx-datatable-column
+                        name="Type" prop="name"
+                        title="Type"
+                        [resizeable]="false"
+                        [sortable]="true"
+                        [draggable]="false"
+                        [cellClass]='getTypeColor'
+                        >
+                            <ng-template let-row="row" let-value="value" ngx-datatable-cell-template>
+                                {{ value }}
+                            </ng-template>
+                    
+                        </ngx-datatable-column>
+
+                        <ngx-datatable-column
+                        name="Value" prop="value"
+                        title="Value"
+                        [resizeable]="false"
+                        [sortable]="true"
+                        [draggable]="false"
+                        cellClass="number-right"
+                        >
+                            <ng-template let-row="row" let-value="value" ngx-datatable-cell-template style="text-align: right;">
+                                {{ value | number:'1.2'}}
+                            </ng-template>
+                        </ngx-datatable-column>
+
+                    </ngx-datatable>
+
+                </div>
+            </div>
+
+
+
+
+
+        </nb-card-body>
+    </nb-card>
+</ng-template>

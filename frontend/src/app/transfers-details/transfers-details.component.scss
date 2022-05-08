@@ -1,0 +1,206 @@
+nb-card {
+    box-shadow:
+    0 2.8px 2.2px rgba(0, 0, 0, 0.154),
+    0 6.7px 5.3px rgba(0, 0, 0, 0.168),
+    0 12.5px 10px rgba(0, 0, 0, 0.18),
+    0 22.3px 17.9px rgba(0, 0, 0, 0.192),
+    0 41.8px 33.4px rgba(0, 0, 0, 0.206),
+    0 100px 80px rgba(0, 0, 0, 0.24);
+    background: linear-gradient(to bottom, #3b3e45, #2f3137 50%);
+}
+
+.board-1 {
+    // padding: 5px;
+    box-shadow: none;
+    background: rgba(0, 0, 0, 0.4);
+    // border-bottom: 10px solid #D13608;
+    border-radius: 5px;
+    // color: rgba(171, 171, 173, 1);
+    margin-bottom: 5px;
+}
+
+.trans {
+    background: linear-gradient(to bottom, rgba(59, 62, 69, 0.9), rgba(47, 49, 55, 0.9) 50%);
+}
+
+.lead {
+    padding: 10px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: white;
+    margin: 0px;
+}
+
+.circle {
+    width:80px;
+    height:80px;
+    border-radius:50%;
+    font-size:20px;
+    color:#fff;
+    line-height:80px;
+    text-align:center;
+    background:#4286f4;
+    font-weight: bold;
+  
+    -webkit-box-shadow: 2px 2px 5px 0px rgba(0, 0, 0, 1);
+    -moz-box-shadow: 2px 2px 5px 0px rgba(0, 0, 0, 1);
+    box-shadow: 2px 2px 5px 0px rgba(0, 0, 0, 1);
+}
+
+.sep-right {
+    border-right: 4px solid #D13608;
+}
+
+.sep-left {
+    border-left: 4px solid #D17808;
+}
+
+/* Headers */
+::ng-deep .datatable-header-cell-template-wrap {
+  text-align: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  font-weight: 800;
+  padding-top: 10px;
+  padding-bottom: 40px;
+}
+
+/* Footer */
+::ng-deep .datatable-footer-cell-template-wrap {
+  text-align: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  font-weight: 800;
+  padding-top: 10px;
+  padding-bottom: 40px;
+}
+
+/* Rows */
+::ng-deep .datatable-body-row:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+::ng-deep .datatable-row-even {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Margins */
+::ng-deep .datatable-body-cell {
+  padding-left: 5px;
+  padding-right: 5px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+/* Format */
+::ng-deep .number-right .datatable-body-cell-label {
+  text-align: right;
+  // margin-right: 5%;
+}
+
+::ng-deep .data-center .datatable-body-cell-label {
+  text-align: center;
+}
+
+/* Tags */
+::ng-deep .tag-tag {
+  background-color: rgba(0, 255, 0, 0.3);
+  color: white;
+  font-weight: 800;
+  text-align: center;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-radius: 2px;
+}
+
+/* Broker colors */
+::ng-deep .in-color .datatable-body-cell-label {
+  text-align: center;
+  background-color: #D17808;
+  color: black;
+  border-radius: 2px;
+  font-weight: 800;
+}
+::ng-deep .out-color .datatable-body-cell-label {
+  text-align: center;
+  background-color: #D13608;
+  color: black;
+  border-radius: 2px;
+  font-weight: 800;
+}
+
+.cubecontainer{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate( -50%, -50% );
+  perspective:400px;
+}
+.cube{
+  transform-origin:50% 50%;
+  transform-style:preserve-3d; 
+  animation:rotate 4s infinite linear;
+}
+.side{
+  position:absolute;
+  display:block;
+  height:200px;
+  width:200px;
+  margin:-100px;
+  border: 1px dashed #D13608;
+  background: rgba(0, 0, 0, 0.2);
+  .activated {
+    background: #D17808;
+    transition-property: background;
+    transition-duration: 3s, 5s;
+  }
+  .inactivated {
+    background: rgba(0, 0, 0, 0.2);
+  }
+}
+.face{
+  width : 60%;
+  height : 60%;
+  margin : 20%;
+  border : 2px solid #D17808;
+  // background-color: rgba(0, 0, 0, 1);
+  // .activated {
+  //   background: rgba(255, 255, 255, 1);
+  // }
+  // .inactivated {
+  //   background: rgba(0, 0, 0, 0.5);
+  // }
+}
+.side1{
+   transform:translateZ(100px);
+}
+.side2{
+   transform:rotateY(90deg) translateZ(100px);
+}
+.side3{
+   transform:rotateY(180deg) translateZ(100px);
+}
+.side4{
+    transform:rotateY(-90deg) translateZ(100px);
+}
+.side5{
+    transform:rotateX(90deg) translateZ(100px);
+}
+.side6{
+    transform:rotateX(-90deg) translateZ(100px);
+}
+
+@keyframes rotate{
+  0% { transform: rotateX(0deg) rotateY(0deg) }
+  100% { transform: rotateX(360deg) rotateY(360deg) }
+}
+
+.f {
+  font-size: 0.8em;
+  position: fixed;
+  top: 5px;
+  right: 10px;
+  font-family: Century Gothic,CenturyGothic,AppleGothic,sans-serif; 
+}
+
+.f a {
+  color : #D17808;
+}
