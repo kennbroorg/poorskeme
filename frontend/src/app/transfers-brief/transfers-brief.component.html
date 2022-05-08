@@ -1,0 +1,24 @@
+<nb-reveal-card>
+    <nb-card-front>
+      <nb-card size="tiny">
+        <nb-card-body style="padding: 0px; padding-left: 50px; overflow: hidden;">
+            <ngx-charts-advanced-pie-chart
+                [scheme]="colorScheme"
+                [results]="trans"
+                >
+            </ngx-charts-advanced-pie-chart>
+        </nb-card-body>
+      </nb-card>
+    </nb-card-front>
+    <nb-card-back>
+      <nb-card size="tiny">
+        <nb-card-body style="padding: 0px; padding-left: 50px; overflow: hidden;">
+            <ngx-charts-advanced-pie-chart
+                [scheme]="colorScheme"
+                [results]="internals"
+                >
+            </ngx-charts-advanced-pie-chart>
+        </nb-card-body>
+      </nb-card>
+    </nb-card-back>
+</nb-reveal-card>
