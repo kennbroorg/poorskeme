@@ -1,0 +1,52 @@
+nb-card {
+    box-shadow:
+    0 2.8px 2.2px rgba(0, 0, 0, 0.154),
+    0 6.7px 5.3px rgba(0, 0, 0, 0.168),
+    0 12.5px 10px rgba(0, 0, 0, 0.18),
+    0 22.3px 17.9px rgba(0, 0, 0, 0.192),
+    0 41.8px 33.4px rgba(0, 0, 0, 0.206),
+    0 100px 80px rgba(0, 0, 0, 0.24);
+    background: linear-gradient(to bottom, #3b3e45, #2f3137 50%);
+}
+
+.node {
+  cursor: pointer;
+}
+
+.node:hover {
+  stroke: rgba(0, 0, 0 ,0) !important;
+  // stroke: #FFF !important;
+  stroke-width: 1.5px !important;
+}
+
+.circlepack-viz circle {
+  // stroke: rgba(0, 0, 0 ,0) !important;
+  stroke-opacity: 0;
+}
+
+.node--leaf {
+  fill: white;
+}
+
+.label {
+  font: 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
+  text-anchor: middle;
+  /* text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, -1px 0 0 #fff, 0 -1px 0 #fff; */
+}
+
+.label,
+.node--root,
+.node--leaf {
+  pointer-events: none;
+}
+
+::ng-deep { 
+  .circlepack-viz circle {
+    stroke-opacity: 0;
+  }
+  .circlepack-viz circle:hover {
+    stroke-opacity: 0;
+    fill-opacity: 0.5;
+  }
+
+}
