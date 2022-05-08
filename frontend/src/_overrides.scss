@@ -1,0 +1,58 @@
+@import './themes';
+
+@mixin nb-overrides() {
+
+  html {
+      scrollbar-color: rgba(0, 0, 0, 0.7) rgba(0, 0, 0, 0.1); 
+      // scrollbar-width: thin;
+      scrollbar-width: none;
+  }
+
+  html::-webkit-scrollbar-track {
+    background-color: rgba(10, 10, 10); /*color de la barra de fondo*/
+  }
+  html::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.7); /*color del manejador*/
+  }
+  html::-webkit-scrollbar {
+    width: 5px; /*ancho del scroll vertical*/
+    height: 5px; /*alto del scroll horizontal*/
+  }
+
+  nb-select.size-medium button {
+    padding: 0.4375rem 2.2rem 0.4375rem 1.125rem !important;
+
+    nb-icon {
+      right: 0.41rem !important;
+    }
+  }
+
+  .layout-container {
+      background-color: #24242E !important;
+      // background-image: url('/assets/bg.png') !important;
+      background-repeat: no-repeat !important;
+      background-position: center center !important;
+      background-attachment: fixed !important;
+      background-size: cover !important;
+
+  }
+
+  nb-sidebar-header {
+      background-color: rgba(0, 0, 0, 0.5) !important;
+  }
+  nb-sidebar .scrollable {
+      background-color: rgba(0, 0, 0, 0.5) !important;
+  }
+
+  .form-control {
+      color: #00f9a6;
+  }
+
+  .form-control:focus {
+      box-shadow: 0 0 0 0.2rem rgba(0, 249, 166, 0.25);
+  }
+
+  nb-card {
+    box-shadow: -5px 20px 20px 10px rgba(0, 0, 0, 0.6);
+  }
+}

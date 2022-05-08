@@ -1,0 +1,12 @@
+@use 'themes' as *;
+
+@use '@nebular/theme/styles/globals' as *;
+
+// Custom
+@import './overrides';
+
+@include nb-install() {
+  @include nb-theme-global();
+  @include nb-overrides();
+};
+/* You can add global styles to this file, and also import other style files */

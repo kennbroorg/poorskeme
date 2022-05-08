@@ -1,0 +1,32 @@
+@forward '@nebular/theme/styles/theming';
+@use '@nebular/theme/styles/theming' as *;
+@use '@nebular/theme/styles/themes/dark';
+
+$nb-themes: nb-register-theme((
+
+  // add your variables here like:
+  card-background-color: rgba(59, 62, 69, 1),  // #3b3e45
+  card-border-color: rgba(59, 62, 69, 1),
+  card-border-radius: 0px,
+
+  tabset-tab-active-text-color: rgba(209, 54, 8, 1),
+  tabset-tab-active-underline-color: rgba(209, 54, 8, 1),
+  tabset-tab-focus-text-color: rgba(209, 54, 8, 1),
+  tabset-tab-focus-underline-color: rgba(209, 54, 8, 1),
+  tabset-tab-hover-text-color: rgba(246, 64, 9, 1),
+  tabset-tab-hover-underline-color: rgba(246, 64, 9, 1),
+  tabset-tab-text-font-size: 1rem,
+  tabset-tab-text-font-weight: 400,
+
+
+  // color-primary-100: #f2f6ff,
+  // color-primary-200: #d9e4ff,
+  // color-primary-300: #a6c1ff,
+  // color-primary-400: #598bff,
+  // color-primary-500: #3366ff,
+  // color-primary-600: #274bdb,
+  // color-primary-700: #1a34b8,
+  // color-primary-800: #102694,
+  // color-primary-900: #091c7a,
+
+), dark, dark);
