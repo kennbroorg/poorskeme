@@ -1,0 +1,62 @@
+<nb-card size="large">
+    <nb-card-body style="overflow: hidden;">
+        <div class="row" style="overflow: hidden;">
+
+            <div class="col-md-12" style="margin-bottom: 0px; padding-bottom: 0px;">
+                <div #areachart style="padding: 0px; margin: 0px; padding-top: 20px; overflow: hidden;">
+                    <ngx-charts-area-chart
+                        [view]="view"
+                        [scheme]="customColors"
+                        [results]="tvd"
+                        [showGridLines]="true"
+                    >
+                    </ngx-charts-area-chart>
+                </div>
+            </div>
+
+            <div class="col-md-12" style="margin-bottom: 0px; padding-bottom: 0px;">
+                <div #timegraph id="timegraph" style="padding: 0px; margin: 0px; padding-top: 20px; overflow: hidden;">
+                    <ngx-charts-chart
+                        [view]="[width, height]"
+                        [showLegend]="false"
+                        [animations]="animations"
+                        class="timeline-filter-bar-chart"
+                        >
+                        <svg:g [attr.transform]="transform" class="chart">
+                            <svg:g
+                            ngx-charts-x-axis
+                            *ngIf="xAxis"
+                            [xScale]="timeScale"
+                            [dims]="dims"
+                            [showLabel]="showXAxisLabel"
+                            [labelText]="xAxisLabel"
+                            ></svg:g>
+                            <svg:g
+                            ngx-charts-y-axis
+                            *ngIf="yAxis"
+                            [yScale]="yScale"
+                            [dims]="dims"
+                            [showGridLines]="showGridLines"
+                            [showLabel]="showYAxisLabel"
+                            [labelText]="yAxisLabel"
+                            ></svg:g>
+                            <svg:g
+                            ngx-charts-series-vertical
+                            [xScale]="xScale"
+                            [yScale]="yScale"
+                            [colors]="colors"
+                            [series]="res_date"
+                            [dims]="dims"
+                            [gradient]="gradient"
+                            [animations]="animations"
+                            [noBarWhenZero]="noBarWhenZero"
+                            ></svg:g>
+                        </svg:g>
+                    </ngx-charts-chart>
+                </div>
+            </div>
+
+        </div>
+
+    </nb-card-body>
+</nb-card>
