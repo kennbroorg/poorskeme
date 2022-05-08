@@ -1,0 +1,25 @@
+.d3-chart {
+    width: 100%;
+    min-height:600px;
+    border: 5px solid gray;
+  }
+
+  ::ng-deep .node rect {
+    cursor: pointer;
+    fill: yellow;
+    fill-opacity: 0.5;
+    stroke: rgba(0, 0, 0, 0.1);
+    stroke-width: 5px;
+    margin: 5px;
+  }
+  
+  ::ng-deep .node text {
+    // font: 20px sans-serif;
+    pointer-events: none;
+  }
+  
+  ::ng-deep .link {
+    fill: none;
+    stroke: #9ecae1;
+    stroke-width: 1.5px;
+  }

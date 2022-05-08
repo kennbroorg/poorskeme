@@ -1,0 +1,227 @@
+<nb-reveal-card>
+    <nb-card-front>
+      <nb-card size="tiny">
+        <nb-card-body>
+          <div class="flex-parent jc-center" #treedata>
+            <button class="bPoor" (click)="open(dialog)">
+                {{contract['ContractName']}}
+            </button>
+          </div>
+        </nb-card-body>
+      </nb-card>
+    </nb-card-front>
+    <nb-card-back>
+    </nb-card-back>
+</nb-reveal-card>
+
+<ng-template #dialog let-data let-ref="dialogRef">
+
+  <nb-card class="trans">
+    <nb-card-body style="overflow: hidden;">
+
+      <nb-tabset fullWidth>
+        <nb-tab tabTitle="Stats">
+          <div class="row">
+
+            <div class="col-md-4">
+
+              <div class="row">
+
+                <div class="col-md-12">
+                  <nb-card class="board-2">
+                    <h3 class="sep-2">Contract</h3>
+                    <p class="lead">{{contract['contract']}}</p>
+                  </nb-card>
+                </div>
+
+                <div class="col-md-12">
+                  <nb-card class="board-1">
+                    <h3 class="sep-1">Token Name</h3>
+                    <p class="lead">{{contract['token_name']}}</p>
+                  </nb-card>
+                </div>
+
+                <nb-card class="clean">
+                  <nb-card-body style="padding: 0px; overflow: hidden;">
+                    <div #pieChart sytle="padding-right: 50px;">
+                      <ngx-charts-pie-chart
+                      style="padding-right: 50px;"
+                      [scheme]="colorSchemeTree"
+                      [results]="contract['investments']"
+                      [legend]="false"
+                      [explodeSlices]="false"
+                      [labels]="true"
+                      [doughnut]="false"
+                      ></ngx-charts-pie-chart>
+                    </div>
+                  </nb-card-body>
+                </nb-card>
+
+              </div>
+
+            </div>
+
+            <div class="col-md-4">
+
+                <div class="col-md-12">
+                  <nb-card class="board-1">
+                    <h3 class="sep-1">Name</h3>
+                    <p class="lead">{{contract['ContractName']}}</p>
+                  </nb-card>
+                </div>
+
+                <nb-card size="tiny" class="clean">
+                  <nb-card-body style="padding: 0px; padding-left: 50px; overflow: hidden;">
+                      <ngx-charts-advanced-pie-chart
+                          [scheme]="colorScheme"
+                          [results]="trx"
+                          >
+                      </ngx-charts-advanced-pie-chart>
+                  </nb-card-body>
+                </nb-card>
+
+                <div class="col-md-12" style="display: flex; justify-content: center; padding: 0px; margin: 0px;">
+                      <ngx-charts-number-card
+                        style="padding-left: 15px;"
+                        [labelFormatting]="statusLabelFormat"
+                        [view]="view"
+                        [scheme]="colorScheme"
+                        [results]="max_liq"
+                        [cardColor]="cardColor">
+                      </ngx-charts-number-card>
+                </div>
+
+                <nb-card size="tiny" class="clean">
+                  <nb-card-body style="padding: 0px; overflow: hidden;">
+                      <ngx-charts-advanced-pie-chart
+                          [scheme]="colorSchemeTree"
+                          [results]="contract['investments']"
+                          >
+                      </ngx-charts-advanced-pie-chart>
+                  </nb-card-body>
+                </nb-card>
+
+            </div>
+
+            <div class="col-md-4">
+
+              <div class="row">
+
+                <div class="col-md-12">
+                  <nb-card class="board-2">
+                    <h3 class="sep-2">Creator</h3>
+                    <p class="lead">{{contract['creator']}}</p>
+                  </nb-card>
+                </div>
+
+                <div class="col-md-6">
+                  <nb-card class="board-1">
+                    <h3 class="sep-1">Creation Date</h3>
+                    <p class="lead">{{contract['fdate']}}</p>
+                  </nb-card>
+                </div>
+
+                <div class="col-md-6">
+                  <nb-card class="board-1">
+                    <h3 class="sep-1">End Date</h3>
+                    <p class="lead">{{contract['ldate']}}</p>
+                  </nb-card>
+                </div>
+
+                <nb-card size="medium" class="clean" style="margin: 0px; padding:0px; overflow: hidden;">
+                  <nb-card-body style="margin: 0px; padding: 0px; overflow: hidden;">
+                      <ngx-charts-tree-map
+                        style="padding-right: 50px;"
+                        [scheme]="colorSchemeTree"
+                        [results]="contract['investments']"
+                      >
+                      </ngx-charts-tree-map>
+                  </nb-card-body>
+                </nb-card>
+
+              </div>
+            </div>
+
+          </div>
+
+        </nb-tab>
+
+        <nb-tab tabTitle="Source Code" style="width: 1000px;">
+          <div class="row">
+
+            <div class="col-md-4">
+              <nb-card class="board-1">
+                <h3 class="sep-1">License</h3>
+                <p class="lead">{{contract['LicenseType']}}</p>
+              </nb-card>
+            </div>
+
+            <div class="col-md-4">
+              <nb-card class="board-1">
+                <h3 class="sep-1">Name</h3>
+                <p class="lead">{{contract['ContractName']}}</p>
+              </nb-card>
+            </div>
+
+            <div class="col-md-4">
+              <nb-card class="board-1">
+                <h3 class="sep-1">Compiler</h3>
+                <p class="lead">{{contract['CompilerVersion']}}</p>
+              </nb-card>
+            </div>
+
+            <div class="col-md-12">
+              <nb-card size="giant" class="board-1">
+                <h3 class="sep-1">Source Code</h3>
+                <div style="overflow: auto;">
+                  <pre><code [highlight]="code" [languages]="['typescript']" [lineNumbers]="true"></code></pre>
+                </div>
+              </nb-card>
+            </div>
+
+          </div>
+        </nb-tab>
+        
+        <nb-tab tabTitle="Diagram" style="overflow: hidden;">
+          <div class="row">
+
+            <div class="col-md-4">
+              <nb-card class="board-1">
+                <h3 class="sep-1">License</h3>
+                <p class="lead">{{contract['LicenseType']}}</p>
+              </nb-card>
+            </div>
+
+            <div class="col-md-4">
+              <nb-card class="board-1">
+                <h3 class="sep-1">Name</h3>
+                <p class="lead">{{contract['ContractName']}}</p>
+              </nb-card>
+            </div>
+
+            <div class="col-md-4">
+              <nb-card class="board-1">
+                <h3 class="sep-1">Compiler</h3>
+                <p class="lead">{{contract['CompilerVersion']}}</p>
+              </nb-card>
+            </div>
+
+            <div class="col-md-12">
+              <nb-card class="board-1" size="medium">
+                <h3 class="sep-1">Diagram</h3>
+                <app-tree-contract [data]="contract['abi']" style="overflow: hidden;"></app-tree-contract>
+              </nb-card>
+            </div>
+
+          </div>
+        </nb-tab>
+        
+        <nb-tab tabTitle="Anomalies">
+          <p>List of <strong>transactions</strong>.</p>
+        </nb-tab>
+      
+      </nb-tabset>
+  
+    </nb-card-body>
+  </nb-card>
+</ng-template>
