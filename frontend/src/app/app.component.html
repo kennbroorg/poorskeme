@@ -1,0 +1,28 @@
+<nb-layout style="overflow: hidden;">
+
+  <nb-layout-column>
+
+    <div class="row">
+      <div class="col-md-4">
+        <app-transactions-brief></app-transactions-brief>
+      </div>
+      <div class="col-md-4">
+        <app-contract-brief></app-contract-brief>
+      </div>
+      <div class="col-md-4">
+        <app-transfers-brief></app-transfers-brief>
+      </div>
+      <div class="col-md-3">
+        <app-liq-trans></app-liq-trans>
+      </div>
+      <div class="col-md-6">
+        <app-transfers (onInfo)="handleInfo($event)"></app-transfers>
+      </div>
+      <div class="col-md-3">
+        <app-transfers-details [subject]="subject"></app-transfers-details>
+      </div>
+    </div>
+
+  </nb-layout-column>
+
+</nb-layout>
