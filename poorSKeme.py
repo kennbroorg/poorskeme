@@ -50,7 +50,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
 def httpServer():
     PORT = 4200
-    logger.info("HTTPD serving...")
+    logger.info("HTTPD serving... Data Visualization Web on http://127.0.0.1:4200")
     with socketserver.TCPServer(("", PORT), Handler) as httpd_server:
         httpd_server.serve_forever()
 
@@ -550,14 +550,17 @@ $$ |      \$$$$$$  |\$$$$$$  |$$ |            \$$$$$$  |$$ | \$$\\$$$$$$$\ $$ | 
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description=textwrap.dedent('''\
-            PONZI contract analyzer
+            P0NZI contract analyzer
             '''),
         epilog='''
             Examples
             --------
 
             # Extract TRXs of contract from block to block
-            python3 ponzi.py -ct 0x029397845754854784 -bf 1000123 -bt 2034985 -w
+            python3 ponzi.py -ct 0xe878BccA052579C9061566Cec154B783Fc5b9fF1 -bf 14040726 -bt 15552901 # To collect
+
+            # Data Visualization of processed contract information
+            python3 poorSKeme.py -f F/contract-0xe878BccA052579C9061566Cec154B783Fc5b9fF1.json -w
             ''')
 
     group1 = parser.add_argument_group("Get and process data")
@@ -585,13 +588,15 @@ $$ |      \$$$$$$  |\$$$$$$  |$$ |            \$$$$$$  |$$ | \$$\\$$$$$$$\ $$ | 
     if (args.contract):
         asyncio.run(save_json(args.contract, args.block_from, args.block_to, key['bscscan'], chunk=args.chunk))
         if (args.file):
-            print("Parameter JSON file are discarded because contract is provided")
+            logger.error("Parameter JSON file are discarded because contract is provided")
 
     elif (args.file):
         rc = process_json(args.file)
 
     else:
-        parser.print_help(sys.stderr)
+        if (args.block_from or args.block_to or args.chunck):
+            logger.error("The CONTRACT ADDRESS is not specified")
+        # parser.print_help(sys.stderr)
 
     if (args.web):
         sys.stdout.flush()

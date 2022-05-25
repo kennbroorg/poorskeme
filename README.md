@@ -1,10 +1,18 @@
+<div align="center" style="margin-bottom: 10px;">
+    <a href="https://twitter.com/intent/follow?screen_name=kennbroorg">
+	<img alt="follow on Twitter" src="https://img.shields.io/twitter/follow/kennbroorg.svg?label=follow%20&style=for-the-badge&logo=twitter&labelColor=abcdef&color=1da1f2">
+    </a>
+</div>
+
 # poorSKeme
 
 OSINT - Data Visualization - Blockchain - Awareness - Scam
 
 # Install
+Go to this [site](https://kennbroorg.gitlab.io/poorskeme-page/) and click on the downdload button
+Or go to release section. Download the ZIP file called poorSKeme.zip
 
-Go to release section. Download the ZIP file called poorSKeme.zip and unzip it, install requeriments and execute it.
+Unzip it, install requeriments and execute it.
 
 ``` shell
 unzip poorSKeme.zip
@@ -48,6 +56,59 @@ optional arguments:
 ```
 If you use the web param, the port is 4200. The complete url is http://127.0.0.1:4200.
 
+# API
+Get the Free API from https://bscscan.com/apis 
+Load them in the API.yaml file replacing the XXX by the APIKey
+
+# Example
+## Getting data
+To collect data from contract 0xe878BccA052579C9061566Cec154B783Fc5b9fF1
+```
+python3 poorSKeme -ct 0xe878BccA052579C9061566Cec154B783Fc5b9fF1
+```
+But this could take too long, so you can pass by parameter the block from and block to (the block from being the creation block of the contract)
+```
+python3 poorSKeme -ct 0xe878BccA052579C9061566Cec154B783Fc5b9fF1 -bf 14040726 -bt 15552901
+```
+This will result in a file named contract-[CONTRACT].json, for our example it will be called contract-0xe878BccA052579C9061566Cec154B783Fc5b9fF1.json
+
+## Process data and visualization
+After obtaining the data file you can process the information and visualize it by executing
+```
+python3 poorSKeme.py -f F/contract-0xe878BccA052579C9061566Cec154B783Fc5b9fF1.json -w
+```
+The above command will turn on two services, an internal API on port 5000 and the webi visualization on port 4200. Just open the browser and enter the address http://127.0.0.1:4200
+
 # Disclaimer
 This is a young project, started in mid-March 2022, so it may contain errors.
-Over time, and with feedback, the project will grow and bugs will be fixed, but it is a personal project and the time dedicated to it is uncertain.
+For now, it only works with the Binance blockchain.
+Over time, and with feedback, the project will grow and bugs will be fixed, but it is a personal project and the time dedicated to it is undetermined.
+
+# Disclaimer
+This is a young project, started in mid-March 2022, so it may contain errors.
+For now, it only works with the Binance blockchain.
+Over time, and with feedback, the project will grow and bugs will be fixed, but it is a personal project and the time dedicated to it is undetermined.
+
+# Disclaimer
+This is a young project, started in mid-March 2022, so it may contain errors.
+For now, it only works with the Binance blockchain.
+Over time, and with feedback, the project will grow and bugs will be fixed, but it is a personal project and the time dedicated to it is undetermined.
+
+> I posted the disclaimer three times, maybe you will read it even once
+
+# Simple Roadmap
+- [X] Binance Blockchain support
+- [X] Data collect
+- [X] Visualization
+- [ ] Ethereum Blockchain support
+- [ ] Automatic anomaly detection
+- [ ] Early detection of scams
+
+...
+...
+...
+
+- [ ] Traceability
+- [ ] Wallet identification
+
+These last two points of the roadmap are subject to a lot of research, but nothing is impossible.
