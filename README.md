@@ -4,6 +4,13 @@
     </a>
 </div>
 
+---
+
+<div align="center">
+    <img alt="Logo" src="https://kennbroorg.gitlab.io/poorskeme-page/img/poorSKeme-logo.png">
+</div>
+
+---
 # poorSKeme
 
 OSINT - Data Visualization - Blockchain - Awareness - Scam
@@ -79,6 +86,10 @@ python3 poorSKeme.py -f F/contract-0xe878BccA052579C9061566Cec154B783Fc5b9fF1.js
 ```
 The above command will turn on two services, an internal API on port 5000 and the webi visualization on port 4200. Just open the browser and enter the address http://127.0.0.1:4200
 
+<div align="center">
+    <a href=""><img src="https://kennbroorg.gitlab.io/poorskeme-page/img/bkg_poorSKeme.png"></a>
+</div>
+
 # Disclaimer
 This is a young project, started in mid-March 2022, so it may contain errors.
 For now, it only works with the Binance blockchain.
@@ -102,7 +113,7 @@ Over time, and with feedback, the project will grow and bugs will be fixed, but 
 - [X] Visualization
 - [ ] Ethereum Blockchain support
 - [ ] Automatic anomaly detection
-- [ ] Early detection of scams
+- [X] Early detection of scams
 
 ...
 ...
