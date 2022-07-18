@@ -4,6 +4,8 @@ import { HttpClient } from '@angular/common/http';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { NbDialogService } from '@nebular/theme';
 
+import { SingleSeries } from '@swimlane/ngx-charts';
+
 @Component({
   selector: 'app-transfers-details',
   templateUrl: './transfers-details.component.html',
@@ -13,17 +15,26 @@ export class TransfersDetailsComponent implements OnInit {
 
   @ViewChild('cardCube', {static: true}) cardContainer!: ElementRef<HTMLElement>;
   @Input() subject!: Subject<string>;
+  @Input() public h: any;
+
+  h_table: any;
   infos: string = "null";
   prev: string = "null";
   loading: boolean = true;
   process: boolean = false;
   detail: any;
+  res_date: any;
   percent: any;
+  perc: any;
+  max: any;
+  lp: any;
 
   sum: any;
-  colorScheme: Color = { domain: ['#D13608', '#D17808'], group: ScaleType.Ordinal, selectable: true, name: 'Customer Usage', };
+  count: any;
+  // colorScheme: Color = { domain: ['#D13608', '#D17808'], group: ScaleType.Ordinal, selectable: true, name: 'Customer Usage', };
+  colorScheme: Color = { domain: ['#CCF2FF', '#66D9FF'], group: ScaleType.Ordinal, selectable: true, name: 'Customer Usage', };
 
-  view: any = [400, 300];
+  // view: any = [400, 300];
 
   constructor(private httpClient: HttpClient, private dialogService: NbDialogService) { 
     // this.loadScripts();
@@ -32,11 +43,15 @@ export class TransfersDetailsComponent implements OnInit {
   ngOnInit(): void {
     this.subject.subscribe((text: string) => {
       this.infos = text;
+      console.log(`Info: ${this.infos} = Prev: ${this.prev}`);
 
       if (this.infos == "null") {
+        console.log(`Entro a Null con ${this.infos}`);
         this.loading = true;
       }
-      else if (this.prev != this.infos) {
+      // else if (this.prev != this.infos) {
+      else {
+        console.log(`Entro a Else con ${this.infos}`);
         this.process = true;
         const url = "http://127.0.0.1:5000/details/" + this.infos;
         this.httpClient
@@ -46,23 +61,68 @@ export class TransfersDetailsComponent implements OnInit {
                     () => console.log('Completed Detail'),
           );
       }
+      console.log(`LOADING: ${this.loading} - PROCESS: ${this.process}`)
     });
+
+    this.h_table = this.h;
   }
 
   ngAfterViewInit() {
-    console.log(this.cardContainer);
+    // console.log(this.cardContainer);
     // this.cubeAnimation();
+
+    // this.subject.subscribe((text: string) => {
+    //   this.infos = text;
+    //   console.log(`Info: ${this.infos}`);
+
+    //   if (this.infos == "null") {
+    //     this.loading = true;
+    //   }
+    //   // else if (this.prev != this.infos) {
+    //   else {
+    //     this.process = true;
+    //     const url = "http://127.0.0.1:5000/details/" + this.infos;
+    //     this.httpClient
+    //       .get(url)
+    //       .subscribe(this.responseDetail,
+    //                 err => console.error('Ops: ', err.message),
+    //                 () => console.log('Completed Detail'),
+    //       );
+    //   }
+    //   console.log(`LOADING: ${this.loading} - PROCESS: ${this.process}`)
+    // });
   }
   
   private responseDetail = (data: any): any => { 
     console.log("Response", data);
     this.detail = data;
+
+    this.res_date = this.TimelineConvert(this.detail['trans_vol'][0]['series']);
+    this.detail['trans_vol'][0]['series'] = this.res_date;
+    this.res_date = this.TimelineConvert(this.detail['trans_vol'][1]['series']);
+    this.detail['trans_vol'][1]['series'] = this.res_date;
+
+    console.log(this.detail['trans_vol']);
+
     this.prev = this.infos;
     this.loading = false;
     this.process = false;
-    this.sum = [{"name": "OUT", "value": this.detail['from_sum']},
-                {"name": "IN", "value": this.detail['to_sum']}];
-    this.percent = Math.round((this.detail['to_sum'] * 100 / this.detail['from_sum']) - 100);
+    this.sum = [{"name": "Deposit", "value": this.detail['from_sum']},
+                {"name": "Withdraw", "value": this.detail['to_sum']}];
+    this.count = [{"name": "Deposit", "value": this.detail['from_count']},
+                  {"name": "Withdraw", "value": this.detail['to_count']}];
+    // this.percent = Math.round((this.detail['to_sum'] * 100 / this.detail['from_sum']) - 100);
+    this.percent = (this.detail['to_sum'] * 100 / this.detail['from_sum']) - 100;
+    this.perc = Math.round(this.percent) + '%'
+    this.max = Math.max(this.detail['from_sum'], this.detail['to_sum']);
+    // console.log(`LOADING: ${this.loading} - PROCESS: ${this.process}`)
+    if (this.percent > 0) {
+      this.lp = "Profit"
+    } else if (this.percent < 0) {
+      this.lp = "Loss"
+    } else {
+      this.lp = "Without loss"
+    }
   }
 
   open(dialog: TemplateRef<any>) {
@@ -78,6 +138,18 @@ export class TransfersDetailsComponent implements OnInit {
       'in-color': row['name'] === "IN", 
       'out-color': row['name'] === "OUT"
     };
+  }
+
+  TimelineConvert(serie: any): SingleSeries {
+    const res_conv: SingleSeries = [];
+
+    for (const d of serie) {
+      res_conv.push({
+        name: new Date(d.name),
+        value: d.value
+      });
+    }
+    return res_conv;
   }
 
 }

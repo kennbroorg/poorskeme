@@ -1,200 +1,313 @@
-<nb-card size="large">
-    <nb-card-body style="overflow: hidden;">
 
-        <div *ngIf="loading">
-            <!-- LOADING
-            <div id="cube"></div> -->
-            <div class="cubecontainer">
-                <div class="cube">
-                    <div class="side side1" [ngClass]="process ? 'activated': 'inactivated'">
-                    <div class="face" [ngClass]="process ? 'activated': 'inactivated'"></div>
-                    </div>
-                    <div class="side side2" [ngClass]="process ? 'activated': 'inactivated'">
-                    <div class="face" [ngClass]="process ? 'activated': 'inactivated'"></div>
-                    </div>
-                    <div class="side side3" [ngClass]="process ? 'activated': 'inactivated'">
-                    <div class="face" [ngClass]="process ? 'activated': 'inactivated'"></div>
-                    </div>
-                    <div class="side side4" [ngClass]="process ? 'activated': 'inactivated'">
-                    <div class="face" [ngClass]="process ? 'activated': 'inactivated'"></div>
-                    </div>
-                    <div class="side side5" [ngClass]="process ? 'activated': 'inactivated'">
-                    <div class="face" [ngClass]="process ? 'activated': 'inactivated'"></div>
-                    </div>
-                    <div class="side side6" [ngClass]="process ? 'activated': 'inactivated'">
-                    <div class="face" [ngClass]="process ? 'activated': 'inactivated'"></div>
+<nb-card id="detail-graph-card">
+    <nb-card-body id="detail-graph-card-body" style="overflow: hidden;">
+
+    <div *ngIf="loading">
+        <div class="row">
+            <!-- Explanation -->
+            <div class="col-md-12" *ngIf="!process">
+                <nb-card style="margin: 7px;">
+                    <!-- <nb-card-body class="shiny" style="font-weight: 500; font-size: 20px; "> -->
+                    <nb-card-body class="shiny" style="font-weight: 300; font-size: 20px;">
+                        <div class="top-title">
+                            DISTRIBUTION CHART
+                        </div>
+                        <div class="fixed-subtitle" style="color:rgba(255, 255, 255, 0.8);">Explanation</div>
+                    </nb-card-body>
+                </nb-card>
+            </div>
+            <div class="col-md-12" *ngIf="!process">
+                <nb-card style="margin: 7px;">
+                    <!-- <nb-card-body class="shiny" style="font-weight: 500; font-size: 20px; "> -->
+                    <nb-card-body style="font-weight: 300; font-size: 20px;">
+
+                          <p class="text-window">The bubble chart on the left shows the flow of tokens between the wallets and the contract, with the darkened bubbles representing the wallets</p>
+                          <p class="text-window">Each wallet can contain one or two bubbles inside it, namely :</p>
+                          <p class="text-window"> - A coloured bubble with the word <span style="background: rgba(204, 242, 255, 0.4); color: #404041 ; padding-left: 3px; padding-right: 3px;);">IN</span> inside it, because tokens enter the wallet and can generally be associated with the execution of contract functions related to a Withdraw</p>
+                          <p class="text-window"> - A coloured bubble with the word <span style="background: rgba(102, 217, 255, 0.4); color: #404041 ; padding-left: 3px; padding-right: 3px;);">OUT</span> inside it, because tokens are leaving the wallet and can generally be associated with the execution of contract functions related to a Deposit</p>
+                          <p class="text-window">Larger bubbles will correspond to larger volume flows, and smaller bubbles will correspond to smaller IN/OUT volumes</p>
+                          <p class="text-window">The graph can be zoomed and navigated. And clicking on any of the bubbles will display a detail of the selected wallet, showing profit or loss percentages, ratio of IN/OUT transactions, volumes transferred, dates, table detailing all transactions between the selected wallet and the contract, etc</p>
+
+                    </nb-card-body>
+                </nb-card>
+            </div>
+
+        <!-- Loading -->
+            <div class="col-md-12" *ngIf="process">
+                <div class="cubecontainer">
+                    <div class="cube">
+                        <div class="side side1" [ngClass]="process ? 'activated': 'inactivated'">
+                        <div class="face" [ngClass]="process ? 'activated': 'inactivated'"></div>
+                        </div>
+                        <div class="side side2" [ngClass]="process ? 'activated': 'inactivated'">
+                        <div class="face" [ngClass]="process ? 'activated': 'inactivated'"></div>
+                        </div>
+                        <div class="side side3" [ngClass]="process ? 'activated': 'inactivated'">
+                        <div class="face" [ngClass]="process ? 'activated': 'inactivated'"></div>
+                        </div>
+                        <div class="side side4" [ngClass]="process ? 'activated': 'inactivated'">
+                        <div class="face" [ngClass]="process ? 'activated': 'inactivated'"></div>
+                        </div>
+                        <div class="side side5" [ngClass]="process ? 'activated': 'inactivated'">
+                        <div class="face" [ngClass]="process ? 'activated': 'inactivated'"></div>
+                        </div>
+                        <div class="side side6" [ngClass]="process ? 'activated': 'inactivated'">
+                        <div class="face" [ngClass]="process ? 'activated': 'inactivated'"></div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+
+    </div>
+
         <div *ngIf="!loading">
             <div class="row">
                 <div class="col-md-12">
+                    <nb-card style="margin: 7px;">
+                        <!-- <nb-card-body class="shiny" style="font-weight: 500; font-size: 20px; "> -->
+                        <nb-card-body class="shiny" style="font-weight: 500; font-size: 20px;">
+                            <div class="top-title">
+                                {{detail['address']}}
+                            </div>
+                            <div class="fixed-subtitle" style="color:rgba(255, 255, 255, 0.8);">Wallet Address</div>
+                        </nb-card-body>
+                    </nb-card>
+                </div>
+                <!-- <div class="col-md-12">
                     <nb-card class="board-1" (click)="open(dialog)">
                         <p class="lead" style="font-weight: 700; cursor: pointer;">{{detail['address']}}</p>
                     </nb-card>
-                </div>
+                </div> -->
 
-                <div class="col-md-5">
-                    <nb-card class="board-1">
-                        <p class="lead">{{detail['fdate']}}</p>
+                <div class="col-md-6">
+                    <nb-card style="height: 200px; overflow: hidden; margin: 7px;">
+                        <nb-card-body style="font-weight: 500; font-size: 20px; overflow: hidden; padding: 0px;">
+                            <div style="width: 100%; height: 100%; padding-left: 50px;">
+                                <ngx-charts-advanced-pie-chart
+                                    style="font-weight: 300; opacity: 0.8;"
+                                    [scheme]="colorScheme"
+                                    [results]="count"
+                                    >
+                                </ngx-charts-advanced-pie-chart>
+                            </div>
+
+                            <div class="top-subtitle">
+                                Transfer operation
+                            </div>
+                            <!-- <app-transactions-brief></app-transactions-brief> -->
+
+                        </nb-card-body>
                     </nb-card>
                 </div>
-                <div class="col-md-2">
-                        <p class="lead">-</p>
+
+                <div class="col-md-6">
+                    <nb-card style="height: 200px; overflow: hidden; margin: 7px; padding: 0px;">
+                        <nb-card-body style="font-weight: 500; font-size: 20px; overflow: hidden; padding: 0px;">
+                            <div class="fixed-subtitle" style="top: 20px; left: 20px;">
+                                Erans and Losses
+                            </div>
+                            <div style="width: 100%; height: 100%;">
+                                <ngx-charts-gauge
+                                    style="font-weight: 300; opacity: 0.8;"
+                                    [legend]="false"
+                                    [results]="sum"
+                                    [animations]="true"
+                                    [textValue]="perc"
+                                    [scheme]="colorScheme"
+                                    [min]="0"
+                                    [max]="max"
+                                    [units]="lp"
+                                    [angleSpan]="270"
+                                    [startAngle]="0"
+                                    [showAxis]="false"
+                                    [bigSegments]="0"
+                                    [smallSegments]="0"
+                                    [tooltipDisabled]="false"
+                                    [margin]="[10, 0, 10, 0]"
+                                    [showText]="true"
+                                >
+                                </ngx-charts-gauge>
+                            </div>
+                            <!-- <app-transactions-brief></app-transactions-brief> -->
+                        </nb-card-body>
+                    </nb-card>
                 </div>
-                <div class="col-md-5">
-                    <nb-card class="board-1">
-                        <p class="lead">{{detail['ldate']}}</p>
+
+
+                <div class="col-md-12">
+                    <nb-card style="height: 50px; overflow: hidden; margin: 7px;">
+                    <nb-card-body style="font-weight: 300; font-size: 20px; overflow: hidden; padding: 0px;">
+                        <div class="title">{{detail['fdate']}} - {{detail['ldate']}}</div>
+                        <div class="top-subtitle" style="top: 5px;">Dates</div>
+                    </nb-card-body>
+                    </nb-card>
+                </div>
+
+
+                <div class="col-md-6">
+                    <nb-card style="height: 200px; overflow: hidden; margin: 7px;">
+                        <nb-card-body style="font-weight: 500; font-size: 20px; overflow: hidden; padding: 0px;">
+                            <div style="width: 100%; height: 100%; opacity: 0.8">
+                                <ngx-charts-area-chart
+                                    [scheme]="colorScheme"
+                                    [results]="this.detail['trans_vol']"
+                                    [showGridLines]="false"
+                                    [xAxis]="true"
+                                    [timeline]="false"
+                                >
+                                </ngx-charts-area-chart>
+                            </div>
+
+                            <div class="top-subtitle">
+                                Transfer Volume
+                            </div>
+
+                        </nb-card-body>
+                    </nb-card>
+                </div>
+
+                <div class="col-md-6">
+                    <nb-card style="height: 200px; overflow: hidden; margin: 7px;">
+                        <nb-card-body style="font-weight: 500; font-size: 20px; overflow: hidden; padding: 0px;">
+                            <!-- <div style="display: flex; flex-direction: column; justify-content: space-between; text-transform: uppercase; align-items: center;"> -->
+                                <div style="width: 100%; height: 99px; text-align: center; opacity: 0.8">
+                                    <div style="width: 100%; position: absolute; top: 25%; left: 50%; transform: translate(-50%, -50%); text-transform: uppercase;">
+                                        <p style="margin: 0px;">{{detail['from_sum']}} tokens</p>
+                                        <p style="margin: 0px;">inverted in {{detail['from_count']}} Transactions</p>
+                                    </div>
+                                </div>
+                                <div style="height: 1px; width: 80%; margin-left: 10%; background-color: rgba(102, 217, 255, 0.4);">
+                                </div>
+                                <!-- <div style="width: 100%; height: 99px; text-align: center; position: absolute; top: 50%; bottom: 50%; transform: translate(-50%, -50%);"> -->
+                                <div style="width: 100%; height: 99px; text-align: center; opacity: 0.8;">
+                                    <div style="width: 100%; position: absolute; top: 75%; left: 50%; transform: translate(-50%, -50%); text-transform: uppercase;">
+                                        <p style="margin: 0px;">{{detail['to_sum']}} tokens</p>
+                                        <p style="margin: 0px;">recovered in {{detail['to_count']}} Transactions</p>
+                                    </div>
+                                </div>
+                            <!-- </div> -->
+
+                            <div class="fixed-subtitle" style="top: 20px; left: 20px;">
+                                Transfers
+                            </div>
+
+                        </nb-card-body>
                     </nb-card>
                 </div>
 
                 <div class="col-md-12">
+                    <nb-card style="margin: 7px; padding: 0px; overflow: auto; max-height: calc(100vh - 44.50px - 44.50px - 72px - 214px - 64px - 200px - 50px);">
+                        <!-- <nb-card-header>
+                            Transfer Details
+                        </nb-card-header> -->
+                        <nb-card-body style="scrollbar-color: rgba(0, 0, 0, 0.7) rgba(0, 0, 0, 0.1); scrollbar-width: thin;padding: 0px;">
+                        <!-- <nb-card-body style="scrollbar-color: rgba(0, 0, 0, 0.7) rgba(0, 0, 0, 0.1); scrollbar-width: thin;padding: 0px; height: calc(100vh - 44.50px - 44.50px);"> -->
+                        <!-- <nb-card-body> -->
 
-                    <nb-flip-card>
-                        <nb-card-front>
 
-                            <nb-card class="board-1" style="overflow: hidden; height: 200px;">
-                                <div class="row">
-                                    <div class="col-md-6" style="text-align: center;">
-                                        <div style="padding-top: 17px; padding-bottom: 5px;"><strong>Deposit</strong></div>
-                                        <div class="sep-right">Tokens: {{detail['from_sum']}}</div>
-                                        <div class="sep-right">Transfers: {{detail['from_count']}}</div>
-                                    </div>
-                                    <div class="col-md-6" style="text-align: center;">
-                                        <div style="padding-top: 17px; padding-bottom: 5px;"><strong>Withdraw</strong></div>
-                                        <div class="sep-left">Tokens: {{detail['to_sum']}}</div>
-                                        <div class="sep-left">Transfers: {{detail['to_count']}}</div>
-                                    </div>
-                                    <div class="col-md-12" style="display: flex; align-items: center; justify-content: center; margin-top: 10px;">
-                                        <div *ngIf="percent >= 0" class="circle" style="background: #D17808;">{{percent}} %</div>
-                                        <div *ngIf="percent < 0" class="circle" style="background: #D13608;">{{percent}} %</div>
-                                    </div>
-                                </div>
-                            </nb-card>
 
-                        </nb-card-front>
-                        <nb-card-back>
+                        <!-- <ngx-datatable
+                            #tableTrans
+                            class="bootstrap expandable"
+                            [rows]="details['moves']"
+                            [loadingIndicator]="loadingIndicator"
+                            columnMode="force"
+                            [reorderable]="reorderable"
+                            rowHeight="auto"
+                            headerHeight="auto"
+                            summaryRow="true"
+                            summaryPosition="bottom"
+                            summaryHeight="auto"
+                            [rowIdentity]="getId"
+                        > -->
 
-                            <!-- <nb-card class="board-1" style="padding-top: 10px; overflow: hidden; height: 200px;"> -->
-                            <nb-card class="board-1" style="overflow: hidden; height: 200px;">
-                                <ngx-charts-advanced-pie-chart
-                                    style="padding-left: 30px;"
-                                    [scheme]="colorScheme"
-                                    [results]="sum"
+                            <div class="row" style="padding: 0px; margin: 0px; opacity: 0.7;">
+                                <div class="col-md-12">
+
+                                    <ngx-datatable
+                                        #tableTrans
+                                        class="bootstrap fullscreen"
+                                        [rows]="detail['moves']"
+                                        columnMode="force"
+                                        [headerHeight]="40"
+                                        [footerHeight]="40"
                                     >
-                                </ngx-charts-advanced-pie-chart>
-                            </nb-card>
 
-                        </nb-card-back>
-                    </nb-flip-card>
+                                        <ngx-datatable-column
+                                        name="Hash" prop="hash"
+                                        title="Trx Hash"
+                                        [resizeable]="false"
+                                        [sortable]="false"
+                                        [draggable]="false"
+                                        [width]="300"
+                                        cellClass="hash-class"
+                                        ></ngx-datatable-column>
 
+                                        <!-- <ngx-datatable-column name="Date" prop="date"></ngx-datatable-column> -->
+                                        <ngx-datatable-column
+                                        name="Date" prop="date"
+                                        title="Date"
+                                        [resizeable]="false"
+                                        [sortable]="true"
+                                        [draggable]="false"
+                                        [width]="100"
+                                        ></ngx-datatable-column>
+
+                                        <ngx-datatable-column
+                                        name="Type" prop="name"
+                                        title="Type"
+                                        [resizeable]="false"
+                                        [sortable]="true"
+                                        [draggable]="false"
+                                        [cellClass]='getTypeColor'
+                                        [width]="30"
+                                        >
+                                            <ng-template let-row="row" let-value="value" ngx-datatable-cell-template>
+                                                {{ value }}
+                                            </ng-template>
+                                    
+                                        </ngx-datatable-column>
+
+                                        <ngx-datatable-column
+                                        name="Function" prop="funct"
+                                        title="Function"
+                                        [resizeable]="false"
+                                        [sortable]="false"
+                                        [draggable]="false"
+                                        [width]="60"
+                                        cellClass="data-center"
+                                        ></ngx-datatable-column>
+
+                                        <ngx-datatable-column
+                                        name="Value" prop="value"
+                                        title="Value"
+                                        [resizeable]="false"
+                                        [sortable]="true"
+                                        [draggable]="false"
+                                        cellClass="number-right"
+                                        [width]="60"
+                                        >
+                                            <ng-template let-row="row" let-value="value" ngx-datatable-cell-template style="text-align: right;">
+                                                {{ value | number:'1.2'}}
+                                            </ng-template>
+                                        </ngx-datatable-column>
+
+                                    </ngx-datatable>
+
+                                </div>
+                            </div>
+                        </nb-card-body>
+                    </nb-card>
                 </div>
 
-                <div class="col-md-12" style="overflow: hidden;">
-                    <div #areachart style="padding: 0px; margin: 0px; padding-top: 20px; overflow: hidden;">
-                        <ngx-charts-area-chart
-                            [view]="view"
-                            [scheme]="colorScheme"
-                            [results]="detail['trans_vol']"
-                            [showGridLines]="false"
-                            [xAxis]="true"
-                            [timeline]="true"
-                        >
-                        </ngx-charts-area-chart>
-                    </div>
-                </div>
+
+
+
+
 
             </div>
         </div>
 
     </nb-card-body>
 </nb-card>
-
-
-<ng-template #dialog let-data let-ref="dialogRef">
-
-    <nb-card class="trans" style="width: 600px; height: 600px;">
-        <nb-card-header>
-            Transfer Details
-        </nb-card-header>
-        <nb-card-body style="scrollbar-color: rgba(0, 0, 0, 0.7) rgba(0, 0, 0, 0.1); scrollbar-width: thin;">
-        <!-- <nb-card-body> -->
-
-
-
-          <!-- <ngx-datatable
-            #tableTrans
-            class="bootstrap expandable"
-            [rows]="details['moves']"
-            [loadingIndicator]="loadingIndicator"
-            columnMode="force"
-            [reorderable]="reorderable"
-            rowHeight="auto"
-            headerHeight="auto"
-            summaryRow="true"
-            summaryPosition="bottom"
-            summaryHeight="auto"
-            [rowIdentity]="getId"
-          > -->
-
-            <div class="row">
-                <div class="col-md-12">
-
-                    <ngx-datatable
-                        #tableTrans
-                        class="bootstrap fullscreen"
-                        [rows]="detail['moves']"
-                        columnMode="force"
-                        [headerHeight]="50"
-                        [footerHeight]="50"
-                    >
-
-                        <!-- <ngx-datatable-column name="Date" prop="date"></ngx-datatable-column> -->
-                        <ngx-datatable-column
-                        name="Date" prop="date"
-                        title="Date"
-                        [resizeable]="false"
-                        [sortable]="true"
-                        [draggable]="false"
-                        ></ngx-datatable-column>
-
-                        <ngx-datatable-column
-                        name="Type" prop="name"
-                        title="Type"
-                        [resizeable]="false"
-                        [sortable]="true"
-                        [draggable]="false"
-                        [cellClass]='getTypeColor'
-                        >
-                            <ng-template let-row="row" let-value="value" ngx-datatable-cell-template>
-                                {{ value }}
-                            </ng-template>
-                    
-                        </ngx-datatable-column>
-
-                        <ngx-datatable-column
-                        name="Value" prop="value"
-                        title="Value"
-                        [resizeable]="false"
-                        [sortable]="true"
-                        [draggable]="false"
-                        cellClass="number-right"
-                        >
-                            <ng-template let-row="row" let-value="value" ngx-datatable-cell-template style="text-align: right;">
-                                {{ value | number:'1.2'}}
-                            </ng-template>
-                        </ngx-datatable-column>
-
-                    </ngx-datatable>
-
-                </div>
-            </div>
-
-
-
-
-
-        </nb-card-body>
-    </nb-card>
-</ng-template>
