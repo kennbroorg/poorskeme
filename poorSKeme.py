@@ -10,6 +10,7 @@ import yaml
 import textwrap
 import time
 import os.path
+import requests
 from bscscan import BscScan
 
 import multiprocessing
@@ -17,6 +18,8 @@ import http.server
 import socketserver
 from termcolor import colored
 import coloredlogs, logging
+
+from web3_input_decoder import InputDecoder, decode_constructor
 
 from api_poorSKeme import create_application
 
@@ -60,9 +63,21 @@ async def save_json(contract_address, block_from, block_to, key, chunk=30000):
     logger.info("Collecting Contract data")
     logger.info("=====================================================")
 
+    url = 'https://api.bscscan.com/api?module=account&action=txlist&address=' + contract_address + '&startblock=0&endblock=99999999' + \
+        '&page=1&offset=1&sort=asc&apikey=' + key 
+    response = requests.get(url)
+    first_block = response.json()['result'][0]
+
+    if (block_from == 0):
+        block_from = int(first_block['blockNumber'])
+
     json_contract = {"contract": contract_address, 
                      "block_from": block_from,
-                     "block_to": block_to}
+                     "block_to": block_to, 
+                     "first_block": first_block['blockNumber'],
+                     "transaction_creation": first_block['hash'],
+                     "date_creation": first_block['timeStamp'],
+                     "creator": first_block['from']}
     # contract
     async with BscScan(key) as client:
         json_result = await client.get_contract_abi(
@@ -296,12 +311,14 @@ def process_json(filename):
     # Get token and volume
     if (native):
         token_name = "Native Token"  # TODO 
-        volume = round(df_transaction['value'].sum() / 1e+18, 2) + round(df_i['value'].sum() / 1e+18, 2)
+        # volume = round(df_transaction['value'].sum() / 1e+18, 2) + round(df_i['value'].sum() / 1e+18, 2)
+        volume = round((df_transaction['value'].sum() / 1e+18, 2 + df_i['value'].sum() / 1e+18) / 2, 2)
     else:
         token = df_t.groupby('tokenSymbol').agg({'value': ['sum','count']})  # TODO: Use for anomalies
         token = token.sort_values(by=[('value','count')], ascending=False)  
         token_name = token.index[0]
-        volume = round(token.iloc[0,0] / 1e+18, 2)
+        # volume = round(token.iloc[0,0] / 1e+18, 2)
+        volume = round(float(token.iloc[0,0] / 1e+18) / 2, 2)
 
     # Liquidity and dates
     address_contract = contract["contract"].lower()
@@ -454,7 +471,7 @@ def process_json(filename):
     trx_total_dec = trx_total.sort_values(["Percentage"])
     trx_total_asc = trx_total.sort_values(["Percentage"], ascending=False)
 
-    # Porcentajes estadisticos
+    # Statistic Percentage
     e_0 = trx_total[trx_total['Percentage'] == 0]
     e_0_100 = trx_total[(trx_total['Percentage'] > 0) & (trx_total['Percentage'] < 100)]
     e_100_241 = trx_total[(trx_total['Percentage'] >= 100) & (trx_total['Percentage'] <= 241)]
@@ -465,6 +482,42 @@ def process_json(filename):
     investments.append({"name": "Loses", "value": len(e_0_100)})
     investments.append({"name": "Earnings", "value": len(e_100_241)})
     investments.append({"name": "Top Profit", "value": len(e_241)})
+
+    # Input decoded
+    # ABI
+    contract_abi = data['getabi']
+    ABI = json.loads(contract_abi)
+    ABI = json.loads(ABI)
+
+    df_hash = df_transaction["hash"][0:]
+    input_column = df_transaction["input"][1:]
+    # TODO: Constructor
+
+    decoder = InputDecoder(ABI)
+    functions = ["constructor"]
+    arguments = ["constructor"]
+    for i in input_column:
+        try:
+            # print(i)
+            func_call = decoder.decode_function((i),)
+            functions.append(func_call.name)
+            arguments.append(func_call.arguments)
+        except:
+            functions.append("Not decoded")
+            arguments.append("Not decoded")
+
+    # df_decoded = pd.DataFrame({"hash": df_hash, "funct": functions, "args": str(arguments)})
+    df_decoded = pd.DataFrame({"hash": df_hash, "funct": functions})
+    dict_decoded = df_decoded.to_dict()
+
+    with open('./tmp/decoded.json', 'w') as outfile:
+        json.dump(dict_decoded, outfile)
+
+    # Functions stats
+    funct_stats = df_decoded['funct'].value_counts()
+    funct_stats_json = []
+    for i in funct_stats.index: 
+        funct_stats_json.append({"name": str(i), "value": int(funct_stats[i])})
 
     json_stats = {"contract": address_contract,
                   "fdate": first_date.strftime("%Y/%m/%d - %H:%M:%S"),
@@ -477,6 +530,8 @@ def process_json(filename):
                   "volume": volume,
                   "wallets": unique_wallets,
                   "investments": investments,
+                  "funct_stats": funct_stats_json,
+                #   "funct_stats": investments,
                   "trx_out": trx_out,
                   "trx_in": trx_in}
 
