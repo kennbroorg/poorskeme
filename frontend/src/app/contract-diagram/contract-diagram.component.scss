@@ -1,0 +1,141 @@
+@import '~ngx-org-chart/_theming.scss';
+
+nb-card {
+    background: rgba(102, 201, 255, 0);
+
+    // border-top: 1px solid rgba(102, 201, 255, 0.3);
+    // border-bottom: 1px solid rgba(102, 201, 255, 0.3);
+
+    // border-top: 1px solid rgba(255, 255, 255, 0.2);
+    // border-top-style: outset;
+    // border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    // border-right: none;
+    // border-left: none;
+
+    // Border 1
+    border-image-source: url('/assets/border-image.png');
+    border-image-slice: 25;
+    border-image-width: 12;
+    border-image-outset: 2;
+    border-image-repeat: round;
+
+    // Border 2
+    // border-image-source: url('/assets/border-image-complete.png');
+    // border-image-slice: 25 25;
+    // border-image-width: 20 20;
+    // border-image-outset: 2;
+    // border-image-repeat: round;
+
+    // Square
+    // background: rgba(102, 201, 255, 0) url("/assets/square500.png")  left top;
+    // background-repeat: repeat;
+    // background-size: 150px 150px;
+
+}
+
+nb-card-body {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    background: rgba(102, 201, 255, 0.1);
+}
+
+#diagram-graph {
+  // height: 750px;
+  height: calc(100vh - 44.50px - 44.50px);  /* height = (page height - header-height - footer-height)   */
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+
+.myDiagramDiv {
+  background: whitesmoke;
+  width: 800px;
+  height: 300px;
+  border: 1px solid black;
+}
+
+  // Border 2
+  border-image-source: url('/assets/border-image-complete.png');
+  border-image-slice: 25 25;
+  border-image-width: 20 20;
+  border-image-outset: 2;
+  border-image-repeat: round;
+
+}
+
+.top-subtitle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 15px;
+    font-weight: 300; 
+    text-transform: uppercase; 
+    color:rgba(102, 217, 255, 0.8); 
+}
+
+// .ngx-org {
+::ng-deep { 
+  .ngx-org-image {
+      background-repeat: no-repeat;
+      width: 2em;
+      height: 2em;
+      margin-right: 0.5em;
+      background-color: white;
+      border-radius: 50%;
+      padding: 0.25em;
+  }
+
+  .ngx-org-name {
+      font-family: 'Montserrat';
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+  .ngx-org-title {
+      font-family: 'Montserrat';
+      color: rgba(102, 217, 255, 0.6);
+    }
+  // }
+
+  // .ngx-org {
+  .ngx-org-horizontal {
+    padding: 1em 0;
+  }
+
+  .ngx-org-vertical {
+    padding: 0 2em;
+  }
+
+  .ngx-org-border {
+    border: 1px solid rgba(204, 242, 255, 0.3);
+    // border: none;
+  }
+
+  .ngx-org-box {
+    padding: 0.5em 1em;
+    width: 250px;
+    // border-radius: 0px;
+    // box-shadow: 0.05em 0.05em 0.2em 0.05em #0000002b;
+    background: rgba(102, 201, 255, 0.1);
+    border-image-source: url('/assets/border-image.png');
+    border-image-slice: 25;
+    border-image-width: 12;
+    border-image-outset: 2;
+    border-image-repeat: round;
+  }
+
+  .ngx-org-connector-horizontal {
+    width: 1em;
+  }
+
+  .ngx-org-connector-vertical {
+    height: 1em;
+  }
+  
+  .ngx-org-constructor-node, .ngx-org-event-node, .ngx-org-funct-node {
+    background: rgba(204, 242, 255, 0.3);
+  }
+
+
+  .ngx-org-input-tag, .ngx-org-output-tag {
+    background: rgba(102, 217, 255, 0.3);
+  }
+}
