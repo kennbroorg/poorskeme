@@ -2,26 +2,140 @@
 
   <nb-layout-column>
 
-    <div class="row">
-      <div class="col-md-4">
-        <app-transactions-brief></app-transactions-brief>
-      </div>
-      <div class="col-md-4">
-        <app-contract-brief></app-contract-brief>
-      </div>
-      <div class="col-md-4">
-        <app-transfers-brief></app-transfers-brief>
-      </div>
-      <div class="col-md-3">
-        <app-liq-trans></app-liq-trans>
-      </div>
-      <div class="col-md-6">
-        <app-transfers (onInfo)="handleInfo($event)"></app-transfers>
-      </div>
-      <div class="col-md-3">
-        <app-transfers-details [subject]="subject"></app-transfers-details>
+    <div class="row" sytle="margin: 0px; padding: 0px;">
+      <div class="col-md-12" sytle="margin: 0px; padding: 0px;">
+
+        <nb-tabset sytle="margin: 0px; padding: 0px;">
+
+          <!-- TAB1 -->
+          <nb-tab tabTitle="Principal">
+
+            <div class="row">
+
+                <div class="col-md-4"></div>
+                <div class="col-md-4" style="margin-top: 80px;">
+                  <div class="col-md-4" style="width: 470px; margin: auto;">
+                    <h3 style="font-weight: 300; text-transform: uppercase; color:rgba(102, 217, 255, 0.8); padding-left: 5px;">Poor people's scheme</h3>
+                    <h1 style="font-weight: 300; font-size: 70px; margin-top: 0px;">POORSKEME</h1>
+                  </div>
+                </div>
+                <div class="col-md-4"></div>
+
+                <div class="col-md-4">
+                    <nb-card>
+                        <nb-card-body style="font-weight: 300; font-size: 20px;">
+
+                          <p class="text-window">PROJECT</p>
+                          <p class="text-window">This project was born from anger at having fallen for a pyramid scheme in the blockchain world</p>
+                          <p class="text-window">Initially, the idea was to identify what and how the money flowed between the wallets</p>
+                          <p class="text-window">Data was collected from blockchain explorers, and using Python, pandas and dataframes, more than jus the flow of money was seen</p>
+                          <p class="text-window" style="margin-bottom: 0px;">Wallets that lost all or part of their money, both in quantity and detail, became evident</p>
+                          <p class="text-window" style="margin-bottom: 0px;">Wallets that earned disproportionately, both in quantity and detail, became evident</p>
+                          <p class="text-window" style="margin-bottom: 0px;">High percentages of fees for developers, marketing people, CEOs, etc, became evident</p>
+                          <p class="text-window">Wallets that did not respect the established percentages and timescales became evident</p>
+                          <p class="text-window">And with all of the above, the present visualisations were created in order to better interpret the data collected, analysed and processed. This allowed more information to become evident and more conclusions to be extracted</p>
+
+                        </nb-card-body>
+                    </nb-card>
+                </div>
+                <div class="col-md-4">
+                    <nb-card>
+                        <!-- <nb-card-body style="padding: 0px; overflow: hidden;"> -->
+                        <nb-card-body class="shiny">
+                            <img src="/assets/Logo.png" alt="Logo" width="300" style="opacity: 0.5; display: block; margin: auto;"> 
+                        </nb-card-body>
+                    </nb-card>
+                    <!-- DISCLAIMER -->
+                    <nb-card>
+                        <nb-card-body>
+                          <p class="text-window">DISCLAIMER</p>
+                          <p class="text-window">This is a young project, started in mid-March 2022, so it may contain errors. For now, it only works with the Binance blockchain</p>
+                          <p class="text-window">Over time, and with feedback, the project will grow and bugs will be fixed, but it is a personal project and the time dedicated to it is undetermined</p>
+                        </nb-card-body>
+                    </nb-card>
+                </div>
+                <div class="col-md-4">
+                    <nb-card>
+                        <nb-card-body style="font-weight: 500;">
+                            <p class="text-window">TECHNICAL INFORMATION</p>
+                            <p class="text-window">The present software is Open Source under MIT License</p>
+
+                            <p class="text-window">It currently only supports the Binance Smart Chain Blockchain and is under development to include the Ethereum blockchain. The data is collected from a terminal, but if you read this you should know that</p>
+
+                            <p class="text-window">The data is transformed into information in the backend where python 3.9, pandas, dataframe, and Flask is used to present the information through an internal API and the visualisations are HTML-CSS-Javascript</p>
+
+                            <p class="text-window" style="margin-top: 15px;">SIMPLE ROADMAP</p>
+                            <p class="text-window"><span style="margin-right: 5px;font-size: 18x;">&#x2611;</span>Data Collect</p>
+                            <p class="text-window"><span style="margin-right: 5px;font-size: 18x;">&#x2611;</span>Visualisations</p>
+                            <p class="text-window"><span style="margin-right: 5px;font-size: 18x;">&#x2610;</span>Ethereum Blockchain support</p>
+                            <p class="text-window"><span style="margin-right: 5px;font-size: 18x;">&#x2610;</span>Automatic anomaly detection</p>
+                            <p class="text-window"><span style="margin-right: 5px;font-size: 18x;">&#x2611;</span>Early detection of scam</p>
+                            <p class="text-window"><span style="margin-right: 5px;font-size: 18x;">&#x2610;</span>...</p>
+                            <p class="text-window"><span style="margin-right: 5px;font-size: 18x;">&#x2610;</span>...</p>
+                            <p class="text-window"><span style="margin-right: 5px;font-size: 18x;">&#x2610;</span>...</p>
+                            <p class="text-window"><span style="margin-right: 5px;font-size: 18x;">&#x2610;</span>Traceabilityp>
+                            <p class="text-window"><span style="margin-right: 5px;font-size: 18x;">&#x2610;</span>Wallet identification<p>
+
+                            <p class="text-window">These last two points of the roadmap are subject to a lot of research, but nothing is impossible</p>
+                        </nb-card-body>
+                    </nb-card>
+                </div>
+
+            </div>
+
+          </nb-tab>
+
+
+          <!-- TAB2 -->
+          <nb-tab tabTitle="Resume">
+            <app-contract-resume [data]="contract" *ngIf="contract"></app-contract-resume>
+          </nb-tab>
+
+
+          <!-- TAB3 -->
+          <nb-tab tabTitle="Detail">
+            <app-contract-detail [data]="contract" *ngIf="contract"></app-contract-detail>
+          </nb-tab>
+
+
+          <!-- TAB4 -->
+          <nb-tab tabTitle="Code">
+            <app-contract-code [data]="contract" *ngIf="contract"></app-contract-code>
+          </nb-tab>
+
+          
+          <!-- TAB5 -->
+          <nb-tab tabTitle="Diagram">
+              <app-diagram [data]="contract" *ngIf="contract"></app-diagram>
+          </nb-tab>
+
+          
+          <!-- TAB6 -->
+          <nb-tab tabTitle="Distribution">
+            <div class="row">
+                <div class="col-md-6">
+                    <app-transfers (onInfo)="handleInfo($event)" [w]="width" [h]="height"></app-transfers>
+                </div>
+
+                <div class="col-md-6">
+                    <app-transfers-details [subject]="subject" [h]="height"></app-transfers-details>
+                </div>
+            </div>
+          </nb-tab>
+
+
+          <!-- TAB7 -->
+          <!-- <nb-tab tabTitle="Anomalies">
+
+            <p>List of <strong>orders</strong>.</p>
+
+          </nb-tab> -->
+
+        </nb-tabset>
+
       </div>
     </div>
+
 
   </nb-layout-column>
 
