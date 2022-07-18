@@ -9,14 +9,12 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
 })
 export class TransactionsBriefComponent implements OnInit {
 
-  view: any = [500, 200];
+  // TODO : Calculate screen dimension in app
+  view: any = [600, 200];
 
-  colorScheme: Color = { domain: ['#D13608', '#D17808'], group: ScaleType.Ordinal, selectable: true, name: 'Customer Usage', };
+  colorScheme: Color = { domain: ['#66D9FF', '#CCF2FF'], group: ScaleType.Ordinal, selectable: true, name: 'Customer Usage', };
 
   trans: any = [];
-
-  width: number = 300;
-  height: number = 100;
 
   constructor(private httpClient: HttpClient) { 
   }
