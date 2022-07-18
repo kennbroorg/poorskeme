@@ -69,40 +69,86 @@ def r_contract():
 
     abi = ast.literal_eval(abi)
 
-    abi_total = []
+    # abi_total = []
+    # for i in abi:
+    #     prop = ''
+    #     input = False 
+    #     output = False 
+    #     head = f"{i['type']}"
+    #     if ('stateMutability' in i):
+    #         prop = prop + f"stateMutability: {i['stateMutability']}"
+    #     if ('anonymous' in i):
+    #         prop = prop + f"anonymous: {i['anonymous']}"
+    #     if ('name' in i):
+    #         head = head + f" - Name: {i['name']} ({prop})"
+
+    #     if ('inputs' in i):
+    #         input = True
+    #         input_content = []
+    #         for j in i['inputs']:
+    #             input_content.append({"name": f"Name: {j['name']} - Type: {j['type']}"})
+
+    #     if ('outputs' in i):
+    #         output = True
+    #         output_content = []
+    #         for j in i['outputs']:
+    #             output_content.append({"name": f"Name: {j['name']} - Type: {j['type']}"})
+
+    #     if (output or input):
+    #         children = []
+    #         if (input):
+    #             children.append({"name": "Input", "children": input_content})
+    #         if (output):
+    #             children.append({"name": "output", "children": output_content})
+    #         abi_item = {"name": head, "children": children}
+        
+    #     abi_total.append(abi_item)
+
+    abi_org = []
+    const = []
+    event = []
+    funct = []
     for i in abi:
-        prop = ''
         input = False 
         output = False 
-        head = f"{i['type']}"
-        if ('stateMutability' in i):
-            prop = prop + f"stateMutability: {i['stateMutability']}"
-        if ('anonymous' in i):
-            prop = prop + f"anonymous: {i['anonymous']}"
-        if ('name' in i):
-            head = head + f" - Name: {i['name']} ({prop})"
 
+        input_content = []
         if ('inputs' in i):
             input = True
-            input_content = []
             for j in i['inputs']:
-                input_content.append({"name": f"Name: {j['name']} - Type: {j['type']}"})
+                input_content.append({"name": j['name'], "cssClass": "ngx-org-input", "image": "", "title": j['type'], "childs": []})
 
+        output_content = []
         if ('outputs' in i):
             output = True
-            output_content = []
             for j in i['outputs']:
-                output_content.append({"name": f"Name: {j['name']} - Type: {j['type']}"})
+                output_content.append({"name": j['name'], "cssClass": "ngx-org-output", "image": "", "title": j['type'], "childs": []})
 
         if (output or input):
-            children = []
-            if (input):
-                children.append({"name": "Input", "children": input_content})
-            if (output):
-                children.append({"name": "output", "children": output_content})
-            abi_item = {"name": head, "children": children}
-        
-        abi_total.append(abi_item)
+            children_io = []
+            # if (input):
+            if (input_content != []):
+                # children.append({"name": "Input", "children": input_content})
+                children_io.append({"name": "INPUT", "cssClass": "ngx-org-input-tag", "image": "", "title": "", "childs": input_content})
+            if (output_content != []):
+                # children.append({"name": "output", "children": output_content})
+                children_io.append({"name": "OUTPUT", "cssClass": "ngx-org-output-tag", "image": "", "title": "", "childs": output_content})
+            # abi_item = {"name": head, "children": children}
+
+        if (i['type'] == 'constructor'):
+            const.append({"name": "CONSTRUCTOR", "cssClass": "ngx-org-constructor-node", "image": "", "title": "", "childs": children_io})
+
+        if (i['type'] == 'event'):
+            event.append({"name": i['name'], "cssClass": "ngx-org-event", "image": "", "title": "Name", "childs": children_io})
+
+        if (i['type'] == 'function'):
+            funct.append({"name": i['name'], "cssClass": "ngx-org-funct", "image": "", "title": "Name", "childs": children_io})
+
+    abi_org.append(const[0])
+    if (event != []):
+        abi_org.append({"name": "EVENTS", "cssClass": "ngx-org-event-node", "image": "", "title": "", "childs": event})
+    if (funct != []):
+        abi_org.append({"name": "FUNCTIONS", "cssClass": "ngx-org-funct-node", "image": "", "title": "", "childs": funct})
 
     contract = ast.literal_eval(contract_info)
 
@@ -111,8 +157,11 @@ def r_contract():
     return jsonify({'contract': contract['contract'],
                     'block_from': contract['block_from'], 
                     'block_to': contract['block_to'], 
+                    'first_block': contract['first_block'], 
+                    'first_trx': contract['transaction_creation'], 
                     'SourceCode': sc['SourceCode'], 
-                    'abi': {"name": sc['ContractName'], "children": abi_total},
+                    # 'abi': {"name": sc['ContractName'], "children": abi_total},
+                    'abi': abi_org,
                     'abiraw': abi,
                     'ContractName': sc['ContractName'], 
                     'CompilerVersion': sc['CompilerVersion'],
@@ -125,6 +174,7 @@ def r_contract():
                     'max_liq': stats['max_liq'],
                     'max_liq_date': stats['max_liq_date'],
                     'investments': stats['investments'],
+                    'funct_stats': stats['funct_stats'],
                     'volume': stats['volume'],
                     'wallets': stats['wallets'],
                     'trx_out': stats['trx_out'],
@@ -244,6 +294,7 @@ def r_result(address):
         df_i = pd.read_json('./tmp/internals.json')
         toc = time.perf_counter()
         logger.info(f"Read transfers file in {toc - tic:0.4f} seconds")
+        tic = time.perf_counter()
 
         dftemp_transaction = df_transaction[df_transaction['isError'] == 0]
         dftemp_transaction = dftemp_transaction[['timeStamp','from', 'to', 'value']]
@@ -258,6 +309,11 @@ def r_result(address):
         df_t = pd.read_json('tmp/transfers.json')
         toc = time.perf_counter()
         logger.info(f"Read transfers file in {toc - tic:0.4f} seconds")
+
+    tic = time.perf_counter()
+    df_decoded = pd.read_json('./tmp/decoded.json')
+    toc = time.perf_counter()
+    logger.info(f"Read decoded functions file in {toc - tic:0.4f} seconds")
 
     detail_from = df_t[df_t['from'] == address]
     from_sum = round(detail_from['value'].sum() / 1e+18, 2)
@@ -298,12 +354,20 @@ def r_result(address):
 
         if (contract['contract'].lower() == detail_total['from'][i]):
             trx_in_day = trx_in_day + value
+            trx_hash = detail_total['hash'][i]
+            funct = (df_decoded[df_decoded['hash'] == trx_hash])
             moves.append({"date": detail_total['timeStamp'][i].strftime("%Y-%m-%d %H:%M:%S"), 
+                          "hash": trx_hash,
+                          "funct": (funct['funct']).to_string(index=False),
                           "name": "IN", 
                           "value": value})
         else: 
             trx_out_day = trx_out_day + value
+            trx_hash = detail_total['hash'][i]
+            funct = (df_decoded[df_decoded['hash'] == trx_hash])
             moves.append({"date": detail_total['timeStamp'][i].strftime("%Y-%m-%d %H:%M:%S"), 
+                          "hash": trx_hash,
+                          "funct": (funct['funct']).to_string(index=False),
                           "name": "OUT", 
                           "value": value})
 
