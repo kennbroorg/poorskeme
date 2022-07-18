@@ -1,7 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BrowserModule } from '@angular/platform-browser';
-import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 
 @Component({
@@ -11,15 +9,12 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
 })
 export class TransfersBriefComponent implements OnInit {
 
-  view: any = [500, 200];
+  view: any = [600, 200];
 
-  colorScheme: Color = { domain: ['#D13608', '#D17808'], group: ScaleType.Ordinal, selectable: true, name: 'Customer Usage', };
+  colorScheme: Color = { domain: ['#66D9FF', '#CCF2FF'], group: ScaleType.Ordinal, selectable: true, name: 'Customer Usage', };
 
   trans: any = [];
   internals: any = [];
-
-  width: number = 300;
-  height: number = 100;
 
   constructor(private httpClient: HttpClient) { 
   }
