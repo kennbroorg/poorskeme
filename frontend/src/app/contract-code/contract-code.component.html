@@ -1,0 +1,50 @@
+<div class="row" *ngIf="contract">
+
+  <!-- License - Code - Compiler -->
+  <div class="col-md-4">
+    <nb-card>
+      <nb-card-body style="font-weight: 500; font-size: 20px;">
+        <div class="title">{{contract['LicenseType']}}</div>
+        <div class="fixed-subtitle">Contract License</div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+  <div class="col-md-4">
+    <nb-card style="height: 140px; margin-top: 60px;">
+      <nb-card-body class="shiny" style="overflow: hidden;">
+        <!-- <div style="font-weight: 300; font-size: 70px; color: rgba(255, 255, 255, 0.8); text-align: center;"> -->
+        <div class="extra-title">
+          {{contract['ContractName']}}
+        </div>
+          <div class="fixed-subtitle" style="color: rgba(255, 255, 255, 0.8); bottom: 20px;">
+            Contract Name
+        </div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+  <div class="col-md-4">
+    <nb-card>
+      <nb-card-body style="font-weight: 500; font-size: 20px;">
+        <div class="title">{{contract['CompilerVersion']}}</div>
+        <div class="fixed-subtitle">Contract Compiller</div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+  <!-- Code -->
+  <div class="col-md-12">
+    <nb-card style="height: 700px">
+      <nb-card-body style="font-weight: 100; font-size: 15px;">
+        <!-- <h3 class="sep-1">Source Code</h3> -->
+        <!-- <ngx-highlight-js [code]="code" [lang]="['typescript']"></ngx-highlight-js> -->
+        <div style="overflow: auto; margin-top: 50px; height: 600px;">
+          <pre><code [highlight]="code" [languages]="['typescript']" [lineNumbers]="true"></code></pre>
+        </div>
+        <div class="top-subtitle">Contract Code</div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+</div>
