@@ -4,19 +4,43 @@
 
 $nb-themes: nb-register-theme((
 
+  font-family-primary: Montserrat,
+
   // add your variables here like:
-  card-background-color: rgba(59, 62, 69, 1),  // #3b3e45
-  card-border-color: rgba(59, 62, 69, 1),
+  card-background-color: rgba(102, 201, 255, 0.15),  // #3b3e45
+  // card-background-color: rgba(0, 50, 77, 0.5),  // #3b3e45
+  card-border-color: rgba(102, 201, 255, 0.2),
   card-border-radius: 0px,
 
-  tabset-tab-active-text-color: rgba(209, 54, 8, 1),
-  tabset-tab-active-underline-color: rgba(209, 54, 8, 1),
-  tabset-tab-focus-text-color: rgba(209, 54, 8, 1),
-  tabset-tab-focus-underline-color: rgba(209, 54, 8, 1),
-  tabset-tab-hover-text-color: rgba(246, 64, 9, 1),
-  tabset-tab-hover-underline-color: rgba(246, 64, 9, 1),
-  tabset-tab-text-font-size: 1rem,
-  tabset-tab-text-font-weight: 400,
+  // tabset-tab-background-color: rgba(255, 255, 255, 0.2),
+  tabset-tab-background-color: rgba(102, 201, 255, 0.2),
+  tabset-tab-focus-background-color: rgba(102, 201, 255, 0.4),
+  tabset-tab-hover-background-color: rgba(102, 201, 255, 0.4),
+  tabset-tab-active-background-color: rgba(102, 201, 255, 0.6),
+
+  tabset-divider-color: rgba(255, 255, 255, 0.3),
+  tabset-divider-width: 1px,
+  tabset-tab-active-text-color: rgba(255, 255, 255, 1),
+  tabset-tab-active-underline-color: rgba(255, 255, 255, 1),
+  tabset-tab-padding: 0.5rem 1rem, 
+  tabset-tab-focus-underline-color: rgba(255, 255, 255, 0.7),
+  tabset-tab-focus-text-color: rgba(255, 255, 255, 0.7),
+  tabset-tab-hover-underline-color: rgba(255, 255, 255, 0.7),
+  tabset-tab-hover-text-color: rgba(255, 255, 255, 0.7),
+  tabset-tab-underline-width: 0px,
+
+  // layout-window-mode-padding-top: 2rem,
+  layout-padding: 0.5rem 1rem 0.5rem,
+
+
+  // tabset-tab-active-text-color: rgba(209, 54, 8, 1),
+  // tabset-tab-active-underline-color: rgba(209, 54, 8, 1),
+  // tabset-tab-focus-text-color: rgba(209, 54, 8, 1),
+  // tabset-tab-focus-underline-color: rgba(209, 54, 8, 1),
+  // tabset-tab-hover-text-color: rgba(246, 64, 9, 1),
+  // tabset-tab-hover-underline-color: rgba(246, 64, 9, 1),
+  // tabset-tab-text-font-size: 1rem,
+  // tabset-tab-text-font-weight: 400,
 
 
   // color-primary-100: #f2f6ff,
