@@ -16,7 +16,7 @@
 OSINT - Data Visualization - Blockchain - Awareness - Scam
 
 <div align="center">
-    <img alt="Logo" src="https://kennbroorg.gitlab.io/poorskeme-page/img/principal.png">
+    <img alt="Principal" src="https://kennbroorg.gitlab.io/poorskeme-page/img/principal.png">
 </div>
 
 # Install
@@ -90,25 +90,15 @@ python3 poorSKeme.py -f F/contract-0xe878BccA052579C9061566Cec154B783Fc5b9fF1.js
 ```
 The above command will turn on two services, an internal API on port 5000 and the webi visualization on port 4200. Just open the browser and enter the address http://127.0.0.1:4200
 
-<div style="display: flex">
-  <div align="center" style="width: 50%; margin: 10px;">
-      <a href=""><img src="https://kennbroorg.gitlab.io/poorskeme-page/img/resume.png"></a>
-  </div>
-  <div align="center" style="width: 50%; margin: 10px;">
-      <a href=""><img src="https://kennbroorg.gitlab.io/poorskeme-page/img/detail.png"></a>
-  </div>
-</div>
-<div style="display: flex">
-  <div align="center" style="width: 50%; margin: 10px;">
-      <a href=""><img src="https://kennbroorg.gitlab.io/poorskeme-page/img/code.png"></a>
-  </div>
-  <div align="center" style="width: 50%; margin: 10px;">
-      <a href=""><img src="https://kennbroorg.gitlab.io/poorskeme-page/img/diagram.png"></a>
-  </div>
-</div>
+<p float="left" style="text-align: center;">
+  <img alt="Resume" src="https://kennbroorg.gitlab.io/poorskeme-page/img/resume.png" style="width: 48%; margin: 10px;"/>
+  <img alt="Detail" src="https://kennbroorg.gitlab.io/poorskeme-page/img/detail.png" style="width: 48%; margin: 10px;"/>
+  <img alt="Code" src="https://kennbroorg.gitlab.io/poorskeme-page/img/code.png" style="width: 48%; margin: 10px;"/>
+  <img alt="Diagram" src="https://kennbroorg.gitlab.io/poorskeme-page/img/diagram.png" style="width: 48%; margin: 10px;"/>
+</p>
 
 <div align="center">
-    <a href=""><img src="https://kennbroorg.gitlab.io/poorskeme-page/img/bkg_poorSKeme.png"></a>
+    <img alt="Distribution" src="https://kennbroorg.gitlab.io/poorskeme-page/img/bkg_poorSKeme.png"/>
 </div>
 
 # Disclaimer
