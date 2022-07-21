@@ -2,6 +2,60 @@
 
 @mixin nb-overrides() {
 
+  @font-face {
+    font-family: 'Montserrat';
+    src: url('/assets/font/Montserrat-Bold.woff2') format('woff2'),
+        url('/assets/font/Montserrat-Bold.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Montserrat';
+    src: url('/assets/font/Montserrat-Light.woff2') format('woff2'),
+        url('/assets/font/Montserrat-Light.woff') format('woff');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Montserrat';
+    src: url('/assets/font/Montserrat-SemiBold.woff2') format('woff2'),
+        url('/assets/font/Montserrat-SemiBold.woff') format('woff');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Montserrat';
+    src: url('/assets/font/Montserrat-Regular.woff2') format('woff2'),
+        url('/assets/font/Montserrat-Regular.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Montserrat';
+    src: url('/assets/font/Montserrat-Medium.woff2') format('woff2'),
+        url('/assets/font/Montserrat-Medium.woff') format('woff');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Montserrat';
+    src: url('/assets/font/Montserrat-Thin.woff2') format('woff2'),
+        url('/assets/font/Montserrat-Thin.woff') format('woff');
+    font-weight: 100;
+    font-style: normal;
+    font-display: swap;
+}
+
   html {
       scrollbar-color: rgba(0, 0, 0, 0.7) rgba(0, 0, 0, 0.1); 
       // scrollbar-width: thin;
@@ -27,14 +81,25 @@
     }
   }
 
-  .layout-container {
-      background-color: #24242E !important;
-      // background-image: url('/assets/bg.png') !important;
-      background-repeat: no-repeat !important;
-      background-position: center center !important;
-      background-attachment: fixed !important;
-      background-size: cover !important;
+  .layout {
+    background-image: linear-gradient(135deg, #000709 0%, #00131a 10%, #00222e 20%, #002a38 30%, #003242 40%, #01394b 50%, #003242 60%, #002a38 70%, #00222e 80%, #00131a 90%, #000709 100%);
+    // background-image: linear-gradient(135deg, #000709 0%, #011724 10%, #00243A 20%, #002C45 30%, #01304C 40%, #00324D 50%, #01304C 60%, #002C45 70%, #00243A 80%, #011724 90%, #000709 100%);
+      // background-color: #24242E !important;
+      // background-repeat: no-repeat !important;
+      // background-position: center center !important;
+      // background-attachment: fixed !important;
+      // background-size: cover !important;
 
+  }
+
+  // Poner patron de dots aca
+  .layout-container {
+    width: 100vw;
+    height: 100vh;
+    background: url("/assets/dot.png")  left top;
+    // background: #293e78 url("/assets/dot.png")  left top;
+    // background-blend-mode:screen, luminosity; 
+    background-repeat: repeat;
   }
 
   nb-sidebar-header {
@@ -49,10 +114,10 @@
   }
 
   .form-control:focus {
-      box-shadow: 0 0 0 0.2rem rgba(0, 249, 166, 0.25);
+    box-shadow: none;
   }
 
   nb-card {
-    box-shadow: -5px 20px 20px 10px rgba(0, 0, 0, 0.6);
+    box-shadow: none;
   }
 }

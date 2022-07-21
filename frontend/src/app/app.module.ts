@@ -19,6 +19,14 @@ import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 
 import { HighlightModule, HIGHLIGHT_OPTIONS, HighlightOptions } from 'ngx-highlightjs';
 
+// import { GojsAngularModule } from 'gojs-angular';
+import { NgxOrgChartModule } from 'ngx-org-chart';
+
+import { ContractResumeComponent } from './contract-resume/contract-resume.component';
+import { ContractDetailComponent } from './contract-detail/contract-detail.component';
+import { ContractCodeComponent } from './contract-code/contract-code.component';
+import { DiagramComponent } from './contract-diagram/contract-diagram.component';
+
 import { TransactionsBriefComponent } from './transactions-brief/transactions-brief.component';
 import { TransfersBriefComponent } from './transfers-brief/transfers-brief.component';
 import { ContractBriefComponent } from './contract-brief/contract-brief.component';
@@ -37,6 +45,10 @@ import { TransfersDetailsComponent } from './transfers-details/transfers-details
     LiqTransComponent,
     TreeContractComponent,
     TransfersDetailsComponent,
+    ContractResumeComponent,
+    ContractDetailComponent,
+    ContractCodeComponent,
+    DiagramComponent,
   ],
   imports: [
     BrowserModule,
@@ -54,6 +66,8 @@ import { TransfersDetailsComponent } from './transfers-details/transfers-details
     NgxDatatableModule,
     HighlightModule,
     AppRoutingModule,
+    // GojsAngularModule,
+    NgxOrgChartModule,
     NbDialogModule.forChild()
   ],
   providers: [

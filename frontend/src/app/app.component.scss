@@ -1,10 +1,74 @@
 nb-card {
-    box-shadow:
-    0 2.8px 2.2px rgba(0, 0, 0, 0.154),
-    0 6.7px 5.3px rgba(0, 0, 0, 0.168),
-    0 12.5px 10px rgba(0, 0, 0, 0.18),
-    0 22.3px 17.9px rgba(0, 0, 0, 0.192),
-    0 41.8px 33.4px rgba(0, 0, 0, 0.206),
-    0 100px 80px rgba(0, 0, 0, 0.24);
-    background: linear-gradient(to bottom, #3b3e45, #2f3137 50%);
+    background: rgba(102, 217, 255, 0);
+
+    // border-top: 1px solid rgba(102, 201, 255, 0.3);
+    // border-bottom: 1px solid rgba(102, 201, 255, 0.3);
+
+    // border-top: 1px solid rgba(255, 255, 255, 0.2);
+    // border-top-style: outset;
+    // border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    // border-right: none;
+    // border-left: none;
+
+    // Border 1
+    border-image-source: url('/assets/border-image.png');
+    border-image-slice: 25;
+    border-image-width: 12;
+    border-image-outset: 2;
+    border-image-repeat: round;
+
+    // Border 2
+    // border-image-source: url('/assets/border-image-complete.png');
+    // border-image-slice: 25 25;
+    // border-image-width: 20 20;
+    // border-image-outset: 2;
+    // border-image-repeat: round;
+
+    // Square
+    // background: rgba(102, 201, 255, 0) url("/assets/square500.png")  left top;
+    // background-repeat: repeat;
+    // background-size: 150px 150px;
+
+}
+
+nb-card-body {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    background: rgba(102, 217, 255, 0.1);
+}
+
+.shiny {
+    background-color: rgba(102, 217, 255, 0.6);
+    -moz-box-shadow: 0px 0px 15px rgba(102, 217, 255, 1);
+    -webkit-box-shadow: 0px 0px 15px rgba(102, 217, 255, 1);
+    box-shadow: 0px 0px 15px rgba(102, 217, 255, 1); 
+}
+
+.text-window {
+    color: rgba(255, 255, 255, 0.5); 
+    font-weight: 400;
+    font-size: 14px;
+    margin-bottom: 5px;
+
+}
+
+::ng-deep .tab {
+    margin-bottom: 5px !important;
+    margin-right: 5px !important;
+    width: 200px !important;
+    text-align: center !important;
+    // font-family: Montserrat;
+    // font-weight: 300;
+}
+
+::ng-deep .active {
+    background-color: rgba(102, 217, 255, 0.6);
+    -moz-box-shadow: 0px 0px 30px rgba(102, 217, 255, 1);
+    -webkit-box-shadow: 0px 0px 30px rgba(102, 217, 255, 1);
+    box-shadow: 0px 0px 30px rgba(102, 217, 255, 1); 
+}
+
+::ng-deep .tab-text {
+    text-align: center !important;
+    font-weight: 500 !important;
 }

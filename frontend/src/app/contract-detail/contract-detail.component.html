@@ -1,0 +1,301 @@
+<div class="row" *ngIf="contract">
+  <!-- Transaction - Title - Transfer -->
+  <div class="col-md-4">
+    <nb-card style="height: 200px; overflow: hidden;">
+      <nb-card-body style="font-weight: 500; font-size: 20px; overflow: hidden; padding: 0px;">
+        <div class="fixed-subtitle">
+          Transactions
+        </div>
+        <app-transactions-brief></app-transactions-brief>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+  <div class="col-md-4">
+    <nb-card style="height: 140px; margin-top: 60px;">
+      <nb-card-body class="shiny" style="overflow: hidden;">
+        <div class="extra-title">
+          {{contract['ContractName']}}
+        </div>
+          <div class="main-subtitle" style="color: rgba(255, 255, 255, 0.8); bottom: 20px;">
+            Contract Name
+        </div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+  <div class="col-md-4">
+    <nb-card style="height: 200px; overflow: hidden;">
+      <nb-card-body style="font-weight: 500; font-size: 20px; overflow: hidden; padding: 0px;">
+          <div class="fixed-subtitle">
+            Transfers
+          </div>
+        <app-transfers-brief></app-transfers-brief>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+  <!-- Funtion Graph - Num Loser - Graph Loser -->
+    <!-- <nb-card size="small">
+      <nb-card-body style="font-weight: 500; font-size: 20px;">
+        <div class="title">{{contract['contract']}}</div>
+        <div class="fixed-subtitle">Contract Address</div>
+      </nb-card-body>
+    </nb-card> -->
+  <div class="col-md-4">
+    <!-- <nb-card class="clean"> -->
+    <nb-card size="small">
+      <nb-card-body style="padding: 0px; overflow: hidden;">
+        <div #pieChart sytle="padding-right: 50px;">
+          <div class="fixed-subtitle">
+            Function call
+          </div>
+          <ngx-charts-pie-chart
+          style="padding-right: 0px; font-weight: 300; opacity: 0.7;"
+          [view]="view"
+          [scheme]="colorSchemeTree"
+          [results]="contract['funct_stats']"
+          [legend]="true"
+          [legendTitle]="'Functions'"
+          [legendPosition]="legendPosition"
+          [explodeSlices]="false"
+          [labels]="true"
+          [doughnut]="false"
+          [gradient]="true"
+          [explodeSlices]="true"
+          ></ngx-charts-pie-chart>
+        </div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+  <div class="col-md-4">
+    <nb-card style="height: 200px; overflow: hidden;">
+      <nb-card-body style="font-weight: 500; font-size: 20px; overflow: hidden; padding: 0px;">
+        <div class="fixed-subtitle">
+          Earnings and losses
+        </div>
+        <ngx-charts-advanced-pie-chart
+            style="font-weight: 300; opacity: 0.8;"
+            [scheme]="colorSchemeTree"
+            [results]="contract['investments']"
+            >
+        </ngx-charts-advanced-pie-chart>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+  <div class="col-md-4">
+    <nb-card size="small">
+      <nb-card-body style="padding: 0px; overflow: hidden;">
+        <ngx-charts-tree-map
+          style="padding-right: 50px; font-weight: 300; opacity: 0.6;"
+          [scheme]="colorSchemeTree"
+          [results]="contract['investments']"
+          [gradient]="false"
+        >
+        </ngx-charts-tree-map>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+  <!-- IN/OUT -->
+  <div class="col-md-6">
+    <nb-card size="small">
+      <nb-card-body style="overflow: hidden;">
+        <div class="fixed-subtitle">
+          IN/OUT per date
+        </div>
+        <div #areachart style="margin: 5px; overflow: hidden; opacity: 0.7">
+        <!-- <div #areachart style="padding: 0px; margin: 0px; padding-top: 0px; overflow: hidden; opacity: 0.7"> -->
+            <ngx-charts-area-chart
+                [view]="viewIO"
+                [scheme]="colorScheme"
+                [results]="tvd_date"
+                [showGridLines]="false"
+                [xAxis]= "true"
+                [yAxis]= "true"
+                [xAxisLabel]= "xAxisLabel"
+                [yAxisLabel]= "yAxisLabel"
+                [showXAxisLabel]= "true"
+                [showYAxisLabel]= "true"
+                [gradient]= "true"
+                [autoScale]= "false"
+                [legend]= "true"
+                [legendTitle]= "'IN / OUT'"
+                [trimXAxisTicks]="true"
+                [maxXAxisTickLength]=10
+                [rotateXAxisTicks]="true"
+            >
+            </ngx-charts-area-chart>
+        </div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+  <!-- Liquidity -->
+  <div class="col-md-6">
+    <nb-card size="small">
+      <nb-card-body style="padding: 0px; overflow: hidden;">
+        <div class="fixed-subtitle">
+          Liquidity per date
+        </div>
+
+
+
+
+        <div #timegraph id="timegraph" style="margin-left: 45px; margin-top: 30px; overflow: hidden; opacity: 0.6;">
+          <ngx-charts-bar-vertical-2d
+          [view]="viewLiq"
+          [scheme]="colorSchemeLiq"
+          [results]="results"
+          [animations]="animations"
+          [gradient]="false"
+          [xAxis]="true"
+          [yAxis]="true"
+          [legend]="false"
+          [showXAxisLabel]="false"
+          [showYAxisLabel]="false"
+          [tooltipDisabled]="false"
+          [xAxisLabel]="'Date'"
+          [yAxisLabel]="'Assets'"
+          [showGridLines]="false"
+          [noBarWhenZero]="false"
+          [showDataLabel]="false"
+          [barPadding]="2"
+          >
+          </ngx-charts-bar-vertical-2d>
+        </div>
+
+
+
+
+        <!-- <div #timegraph id="timegraph" style="padding: 25px; overflow: hidden; opacity: 0.7;">
+            <ngx-charts-chart
+                [view]="[width, height]"
+                [showLegend]="true"
+                [animations]="animations"
+                class="timeline-filter-bar-chart"
+                >
+                <svg:g [attr.transform]="transform" class="chart">
+                    <svg:g
+                    ngx-charts-x-axis
+                    *ngIf="xAxis"
+                    [xScale]="timeScale"
+                    [dims]="dims"
+                    [showLabel]="showXAxisLabel"
+                    [labelText]="xAxisLabel"
+                    ></svg:g>
+                    <svg:g
+                    ngx-charts-y-axis
+                    *ngIf="yAxis"
+                    [yScale]="yScale"
+                    [dims]="dims"
+                    [showGridLines]="showGridLines"
+                    [showLabel]="showYAxisLabel"
+                    [labelText]="''"
+                    ></svg:g>
+                    <svg:g
+                    ngx-charts-series-vertical
+                    [xScale]="xScale"
+                    [yScale]="yScale"
+                    [colors]="colors"
+                    [series]="results"
+                    [dims]="dims"
+                    [gradient]="gradient"
+                    [animations]="animations"
+                    [noBarWhenZero]="noBarWhenZero"
+                    ></svg:g>
+                </svg:g>
+            </ngx-charts-chart>
+        </div> -->
+
+
+
+
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+
+
+
+
+  <!-- <div class="col-md-4">
+    <nb-card>
+      <nb-card-body style="font-weight: 500; font-size: 20px;">
+        <div class="title">{{contract['contract']}}</div>
+        <div class="fixed-subtitle">Contract Address</div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+  <div class="col-md-2">
+    <nb-card>
+      <nb-card-body style="font-weight: 500; font-size: 20px;">
+        <div class="title">{{contract['fdate']}}</div>
+        <div class="fixed-subtitle">First Date</div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+  <div class="col-md-2">
+    <nb-card>
+      <nb-card-body style="font-weight: 500; font-size: 20px;">
+        <div class="title">{{contract['ldate']}}</div>
+        <div class="fixed-subtitle">End Date</div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+  <div class="col-md-4">
+    <nb-card>
+      <nb-card-body style="font-weight: 500; font-size: 20px;">
+        <div class="title">{{contract['creator']}}</div>
+        <div class="fixed-subtitle">Creator Address</div>
+      </nb-card-body>
+    </nb-card>
+  </div> -->
+
+  <!-- Volume - Lioquidity -->
+  <!-- <div class="col-md-6">
+    <nb-card style="height: 230px; overflow: hidden;">
+      <nb-card-body style="font-weight: 500; font-size: 20px; overflow: hidden; padding: 0px;">
+        <div class="number">{{contract['volume']}}</div>
+        <div class="fixed-subtitle">Volume (FIX)</div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+  <div class="col-md-6">
+    <nb-card style="height: 230px; overflow: hidden;">
+      <nb-card-body style="font-weight: 500; font-size: 20px; overflow: hidden; padding: 0px;">
+        <div class="number">{{max_liq_num}}</div>
+        <div class="fixed-subtitle">Max Liquidity - Date {{contract['max_liq_date']}}</div>
+      </nb-card-body>
+    </nb-card>
+  </div> -->
+
+  <!-- Transaction Creation - Token Name - Block Creation -->
+  <!-- <div class="col-md-4">
+    <nb-card>
+      <nb-card-body style="font-weight: 500; font-size: 20px;">
+        <div class="title">{{contract['contract']}}</div>
+        <div class="fixed-subtitle">Transaction Creation</div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+  <div class="col-md-4">
+    <nb-card>
+      <nb-card-body style="font-weight: 500; font-size: 20px;">
+        <div class="title">{{contract['token_name']}}</div>
+        <div class="fixed-subtitle">Token Name</div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+  <div class="col-md-4">
+    <nb-card>
+      <nb-card-body style="font-weight: 500; font-size: 20px;">
+        <div class="title">{{contract['creator']}}</div>
+        <div class="fixed-subtitle">Block Creation</div>
+      </nb-card-body>
+    </nb-card>
+  </div> -->
+
+</div>
