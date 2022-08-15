@@ -1,9 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
-// import { HttpClient } from '@angular/common/http';
 
-import { OrgChart } from 'd3-org-chart';
-
-// import CirclePack from 'circlepack-chart';
 @Component({
   selector: 'app-diagram',
   templateUrl: './contract-diagram.component.html',
@@ -22,7 +18,7 @@ export class DiagramComponent implements OnInit {
   ngOnInit() {
 
     this.nodes = this.data['abi'];
-    console.log("!!!!!!!!!!!!!NODES:", this.nodes);
+    console.log("Diagram", this.nodes);
   }
 
 }
