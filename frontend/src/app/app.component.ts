@@ -1,6 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { Subject } from "rxjs";
 import { HttpClient } from '@angular/common/http';
+
+import { NbTabsetComponent, NbTabComponent } from '@nebular/theme/components/tabset/tabset.component';
 
 import * as d3 from 'd3';
 
@@ -10,7 +12,12 @@ import * as d3 from 'd3';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
+
+  @ViewChild("tabset") tabsetEl!: NbTabsetComponent;
+  @ViewChild("trxTab") trxTabEl!: NbTabComponent;
+
   subject = new Subject<string>();
+  trx = new Subject<string>();
   selected = false;
   height = 0;
   width = 0;
@@ -22,6 +29,10 @@ export class AppComponent {
   ngOnInit(): void {
     this.subject.subscribe((text: string) => {
       console.log(`Received from child component: ${text}`);
+    });
+    this.trx.subscribe((text: string) => {
+      console.log(`Received from child component Distribution: ${text}`);
+      this.tabsetEl.selectTab(this.trxTabEl);
     });
 
     var h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
@@ -48,6 +59,11 @@ export class AppComponent {
     } else {
       this.selected = true;
     }
+  };
+
+  handleTrx = (info: string) => {
+    this.trx.next(info);
+    console.log(`TRX: ${info}`);
   };
 
   private responseContract = (data: any): any => {

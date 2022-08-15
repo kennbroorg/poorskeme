@@ -5,7 +5,7 @@
     <div class="row" sytle="margin: 0px; padding: 0px;">
       <div class="col-md-12" sytle="margin: 0px; padding: 0px;">
 
-        <nb-tabset sytle="margin: 0px; padding: 0px;">
+        <nb-tabset sytle="margin: 0px; padding: 0px;" id="tabset" name="tabset" #tabset>
 
           <!-- TAB1 -->
           <nb-tab tabTitle="Principal">
@@ -118,13 +118,25 @@
                 </div>
 
                 <div class="col-md-6">
-                    <app-transfers-details [subject]="subject" [h]="height"></app-transfers-details>
+                    <!-- <app-transfers-details [subject]="subject" [h]="height"></app-transfers-details> -->
+                    <app-transfers-details (onTrx)="handleTrx($event)" [subject]="subject" [h]="height"></app-transfers-details>
                 </div>
             </div>
           </nb-tab>
 
 
           <!-- TAB7 -->
+          <!-- <nb-tab tabTitle="Transaction" active="{{setActiveTrx}}" id="addTab" name="addTab" #addTab> -->
+          <nb-tab tabTitle="Transaction" id="trxTab" name="trxTab" #trxTab>
+            <div class="row">
+                <div class="col-md-12">
+                    <app-trx-details [trx]="trx" ></app-trx-details>
+                </div>
+            </div>
+          </nb-tab>
+
+
+          <!-- TAB8 -->
           <!-- <nb-tab tabTitle="Anomalies">
 
             <p>List of <strong>orders</strong>.</p>

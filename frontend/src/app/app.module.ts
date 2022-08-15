@@ -26,6 +26,7 @@ import { ContractResumeComponent } from './contract-resume/contract-resume.compo
 import { ContractDetailComponent } from './contract-detail/contract-detail.component';
 import { ContractCodeComponent } from './contract-code/contract-code.component';
 import { DiagramComponent } from './contract-diagram/contract-diagram.component';
+import { TrxDetailsComponent } from './trx-details/trx-details.component';
 
 import { TransactionsBriefComponent } from './transactions-brief/transactions-brief.component';
 import { TransfersBriefComponent } from './transfers-brief/transfers-brief.component';
@@ -49,6 +50,7 @@ import { TransfersDetailsComponent } from './transfers-details/transfers-details
     ContractDetailComponent,
     ContractCodeComponent,
     DiagramComponent,
+    TrxDetailsComponent,
   ],
   imports: [
     BrowserModule,
