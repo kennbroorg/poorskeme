@@ -225,13 +225,17 @@
                             <div class="row" style="padding: 0px; margin: 0px; opacity: 0.7;">
                                 <div class="col-md-12">
 
+                                        <!-- [selectionType]="SelectionType.cell" -->
                                     <ngx-datatable
                                         #tableTrans
                                         class="bootstrap fullscreen"
                                         [rows]="detail['moves']"
-                                        columnMode="force"
+                                        [columnMode]="ColumnMode.force"
                                         [headerHeight]="40"
                                         [footerHeight]="40"
+                                        [selected]="selected"
+                                        [selectionType]="SelectionType.single"
+                                        (select)="onSelect($event)"
                                     >
 
                                         <ngx-datatable-column

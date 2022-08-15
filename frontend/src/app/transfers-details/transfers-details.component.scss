@@ -189,9 +189,19 @@ nb-card-body {
 }
 
 /* Rows */
+::ng-deep .datatable-body-row.active {
+  // background-color: rgba(102, 217, 255, 0.6);
+  // box-shadow: 0px 0px 30px #66d9ff;
+  // .active {
+    background-color: rgba(102, 217, 255, 0.6);
+    box-shadow: none;
+  // }
+}
+
 ::ng-deep .datatable-body-row:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
+
 ::ng-deep .datatable-row-even {
   background-color: rgba(0, 0, 0, 0.1);
 }

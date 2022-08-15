@@ -1,10 +1,11 @@
-import { Component, OnInit, TemplateRef, Input, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, TemplateRef, Input, Output, EventEmitter, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
 import { Subject } from "rxjs";
 import { HttpClient } from '@angular/common/http';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { NbDialogService } from '@nebular/theme';
 
 import { SingleSeries } from '@swimlane/ngx-charts';
+import { ColumnMode, SelectionType } from '@swimlane/ngx-datatable/';
 
 @Component({
   selector: 'app-transfers-details',
@@ -16,6 +17,7 @@ export class TransfersDetailsComponent implements OnInit {
   @ViewChild('cardCube', {static: true}) cardContainer!: ElementRef<HTMLElement>;
   @Input() subject!: Subject<string>;
   @Input() public h: any;
+  @Output() onTrx: EventEmitter<string> = new EventEmitter<string>();
 
   h_table: any;
   infos: string = "null";
@@ -34,6 +36,12 @@ export class TransfersDetailsComponent implements OnInit {
   // colorScheme: Color = { domain: ['#D13608', '#D17808'], group: ScaleType.Ordinal, selectable: true, name: 'Customer Usage', };
   colorScheme: Color = { domain: ['#CCF2FF', '#66D9FF'], group: ScaleType.Ordinal, selectable: true, name: 'Customer Usage', };
 
+  rows: any[] = [];
+  selected: any[] = [];
+  columns: any[] = [{ prop: 'name' }, { name: 'Company' }, { name: 'Gender' }];
+
+  ColumnMode = ColumnMode;
+  SelectionType = SelectionType;
   // view: any = [400, 300];
 
   constructor(private httpClient: HttpClient, private dialogService: NbDialogService) { 
@@ -43,15 +51,20 @@ export class TransfersDetailsComponent implements OnInit {
   ngOnInit(): void {
     this.subject.subscribe((text: string) => {
       this.infos = text;
-      console.log(`Info: ${this.infos} = Prev: ${this.prev}`);
+      // console.log(`Info: ${this.infos} = Prev: ${this.prev}`);
 
       if (this.infos == "null") {
-        console.log(`Entro a Null con ${this.infos}`);
+        // console.log(`Entro a Null con ${this.infos}`);
         this.loading = true;
+        this.process = false;
       }
-      // else if (this.prev != this.infos) {
+      else if (this.prev == this.infos) {
+        this.loading = false;
+        this.process = false;
+      }
       else {
-        console.log(`Entro a Else con ${this.infos}`);
+        // console.log(`Entro a Else con ${this.infos}`);
+        this.loading = true;
         this.process = true;
         const url = "http://127.0.0.1:5000/details/" + this.infos;
         this.httpClient
@@ -94,7 +107,7 @@ export class TransfersDetailsComponent implements OnInit {
   }
   
   private responseDetail = (data: any): any => { 
-    console.log("Response", data);
+    // console.log("Response", data);
     this.detail = data;
 
     this.res_date = this.TimelineConvert(this.detail['trans_vol'][0]['series']);
@@ -102,7 +115,7 @@ export class TransfersDetailsComponent implements OnInit {
     this.res_date = this.TimelineConvert(this.detail['trans_vol'][1]['series']);
     this.detail['trans_vol'][1]['series'] = this.res_date;
 
-    console.log(this.detail['trans_vol']);
+    // console.log(this.detail['trans_vol']);
 
     this.prev = this.infos;
     this.loading = false;
@@ -133,7 +146,7 @@ export class TransfersDetailsComponent implements OnInit {
   // getTypeColor({ row, column, value }): any {
   getTypeColor( prop: any): any {
     let row = prop['row'];
-    console.log("TYPE", row['name']);
+    // console.log("TYPE", row['name']);
     return {
       'in-color': row['name'] === "IN", 
       'out-color': row['name'] === "OUT"
@@ -150,6 +163,12 @@ export class TransfersDetailsComponent implements OnInit {
       });
     }
     return res_conv;
+  }
+
+  onSelect(event: any) {
+    // console.log('Event: select', event, this.selected);
+    console.log('TRX: ', this.selected[0]['hash']);
+    this.onTrx.emit(this.selected[0]['hash']);
   }
 
 }
