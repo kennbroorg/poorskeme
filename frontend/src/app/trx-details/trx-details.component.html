@@ -1,0 +1,527 @@
+
+<nb-card id="detail-graph-card">
+    <nb-card-body id="detail-graph-card-body" style="overflow: hidden;">
+
+        <div *ngIf="loading">
+            <div class="row">
+                <!-- No TRX selected -->
+                <div class="col-md-12" *ngIf="!process" style="height: calc(100vh - 100px);">
+                    <div class="col-md-4 offset-md-4" style="position: absolute; top: 50%; transform: translate(0, -50%);">
+                        <nb-card size="small">
+                            <!-- <nb-card-body style="padding: 0px; overflow: hidden;"> -->
+                            <nb-card-body class="shiny" style="text-align: center;">
+                                <!-- <img src="/assets/Logo.png" alt="Logo" width="300" style="opacity: 0.5; display: block; margin: auto;">  -->
+                                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.7;">
+                                    <h1 style="font-weight: 300; font-size: 50px;">NO</h1>
+                                    <h1 style="font-weight: 300; font-size: 50px;">TRANSACTION</h1>
+                                    <h1 style="font-weight: 300; font-size: 50px;">IS SELECTED</h1>
+                                </div>
+                            </nb-card-body>
+                        </nb-card>
+                        <!-- DISCLAIMER -->
+                        <!-- <nb-card>
+                            <nb-card-body>
+                            <p class="text-window">DISCLAIMER</p>
+                            <p class="text-window">This is a young project, started in mid-March 2022, so it may contain errors. For now, it only works with the Binance blockchain</p>
+                            <p class="text-window">Over time, and with feedback, the project will grow and bugs will be fixed, but it is a personal project and the time dedicated to it is undetermined</p>
+                            </nb-card-body>
+                        </nb-card> -->
+                    </div>
+                </div>
+
+            <!-- Loading -->
+                <div class="col-md-12" *ngIf="process">
+                    <div class="cubecontainer">
+                        <div class="cube">
+                            <div class="side side1" [ngClass]="process ? 'activated': 'inactivated'">
+                            <div class="face" [ngClass]="process ? 'activated': 'inactivated'"></div>
+                            </div>
+                            <div class="side side2" [ngClass]="process ? 'activated': 'inactivated'">
+                            <div class="face" [ngClass]="process ? 'activated': 'inactivated'"></div>
+                            </div>
+                            <div class="side side3" [ngClass]="process ? 'activated': 'inactivated'">
+                            <div class="face" [ngClass]="process ? 'activated': 'inactivated'"></div>
+                            </div>
+                            <div class="side side4" [ngClass]="process ? 'activated': 'inactivated'">
+                            <div class="face" [ngClass]="process ? 'activated': 'inactivated'"></div>
+                            </div>
+                            <div class="side side5" [ngClass]="process ? 'activated': 'inactivated'">
+                            <div class="face" [ngClass]="process ? 'activated': 'inactivated'"></div>
+                            </div>
+                            <div class="side side6" [ngClass]="process ? 'activated': 'inactivated'">
+                            <div class="face" [ngClass]="process ? 'activated': 'inactivated'"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div *ngIf="!loading">
+            <div class="row">
+                <!-- Title -->
+                <div class="col-md-12">
+                    <nb-card style="margin: 7px;">
+                        <nb-card-body class="shiny" style="font-weight: 500; font-size: 20px;">
+                            <div class="top-title">
+                                {{hash}}
+                            </div>
+                            <div class="fixed-subtitle" style="color:rgba(255, 255, 255, 0.8);">Transaction Address analized</div>
+                        </nb-card-body>
+                    </nb-card>
+                </div>
+
+                <!-- Constructor diagram -->
+                <div class="col-md-5" style="margin-top: 20px;">
+                    <nb-card size="small" style="margin-left: 10px;">
+                        <nb-card-body style="padding: 0px; overflow: auto;" class="nb-card-complete">
+                            <!-- <div #cardCircle style="margin: 0px; padding: 0px; text-align: center; clear: both;"></div> -->
+                            <div class="top-subtitle">
+                                Function code
+                            </div>
+                            <div style="overflow: auto;">
+                                <pre><code [highlight]="code" [languages]="['typescript']" [lineNumbers]="true"></code></pre>
+                                <!-- {{detail['code']}} -->
+                            </div>
+                        </nb-card-body>
+                    </nb-card>
+                </div>
+
+                <!-- Function diagram -->
+                <div class="col-md-7" style="margin-top: 20px;">
+                    <nb-card id="function-graph" size="small" class="nb-card-complete" style="margin-right: 10px;">
+                        <nb-card-body style="padding: 0px; overflow: auto;">
+                            <!-- <div #cardCircle style="margin: 0px; padding: 0px; text-align: center; clear: both;"></div> -->
+                            <div class="top-subtitle">
+                                Function Diagram
+                            </div>
+                            <ngx-org-chart [nodes]="nodesFunctions" direction="horizontal"></ngx-org-chart>
+                        </nb-card-body>
+                    </nb-card>
+                </div>
+
+                <!-- TRX -->
+                <div class="col-md-12">
+                    <h1 style="font-weight: 300; font-size: 30px; margin-top: 0px; margin-bottom: 5px;">TRANSACTIONS</h1>
+                    <nb-card style="margin: 7px; padding: 0px; overflow: auto;">
+                        <nb-card-body style="scrollbar-color: rgba(0, 0, 0, 0.7) rgba(0, 0, 0, 0.1); scrollbar-width: thin;padding: 0px;">
+                            <div class="row" style="padding: 0px; margin: 0px; opacity: 0.7;">
+                                <div class="col-md-12">
+
+                                    <ngx-datatable
+                                        #tableTRX
+                                        class="bootstrap fullscreen"
+                                        [rows]="detail['trx']"
+                                        columnMode="force"
+                                        [headerHeight]="40"
+                                        [footerHeight]="0"
+                                    >
+                                        <!-- [selected]="selected"
+                                        [selectionType]="SelectionType.single"
+                                        (select)="onSelect($event)" -->
+
+                                        <!-- [width]="300" -->
+                                        <ngx-datatable-column
+                                        name="Block" prop="blockNumber"
+                                        title="Block"
+                                        [resizeable]="false"
+                                        [sortable]="false"
+                                        [draggable]="false"
+                                        cellClass="hash-class"
+                                        ></ngx-datatable-column>
+
+                                        <ngx-datatable-column
+                                        name="Date" prop="date"
+                                        title="Date"
+                                        [resizeable]="false"
+                                        [sortable]="true"
+                                        [draggable]="false"
+                                        >
+                                            <ng-template let-row="row" let-value="value" ngx-datatable-cell-template style="text-align: left;">
+                                                {{ value | date:'yyyy/MM/dd HH:mm:ss' }}
+                                            </ng-template>
+                                        </ngx-datatable-column>
+
+                                        <!-- <ngx-datatable-column
+                                        name="From" prop="from"
+                                        title="From"
+                                        [resizeable]="false"
+                                        [sortable]="true"
+                                        [draggable]="false"
+                                        [cellClass]='getTypeColor'
+                                        [width]="30"
+                                        >
+                                            <ng-template let-row="row" let-value="value" ngx-datatable-cell-template>
+                                                {{ value }}
+                                            </ng-template>
+                                    
+                                        </ngx-datatable-column> -->
+
+                                        <ngx-datatable-column
+                                        name="From" prop="from"
+                                        title="From"
+                                        [resizeable]="false"
+                                        [sortable]="false"
+                                        [draggable]="false"
+                                        cellClass="data-center"
+                                        ></ngx-datatable-column>
+
+                                        <ngx-datatable-column
+                                        name="To" prop="to"
+                                        title="To"
+                                        [resizeable]="false"
+                                        [sortable]="false"
+                                        [draggable]="false"
+                                        cellClass="data-center"
+                                        ></ngx-datatable-column>
+
+                                        <ngx-datatable-column
+                                        name="Value" prop="value"
+                                        title="Value"
+                                        [resizeable]="false"
+                                        [sortable]="true"
+                                        [draggable]="false"
+                                        cellClass="number-right"
+                                        [width]="60"
+                                        >
+                                            <ng-template let-row="row" let-value="value" ngx-datatable-cell-template style="text-align: right;">
+                                                {{ value / 1e+18 | number:'1.2'}}
+                                            </ng-template>
+                                        </ngx-datatable-column>
+
+                                    </ngx-datatable>
+
+                                </div>
+                            </div>
+                        </nb-card-body>
+                    </nb-card>
+                </div>
+
+                <!-- Transfer -->
+                <div class="col-md-12">
+                    <h1 style="font-weight: 300; font-size: 30px; margin-top: 10px; margin-bottom: 5px;">TRANSFERS</h1>
+                    <nb-card style="margin: 7px; padding: 0px; overflow: auto; max-height: calc(100vh - 800px);">
+                        <nb-card-body style="scrollbar-color: rgba(0, 0, 0, 0.7) rgba(0, 0, 0, 0.1); scrollbar-width: thin;padding: 0px;">
+                            <div class="row" style="padding: 0px; margin: 0px; opacity: 0.7;">
+                                <div class="col-md-12">
+
+                                    <ngx-datatable
+                                        #tableTRX
+                                        class="bootstrap fullscreen"
+                                        [rows]="detail['transfers']"
+                                        columnMode="force"
+                                        [headerHeight]="40"
+                                        [footerHeight]="0"
+                                    >
+                                        <!-- [selected]="selected"
+                                        [selectionType]="SelectionType.single"
+                                        (select)="onSelect($event)" -->
+
+                                        <!-- [width]="300" -->
+                                        <ngx-datatable-column
+                                        name="Block" prop="blockNumber"
+                                        title="Block"
+                                        [resizeable]="false"
+                                        [sortable]="false"
+                                        [draggable]="false"
+                                        cellClass="hash-class"
+                                        ></ngx-datatable-column>
+
+                                        <ngx-datatable-column
+                                        name="Date" prop="timeStamp"
+                                        title="Date"
+                                        [resizeable]="false"
+                                        [sortable]="true"
+                                        [draggable]="false"
+                                        >
+                                            <ng-template let-row="row" let-value="value" ngx-datatable-cell-template style="text-align: left;">
+                                                {{ value | date:'yyyy/MM/dd HH:mm:ss' }}
+                                            </ng-template>
+                                        </ngx-datatable-column>
+
+                                        <!-- <ngx-datatable-column
+                                        name="From" prop="from"
+                                        title="From"
+                                        [resizeable]="false"
+                                        [sortable]="true"
+                                        [draggable]="false"
+                                        [cellClass]='getTypeColor'
+                                        [width]="30"
+                                        >
+                                            <ng-template let-row="row" let-value="value" ngx-datatable-cell-template>
+                                                {{ value }}
+                                            </ng-template>
+                                    
+                                        </ngx-datatable-column> -->
+
+                                        <ngx-datatable-column
+                                        name="From" prop="from"
+                                        title="From"
+                                        [resizeable]="false"
+                                        [sortable]="false"
+                                        [draggable]="false"
+                                        cellClass="data-center"
+                                        ></ngx-datatable-column>
+
+                                        <ngx-datatable-column
+                                        name="To" prop="to"
+                                        title="To"
+                                        [resizeable]="false"
+                                        [sortable]="false"
+                                        [draggable]="false"
+                                        cellClass="data-center"
+                                        ></ngx-datatable-column>
+
+                                        <ngx-datatable-column
+                                        name="Value" prop="value"
+                                        title="Value"
+                                        [resizeable]="false"
+                                        [sortable]="true"
+                                        [draggable]="false"
+                                        cellClass="number-right"
+                                        [width]="60"
+                                        >
+                                            <ng-template let-row="row" let-value="value" ngx-datatable-cell-template style="text-align: right;">
+                                                {{ value / 1e+18 | number:'1.2'}}
+                                            </ng-template>
+                                        </ngx-datatable-column>
+
+                                    </ngx-datatable>
+
+                                </div>
+                            </div>
+                        </nb-card-body>
+                    </nb-card>
+                </div>
+
+
+
+
+
+
+
+
+
+            </div>
+
+
+        </div>
+        <!-- <div *ngIf="!loading">
+            <div class="row">
+                <div class="col-md-12">
+                    <nb-card style="margin: 7px;">
+                        <nb-card-body class="shiny" style="font-weight: 500; font-size: 20px;">
+                            <div class="top-title">
+                                {{detail['address']}}
+                            </div>
+                            <div class="fixed-subtitle" style="color:rgba(255, 255, 255, 0.8);">Wallet Address</div>
+                        </nb-card-body>
+                    </nb-card>
+                </div>
+
+                <div class="col-md-6">
+                    <nb-card style="height: 200px; overflow: hidden; margin: 7px;">
+                        <nb-card-body style="font-weight: 500; font-size: 20px; overflow: hidden; padding: 0px;">
+                            <div style="width: 100%; height: 100%; padding-left: 50px;">
+                                <ngx-charts-advanced-pie-chart
+                                    style="font-weight: 300; opacity: 0.8;"
+                                    [scheme]="colorScheme"
+                                    [results]="count"
+                                    >
+                                </ngx-charts-advanced-pie-chart>
+                            </div>
+
+                            <div class="top-subtitle">
+                                Transfer operation
+                            </div>
+
+                        </nb-card-body>
+                    </nb-card>
+                </div>
+
+                <div class="col-md-6">
+                    <nb-card style="height: 200px; overflow: hidden; margin: 7px; padding: 0px;">
+                        <nb-card-body style="font-weight: 500; font-size: 20px; overflow: hidden; padding: 0px;">
+                            <div class="fixed-subtitle" style="top: 20px; left: 20px;">
+                                Erans and Losses
+                            </div>
+                            <div style="width: 100%; height: 100%;">
+                                <ngx-charts-gauge
+                                    style="font-weight: 300; opacity: 0.8;"
+                                    [legend]="false"
+                                    [results]="sum"
+                                    [animations]="true"
+                                    [textValue]="perc"
+                                    [scheme]="colorScheme"
+                                    [min]="0"
+                                    [max]="max"
+                                    [units]="lp"
+                                    [angleSpan]="270"
+                                    [startAngle]="0"
+                                    [showAxis]="false"
+                                    [bigSegments]="0"
+                                    [smallSegments]="0"
+                                    [tooltipDisabled]="false"
+                                    [margin]="[10, 0, 10, 0]"
+                                    [showText]="true"
+                                >
+                                </ngx-charts-gauge>
+                            </div>
+                        </nb-card-body>
+                    </nb-card>
+                </div>
+
+
+                <div class="col-md-12">
+                    <nb-card style="height: 50px; overflow: hidden; margin: 7px;">
+                    <nb-card-body style="font-weight: 300; font-size: 20px; overflow: hidden; padding: 0px;">
+                        <div class="title">{{detail['fdate']}} - {{detail['ldate']}}</div>
+                        <div class="top-subtitle" style="top: 5px;">Dates</div>
+                    </nb-card-body>
+                    </nb-card>
+                </div>
+
+
+                <div class="col-md-6">
+                    <nb-card style="height: 200px; overflow: hidden; margin: 7px;">
+                        <nb-card-body style="font-weight: 500; font-size: 20px; overflow: hidden; padding: 0px;">
+                            <div style="width: 100%; height: 100%; opacity: 0.8">
+                                <ngx-charts-area-chart
+                                    [scheme]="colorScheme"
+                                    [results]="this.detail['trans_vol']"
+                                    [showGridLines]="false"
+                                    [xAxis]="true"
+                                    [timeline]="false"
+                                >
+                                </ngx-charts-area-chart>
+                            </div>
+
+                            <div class="top-subtitle">
+                                Transfer Volume
+                            </div>
+
+                        </nb-card-body>
+                    </nb-card>
+                </div>
+
+                <div class="col-md-6">
+                    <nb-card style="height: 200px; overflow: hidden; margin: 7px;">
+                        <nb-card-body style="font-weight: 500; font-size: 20px; overflow: hidden; padding: 0px;">
+                                <div style="width: 100%; height: 99px; text-align: center; opacity: 0.8">
+                                    <div style="width: 100%; position: absolute; top: 25%; left: 50%; transform: translate(-50%, -50%); text-transform: uppercase;">
+                                        <p style="margin: 0px;">{{detail['from_sum']}} tokens</p>
+                                        <p style="margin: 0px;">inverted in {{detail['from_count']}} Transactions</p>
+                                    </div>
+                                </div>
+                                <div style="height: 1px; width: 80%; margin-left: 10%; background-color: rgba(102, 217, 255, 0.4);">
+                                </div>
+                                <div style="width: 100%; height: 99px; text-align: center; opacity: 0.8;">
+                                    <div style="width: 100%; position: absolute; top: 75%; left: 50%; transform: translate(-50%, -50%); text-transform: uppercase;">
+                                        <p style="margin: 0px;">{{detail['to_sum']}} tokens</p>
+                                        <p style="margin: 0px;">recovered in {{detail['to_count']}} Transactions</p>
+                                    </div>
+                                </div>
+
+                            <div class="fixed-subtitle" style="top: 20px; left: 20px;">
+                                Transfers
+                            </div>
+
+                        </nb-card-body>
+                    </nb-card>
+                </div>
+
+                <div class="col-md-12">
+                    <nb-card style="margin: 7px; padding: 0px; overflow: auto; max-height: calc(100vh - 44.50px - 44.50px - 72px - 214px - 64px - 200px - 50px);">
+                        <nb-card-body style="scrollbar-color: rgba(0, 0, 0, 0.7) rgba(0, 0, 0, 0.1); scrollbar-width: thin;padding: 0px;">
+                            <div class="row" style="padding: 0px; margin: 0px; opacity: 0.7;">
+                                <div class="col-md-12">
+
+                                    <ngx-datatable
+                                        #tableTrans
+                                        class="bootstrap fullscreen"
+                                        [rows]="detail['moves']"
+                                        columnMode="force"
+                                        [headerHeight]="40"
+                                        [footerHeight]="40"
+                                        [selected]="selected"
+                                        [selectionType]="SelectionType.single"
+                                        (select)="onSelect($event)"
+                                    >
+
+                                        <ngx-datatable-column
+                                        name="Hash" prop="hash"
+                                        title="Trx Hash"
+                                        [resizeable]="false"
+                                        [sortable]="false"
+                                        [draggable]="false"
+                                        [width]="300"
+                                        cellClass="hash-class"
+                                        ></ngx-datatable-column>
+
+                                        <ngx-datatable-column
+                                        name="Date" prop="date"
+                                        title="Date"
+                                        [resizeable]="false"
+                                        [sortable]="true"
+                                        [draggable]="false"
+                                        [width]="100"
+                                        ></ngx-datatable-column>
+
+                                        <ngx-datatable-column
+                                        name="Type" prop="name"
+                                        title="Type"
+                                        [resizeable]="false"
+                                        [sortable]="true"
+                                        [draggable]="false"
+                                        [cellClass]='getTypeColor'
+                                        [width]="30"
+                                        >
+                                            <ng-template let-row="row" let-value="value" ngx-datatable-cell-template>
+                                                {{ value }}
+                                            </ng-template>
+                                    
+                                        </ngx-datatable-column>
+
+                                        <ngx-datatable-column
+                                        name="Function" prop="funct"
+                                        title="Function"
+                                        [resizeable]="false"
+                                        [sortable]="false"
+                                        [draggable]="false"
+                                        [width]="60"
+                                        cellClass="data-center"
+                                        ></ngx-datatable-column>
+
+                                        <ngx-datatable-column
+                                        name="Value" prop="value"
+                                        title="Value"
+                                        [resizeable]="false"
+                                        [sortable]="true"
+                                        [draggable]="false"
+                                        cellClass="number-right"
+                                        [width]="60"
+                                        >
+                                            <ng-template let-row="row" let-value="value" ngx-datatable-cell-template style="text-align: right;">
+                                                {{ value | number:'1.2'}}
+                                            </ng-template>
+                                        </ngx-datatable-column>
+
+                                    </ngx-datatable>
+
+                                </div>
+                            </div>
+                        </nb-card-body>
+                    </nb-card>
+                </div>
+
+
+
+
+
+
+            </div>
+        </div> -->
+
+    </nb-card-body>
+</nb-card>
