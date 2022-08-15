@@ -52,6 +52,7 @@
     "@types/node": "^12.11.1",
     "ajv": "^8.11.0",
     "date-fns": "^2.29.1",
+    "install-peers": "^1.0.4",
     "jasmine-core": "~4.0.0",
     "karma": "~6.3.0",
     "karma-chrome-launcher": "~3.1.0",
