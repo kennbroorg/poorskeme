@@ -272,7 +272,7 @@ def r_transfers():
 
 
 ################################################
-# Result
+# Adress details
 ################################################
 @home.route("/details/<address>")
 def r_result(address):
@@ -389,3 +389,156 @@ def r_result(address):
                     "to_count": to_count,
                     "trans_vol": trans_vol,
                     "moves": moves})
+
+
+################################################
+# Trx details
+################################################
+@home.route("/trx_hash/<trx_hash>")
+def r_trx(trx_hash):
+    tic = time.perf_counter()
+    with open('tmp/sourcecode.json', 'r') as f:
+        source_code = f.read()
+    toc = time.perf_counter()
+    logger.info(f"Read contract source code file in {toc - tic:0.4f} seconds")
+    sc = ast.literal_eval(source_code)[0]
+    abi = sc['ABI']
+    abi = abi.replace("\\", "")
+    abi = abi.replace('\"', '"')
+    abi = abi.replace(':false', ':"false"')
+    abi = abi.replace(':true', ':"true"')
+    abi = abi.replace('""', '"null"')
+    abi = ast.literal_eval(abi)
+
+    logger.info(f"Read transfers file in {toc - tic:0.4f} seconds")
+    tic = time.perf_counter()
+    df_transaction = pd.read_json('./tmp/transactions.json')
+    toc = time.perf_counter()
+    logger.info(f"Read transfers file in {toc - tic:0.4f} seconds")
+    tic = time.perf_counter()
+    df_i = pd.read_json('./tmp/internals.json')
+    toc = time.perf_counter()
+    logger.info(f"Read transfers file in {toc - tic:0.4f} seconds")
+    tic = time.perf_counter()
+    df_t = pd.read_json('tmp/transfers.json')
+    toc = time.perf_counter()
+    logger.info(f"Read transfers file in {toc - tic:0.4f} seconds")
+    tic = time.perf_counter()
+    df_decode = pd.read_json('tmp/decoded.json')
+    toc = time.perf_counter()
+    logger.info(f"Read decoded file in {toc - tic:0.4f} seconds")
+
+    trx = (df_transaction[df_transaction['hash'] == trx_hash])
+    transfers = (df_t[df_t['hash'] == trx_hash])
+    trx_date = pd.to_datetime(trx['timeStamp'], unit='ns')
+    # trx_date = trx['timeStamp'].dt.strftime('%Y/%m/%d %H:%M:%S')
+    print(trx_date)
+    transfers_date = pd.to_datetime(transfers['timeStamp'], unit='ns')
+    # transfers_date = trx['timeStamp'].dt.strftime('%Y/%m/%d %H:%M:%S')
+    trx['date'] = trx_date
+    transfers['date'] = transfers_date
+
+    decoded_constructor = (df_decode[df_decode['funct'] == "constructor"])
+    decoded = (df_decode[df_decode['hash'] == trx_hash])
+
+    func_name = decoded['funct'].values[0]
+    args = decoded['args'].values[0][2:-2]
+
+    args_const = decoded_constructor['args'].values[0][2:-2]
+
+    args_a = args.split('), (')
+    args_const_a = args_const.split('), (')
+
+    values = {}
+    if (args != ''):
+        for i in args_a:
+            e = i.split(', ')
+            name = e[1].strip("'")
+            value = e[2].strip("'")
+            values[name] = value
+
+    values_const = {}
+    for i in args_const_a:
+        e = i.split(', ')
+        name = e[1].strip("'")
+        value = e[2].strip("'")
+        values_const[name] = value
+
+    # Diagram
+    funct = []
+    const = {}
+    for i in abi:
+        input = False 
+        output = False 
+
+        input_content = []
+        if ('inputs' in i):
+            input = True
+            if (i['type'] == "constructor"):
+                for j in i['inputs']:
+                    try:
+                        value = values_const[j['name']]
+                    except:
+                        value = "none"
+                    input_content.append({"name": j['name'] + ' ' + j['type'], "cssClass": "ngx-org-input", "image": "", "title": value, "childs": []})
+            elif (i['type'] == 'function' and i['name'] == func_name):
+                for j in i['inputs']:
+                    try:
+                        value = values[j['name']]
+                    except:
+                        value = "none"
+                    input_content.append({"name": j['name'] + ' ' + j['type'], "cssClass": "ngx-org-input", "image": "", "title": value, "childs": []})
+
+        output_content = []
+        if ('outputs' in i):
+            output = True
+            if (i['type'] == "constructor"):
+                for j in i['outputs']:
+                    try:
+                        value = values_const[j['name']]
+                    except:
+                        value = "none"
+                    output_content.append({"name": j['name'] + ' ' + j['type'], "cssClass": "ngx-org-output", "image": "", "title": value, "childs": []})
+            elif (i['type'] == 'function' and i['name'] == func_name):
+                for j in i['outputs']:
+                    try:
+                        value = values[j['name']]
+                    except:
+                        value = "none"
+                    output_content.append({"name": j['name'] + ' ' + j['type'], "cssClass": "ngx-org-output", "image": "", "title": value, "childs": []})
+
+        if (output or input):
+            children_io = []
+            if (input_content != []):
+                children_io.append({"name": "INPUT", "cssClass": "ngx-org-input-tag", "image": "", "title": "", "childs": input_content})
+            if (output_content != []):
+                children_io.append({"name": "OUTPUT", "cssClass": "ngx-org-output-tag", "image": "", "title": "", "childs": output_content})
+
+        if (i['type'] == 'constructor'):
+            const = {"name": "CONSTRUCTOR", "cssClass": "ngx-org-constructor-node", "image": "", "title": "", "childs": children_io}
+
+        if (i['type'] == 'function' and i['name'] == func_name):
+            funct = [{"name": i['name'], "cssClass": "ngx-org-funct", "image": "", "title": "Name", "childs": children_io}]
+
+    if (funct != []):
+        diagram = {"name": "FUNCTIONS", "cssClass": "ngx-org-funct-node", "image": "", "title": "", "childs": funct}
+
+    # Code
+    source = sc['SourceCode']
+    funct_start = source.index("function " + func_name)
+    func_code = source[funct_start - 4:]
+    funct_end = func_code[12:].index("function ")
+    func_code = func_code[:funct_end]
+
+    trx_json = trx.to_json(orient = 'records')
+    transfer_json = transfers.to_json(orient = 'records')
+    trx_json = ast.literal_eval(trx_json)
+    transfer_json = ast.literal_eval(transfer_json)
+
+    result = {"hash": trx_hash,
+                "trx": trx_json,
+                "transfers": transfer_json,
+                "constructor": const,
+                "function": diagram,
+                "code": func_code}
+    return jsonify(result)

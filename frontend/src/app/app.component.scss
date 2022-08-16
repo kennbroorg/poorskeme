@@ -52,21 +52,24 @@ nb-card-body {
 
 }
 
-::ng-deep .tab {
-    margin-bottom: 5px !important;
-    margin-right: 5px !important;
-    width: 200px !important;
-    text-align: center !important;
-    // font-family: Montserrat;
-    // font-weight: 300;
+::ng-deep {
+    #tabset .tabset .tab {
+        margin-bottom: 5px !important;
+        margin-right: 5px !important;
+        width: 200px !important;
+        text-align: center !important;
+        // font-family: Montserrat;
+        // font-weight: 300;
+    }
+    #tabset .tabset .active {
+        background-color: rgba(102, 217, 255, 0.6);
+        -moz-box-shadow: 0px 0px 30px rgba(102, 217, 255, 1);
+        -webkit-box-shadow: 0px 0px 30px rgba(102, 217, 255, 1);
+        box-shadow: 0px 0px 30px rgba(102, 217, 255, 1); 
+    }
 }
 
-::ng-deep .active {
-    background-color: rgba(102, 217, 255, 0.6);
-    -moz-box-shadow: 0px 0px 30px rgba(102, 217, 255, 1);
-    -webkit-box-shadow: 0px 0px 30px rgba(102, 217, 255, 1);
-    box-shadow: 0px 0px 30px rgba(102, 217, 255, 1); 
-}
+// ::ng-deep .active {
 
 ::ng-deep .tab-text {
     text-align: center !important;

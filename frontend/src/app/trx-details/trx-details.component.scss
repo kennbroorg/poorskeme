@@ -28,7 +28,14 @@ nb-card {
     // background: rgba(102, 201, 255, 0) url("/assets/square500.png")  left top;
     // background-repeat: repeat;
     // background-size: 50px 50px;
+}
 
+.nb-card-complete {
+    border-image-source: url('/assets/border-image-complete.png');
+    border-image-slice: 25 25;
+    border-image-width: 20 20;
+    border-image-outset: 2;
+    border-image-repeat: round;
 }
 
 nb-card-body {
@@ -36,6 +43,14 @@ nb-card-body {
     margin-bottom: 5px;
     // background: rgba(102, 201, 255, 0.1);
     background: rgba(102, 201, 255, 0.1);
+
+    ngx-org-chart {
+      margin: 0;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
 }
 
 
@@ -83,6 +98,20 @@ nb-card-body {
     text-transform: uppercase; 
     color:rgba(102, 217, 255, 0.8); 
 }
+
+  // ::ng-deep { 
+  //   .ngx-org-funct-node {
+  //     width: 300px;
+  //   }
+
+  //   .ngx-org-funct {
+  //     width: 300px;
+  //   }
+
+  //   .ngx-org-input-tag {
+  //     width: 100px;
+  //   }
+  // }
 
 #detail-graph-card {
   // height: 750px;
@@ -189,19 +218,9 @@ nb-card-body {
 }
 
 /* Rows */
-::ng-deep .datatable-body-row.active {
-  // background-color: rgba(102, 217, 255, 0.6);
-  // box-shadow: 0px 0px 30px #66d9ff;
-  // .active {
-    background-color: rgba(102, 217, 255, 0.6);
-    box-shadow: none;
-  // }
-}
-
 ::ng-deep .datatable-body-row:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
-
 ::ng-deep .datatable-row-even {
   background-color: rgba(0, 0, 0, 0.1);
 }

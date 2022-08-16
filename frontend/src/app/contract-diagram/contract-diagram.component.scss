@@ -37,6 +37,13 @@ nb-card-body {
     margin-top: 5px;
     margin-bottom: 5px;
     background: rgba(102, 201, 255, 0.1);
+
+    ngx-org-chart {
+      margin: 0;
+      position: absolute;
+      left: 50%;
+      transform: translate(-50%, 0%);
+    }
 }
 
 #diagram-graph {
@@ -74,6 +81,7 @@ nb-card-body {
 
 // .ngx-org {
 ::ng-deep { 
+
   .ngx-org-image {
       background-repeat: no-repeat;
       width: 2em;
@@ -92,6 +100,7 @@ nb-card-body {
   .ngx-org-title {
       font-family: 'Montserrat';
       color: rgba(102, 217, 255, 0.6);
+      overflow-wrap: break-word;
     }
   // }
 
@@ -111,7 +120,7 @@ nb-card-body {
 
   .ngx-org-box {
     padding: 0.5em 1em;
-    width: 250px;
+    min-width: 250px;
     // border-radius: 0px;
     // box-shadow: 0.05em 0.05em 0.2em 0.05em #0000002b;
     background: rgba(102, 201, 255, 0.1);
@@ -120,6 +129,7 @@ nb-card-body {
     border-image-width: 12;
     border-image-outset: 2;
     border-image-repeat: round;
+    overflow: hidden;
   }
 
   .ngx-org-connector-horizontal {
@@ -132,10 +142,19 @@ nb-card-body {
   
   .ngx-org-constructor-node, .ngx-org-event-node, .ngx-org-funct-node {
     background: rgba(204, 242, 255, 0.3);
+    width: 150px;
+    min-width: unset;
   }
 
+  .ngx-org-funct {
+    background: rgba(102, 217, 255, 0.3);
+    width: 150px;
+    min-width: unset;
+  }
 
   .ngx-org-input-tag, .ngx-org-output-tag {
     background: rgba(102, 217, 255, 0.3);
+    width: 100px;
+    min-width: unset;
   }
 }

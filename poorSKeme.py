@@ -490,24 +490,28 @@ def process_json(filename):
     ABI = json.loads(ABI)
 
     df_hash = df_transaction["hash"][0:]
+    input_constructor = df_transaction["input"][0]
     input_column = df_transaction["input"][1:]
-    # TODO: Constructor
 
     decoder = InputDecoder(ABI)
-    functions = ["constructor"]
-    arguments = ["constructor"]
+    constructor_call = decoder.decode_constructor((input_constructor),)
+
+    functions = []
+    functions.append(constructor_call.name)
+    arguments = []
+    arguments.append(str(constructor_call.arguments))
     for i in input_column:
         try:
             # print(i)
             func_call = decoder.decode_function((i),)
             functions.append(func_call.name)
-            arguments.append(func_call.arguments)
+            arguments.append(str(func_call.arguments))
         except:
             functions.append("Not decoded")
             arguments.append("Not decoded")
 
-    # df_decoded = pd.DataFrame({"hash": df_hash, "funct": functions, "args": str(arguments)})
-    df_decoded = pd.DataFrame({"hash": df_hash, "funct": functions})
+    df_decoded = pd.DataFrame({"hash": df_hash, "funct": functions, "args": arguments})
+    # df_decoded = pd.DataFrame({"hash": df_hash, "funct": functions})
     dict_decoded = df_decoded.to_dict()
 
     with open('./tmp/decoded.json', 'w') as outfile:
