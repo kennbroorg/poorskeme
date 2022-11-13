@@ -29,7 +29,7 @@ Unzip it, install requeriments and execute it.
 unzip poorSKeme.zip
 cd poorSKeme
 pip install -r requirements.txt
-python3 poorSKeme --help
+python3 collector --help
 ```
 ```
 $$$$$$$\                                       $$$$$$\  $$\   $$\
@@ -42,7 +42,7 @@ $$ |      \$$$$$$  |\$$$$$$  |$$ |            \$$$$$$  |$$ | \$$\$$$$$$$\ $$ | $
 \__|       \______/  \______/ \__|             \______/ \__|  \__|\_______|\__| \__| \__| \_______|
 
 
-usage: poorSKeme.py [-h] [-c CHUNK] [-ct CONTRACT] [-bf BLOCK_FROM] [-bt BLOCK_TO] [-f FILE] [-w]
+usage: collector.py [-h] [-c CHUNK] [-ct CONTRACT] [-bf BLOCK_FROM] [-bt BLOCK_TO] [-f FILE] [-w]
 
 PONZI contract analyzer
 
@@ -66,6 +66,30 @@ optional arguments:
     -w, --web             WEB for data visaulization>
 ```
 If you use the web param, the port is 4200. The complete url is http://127.0.0.1:4200.
+
+# Install using docker.
+
+1. Configure your bsc API Key in the API.yaml file. for get the key go to next link https://bscscan.com/myapikey.
+
+2. Download the example contract information (it can be takes some minutes)
+
+``` shell
+docker compose run --rm api python poorSKeme.py -ct 0xe878BccA052579C9061566Cec154B783Fc5b9fF1 -bf 14040726 -bt 15552901
+```
+
+3. Install frontend dependencies
+
+``` shell
+docker compose run --rm console npm i
+```
+
+4. Run services (api in port 5000 and frontend in port 4200)
+
+``` shell
+docker compose up
+```
+
+Open http://localhost:4200 for explore the contract.
 
 # API
 Get the Free API from https://bscscan.com/apis 

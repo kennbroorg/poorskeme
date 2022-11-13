@@ -1,0 +1,34 @@
+version: "3.3"
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        ENVIRONMENT: local
+    image: poorskeme/api
+    container_name: poorskeme-api
+    command: flask run -h 0.0.0.0
+    env_file: .env
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/app
+    ports:
+      - "5000:5000"
+
+  console:
+    build:
+      context: ./frontend/
+      dockerfile: Dockerfile
+      target: development
+    container_name: poorskeme-console
+    command: npm start
+    env_file: ./frontend/.env
+    image: poorskeme/console
+    ports:
+      - "4200:4200"
+    restart: always
+    volumes:
+      - ./frontend:/app
+
