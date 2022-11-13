@@ -13,49 +13,16 @@ import os.path
 import requests
 from bscscan import BscScan
 
-import multiprocessing
-import http.server
-import socketserver
+import subprocess
 from termcolor import colored
 import coloredlogs, logging
 
-from web3_input_decoder import InputDecoder, decode_constructor
-
-from api_poorSKeme import create_application
+from web3_input_decoder import InputDecoder
 
 
 # create a logger object.
 logger = logging.getLogger(__name__)
-coloredlogs.install(level='DEBUG')
-
-
-__author__ = "KennBro"
-__copyright__ = "Copyright 2022, Personal Research"
-__credits__ = ["KennBro"]
-__license__ = "GPL"
-__version__ = "1.0.0"
-__maintainer__ = "KennBro"
-__email__ = "kennbro <at> protonmail <dot> com"
-__status__ = "Development"
-
-
-def flaskServer(ip='127.0.0.1', port=5000):
-    app = create_application()
-    # app.run(host=ip, port=port, debug=True)
-    logger.info("Flask serving...")
-    app.run(port=port, debug=True, host=ip, use_reloader=False)
-
-
-class Handler(http.server.SimpleHTTPRequestHandler):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory="./frontend/dist/", **kwargs)
-
-
-def httpServer():
-    PORT = 4200
-    logger.info("HTTPD serving... Data Visualization Web on http://127.0.0.1:4200")
-    with socketserver.TCPServer(("", PORT), Handler) as httpd_server:
-        httpd_server.serve_forever()
+coloredlogs.install(level="DEBUG")
 
 
 async def save_json(contract_address, block_from, block_to, key, chunk=30000):
@@ -644,12 +611,12 @@ $$ |      \$$$$$$  |\$$$$$$  |$$ |            \$$$$$$  |$$ | \$$\\$$$$$$$\ $$ | 
     args = parser.parse_args()
 
     # Validations
-    if (args.contract):
+    if args.contract:
         asyncio.run(save_json(args.contract, args.block_from, args.block_to, key['bscscan'], chunk=args.chunk))
         if (args.file):
             logger.error("Parameter JSON file are discarded because contract is provided")
 
-    elif (args.file):
+    elif args.file:
         rc = process_json(args.file)
 
     else:
@@ -657,20 +624,7 @@ $$ |      \$$$$$$  |\$$$$$$  |$$ |            \$$$$$$  |$$ | \$$\\$$$$$$$\ $$ | 
             logger.error("The CONTRACT ADDRESS is not specified")
         # parser.print_help(sys.stderr)
 
-    if (args.web):
+    if args.web:
         sys.stdout.flush()
-        kwargs_flask = {"ip": "127.0.0.1", "port": 5000}
-        flask_proc = multiprocessing.Process(name='flask',
-                                                target=flaskServer,
-                                                kwargs=kwargs_flask)
-        flask_proc.daemon = True
-
-        sys.stdout.flush()
-        httpd_proc = multiprocessing.Process(name='httpd',
-                                                target=httpServer)
-        httpd_proc.daemon = True
-
-        flask_proc.start()
-        httpd_proc.start()
-        flask_proc.join()
-        httpd_proc.join()
+        p = subprocess.Popen("flask run", stdout=subprocess.PIPE, shell=True)
+        print(p.communicate())
