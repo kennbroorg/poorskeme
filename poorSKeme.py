@@ -137,7 +137,10 @@ $$ |      \$$$$$$  |\$$$$$$  |$$ |            \$$$$$$  |$$ | \$$\\$$$$$$$\ $$ | 
             asyncio.run(eth.eth_json_collect(args.contract, args.block_from, args.block_to, key['ethscan'], chunk=args.chunk))
 
     elif (args.file):
-        rc = bsc.bsc_json_process(args.file)
+        if (args.blockchain == "bsc"):
+            rc = bsc.bsc_json_process(args.file)
+        if (args.blockchain == "eth"):
+            rc = eth.eth_json_process(args.file)
 
     else:
         if (args.block_from or args.block_to or args.chunck):
