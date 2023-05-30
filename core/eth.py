@@ -259,20 +259,365 @@ async def eth_json_collect(contract_address, block_from, block_to, key, chunk=30
     print('Internals')
     print(json_internals)
 
-    # # Consolidate data
-    # json_total = {"contract": json_contract,
-    #               "getabi": json_str_contract_abi,
-    #               "source_code": json_obj_source_code,
-    #               "circ_supply": json_str_circ_supply,
-    #               "total_supply": json_obj_total_supply,
-    #               "transactions": json_transaction,
-    #               "transfers": json_transfer,
-    #               "internals": json_internals}
+    # Consolidate data
+    json_total = {"contract": json_contract,
+                  # "getabi": json_str_contract_abi,
+                  "getabi": json_obj_contract_abi,
+                  "source_code": json_obj_source_code,
+                  # "circ_supply": json_str_circ_supply,
+                  # "total_supply": json_obj_total_supply,
+                  "transactions": json_transaction,
+                  "transfers": json_transfer,
+                  "internals": json_internals}
 
-    # filename = "contract-" + contract_address + ".json"
-    # with open(filename, 'w') as outfile:
-    #     json.dump(json_total, outfile)
+    filename = "contract-eth-" + contract_address + ".json"
+    with open(filename, 'w') as outfile:
+        json.dump(json_total, outfile)
 
-    # eth_json_process(filename)
+    eth_json_process(filename)
 
 
+def eth_json_process(filename):
+    # Validate file
+    if (not os.path.exists(filename)):
+        raise("JSON File not found")
+
+    # Read JSON file
+    tic = time.perf_counter()
+    with open(filename) as json_file:
+        data = json.load(json_file)
+    toc = time.perf_counter()
+    logger.info(f"Read file in {toc - tic:0.4f} seconds")
+    
+    # Split in temporary files
+    if (not os.path.exists('./tmp')):
+        os.makedirs('./tmp')
+
+    tic = time.perf_counter()
+    contract = data['contract']
+    with open('./tmp/contract.json', 'w') as outfile:
+        json.dump(contract, outfile)
+
+    contract_abi = data['getabi']
+    with open('./tmp/contract-abi.json', 'w') as outfile:
+        json.dump(contract_abi, outfile)
+
+    source_code = data['source_code']
+    with open('./tmp/sourcecode.json', 'w') as outfile:
+        json.dump(source_code, outfile)
+
+    transactions = data['transactions']
+    with open('./tmp/transactions.json', 'w') as outfile:
+        json.dump(transactions, outfile)
+
+    transfers = data['transfers']
+    with open('./tmp/transfers.json', 'w') as outfile:
+        json.dump(transfers, outfile)
+
+    internals = data['internals']
+    with open('./tmp/internals.json', 'w') as outfile:
+        json.dump(internals, outfile)
+
+    toc = time.perf_counter()
+    logger.info(f"Split file in {toc - tic:0.4f} seconds")
+
+    # Preprocess Statistics
+    tic = time.perf_counter()
+    
+    # I must reload the files for datatypes (Optimize?)
+    df_transaction = pd.read_json('./tmp/transactions.json')
+    df_t = pd.read_json('./tmp/transfers.json')
+    df_i = pd.read_json('./tmp/internals.json')
+
+    native = False
+    if (df_i.size > df_t.size):
+        native = True
+        logger.info(f"Detect NATIVE token")
+    else: 
+        logger.info(f"Detect NOT NATIVE token")
+
+    # Get contract creator
+    contract_creator = df_transaction["from"][0]
+
+    # Get token and volume
+    if (native):
+        token_name = "ETH"
+        volume = round(df_transaction['value'].sum() / 1e+18, 2) + round(df_i['value'].sum() / 1e+18, 2)
+        volume = round(volume / 2, 2)
+        # volume = round((df_transaction['value'].sum() / 1e+18, 2 + df_i['value'].sum() / 1e+18) / 2, 2)
+    else:
+        token = df_t.groupby('tokenSymbol').agg({'value': ['sum','count']})  # TODO: Use for anomalies
+        token = token.sort_values(by=[('value','count')], ascending=False)  
+        token_name = token.index[0]
+        # volume = round(token.iloc[0,0] / 1e+18, 2)
+        volume = round(float(token.iloc[0,0] / 1e+18) / 2, 2)
+
+    # Liquidity and dates
+    address_contract = contract["contract"].lower()
+    liq = 0
+    max_liq = 0
+    trx_out = 0 
+    trx_in = 0
+    trx_out_day = 0 
+    trx_in_day = 0
+    remain = 0
+    liq_series = []
+    trx_in_series = []
+    trx_out_series = []
+    day = ''
+    day_prev = ''
+    day_prev_complete = ''
+    if (native):
+        dftemp_transaction = df_transaction[df_transaction['isError'] == 0]
+        dftemp_transaction = dftemp_transaction[['timeStamp','from', 'to', 'value']]
+        dftemp_transaction = dftemp_transaction[dftemp_transaction["value"] != 0]
+
+        dftemp_i = df_i[['timeStamp', 'from', 'to', 'value']]
+        dftemp = pd.concat([dftemp_transaction, dftemp_i],
+                           join='inner', ignore_index=True)
+        dftemp = dftemp.sort_values(["timeStamp"])
+
+        unique_wallets = len(dftemp['from'].unique())
+
+        for i in dftemp.index: 
+            value = round(dftemp["value"][i] / 1e+18, 2)
+            address_from = dftemp["from"][i]
+            address_to = dftemp["to"][i]
+
+            if (address_from == address_contract):
+                liq = liq - value
+                trx_out = trx_out + value
+                trx_out_day = trx_out_day + value
+            elif (address_to == address_contract):
+                liq = liq + value
+                trx_in = trx_in + value
+                trx_in_day = trx_in_day + value
+                if (max_liq < liq):
+                    max_liq = liq
+                    max_liq_date = dftemp["timeStamp"][i]
+            else:
+                remain = remain + value
+
+            if (day == ''):
+                # day = df_t['timeStamp'][i].strftime("%Y-%m-%d")
+                day = df_i['timeStamp'][i].strftime("%Y-%m-%d")
+                day_prev = day
+                day_prev_complete = dftemp['timeStamp'][i]
+            elif (day_prev != day):
+                liq_series.append({"name": day_prev_complete.strftime("%Y-%m-%dT%H:%M:%S.009Z"),
+                                "value": liq})
+                trx_in_series.append({"name": day_prev_complete.strftime("%Y-%m-%dT%H:%M:%S.009Z"),
+                                      "value": trx_in_day})
+                trx_out_series.append({"name": day_prev_complete.strftime("%Y-%m-%dT%H:%M:%S.009Z"),
+                                       "value": trx_out_day})
+                day_prev = day
+                day_prev_complete = dftemp['timeStamp'][i]
+                trx_in_day = 0
+                trx_out_day = 0
+            else:
+                day = dftemp['timeStamp'][i].strftime("%Y-%m-%d")
+
+        first_date = dftemp['timeStamp'][0]
+        last_date = dftemp['timeStamp'].iloc[-1]  # TODO : When Liq == 0
+
+    else:
+        unique_wallets = len(df_t['from'].unique())
+        for i in df_t.index: 
+            if (df_t["tokenSymbol"][i] == token_name):
+                value = round(df_t["value"][i] / 1e+18, 2)
+                address_from = df_t["from"][i].lower()
+                address_to = df_t["to"][i].lower()
+
+                if (address_from == address_contract):
+                    liq = liq - value
+                    trx_out = trx_out + value
+                    trx_out_day = trx_out_day + value
+                elif (address_to == address_contract):
+                    liq = liq + value
+                    trx_in = trx_in + value
+                    trx_in_day = trx_in_day + value
+                    if (max_liq < liq):
+                        max_liq = liq
+                        max_liq_date = df_t["timeStamp"][i]
+                else:
+                    remain = remain + value
+
+                if (day == ''):
+                    day = df_t['timeStamp'][i].strftime("%Y-%m-%d")
+                    day_prev = day
+                    day_prev_complete = df_t['timeStamp'][i]
+                elif (day_prev != day):
+                    liq_series.append({"name": day_prev_complete.strftime("%Y-%m-%dT%H:%M:%S.009Z"),
+                                       "value": liq})
+                    trx_in_series.append({"name": day_prev_complete.strftime("%Y-%m-%dT%H:%M:%S.009Z"),
+                                          "value": trx_in_day})
+                    trx_out_series.append({"name": day_prev_complete.strftime("%Y-%m-%dT%H:%M:%S.009Z"),
+                                           "value": trx_out_day})
+                    day_prev = day
+                    day_prev_complete = df_t['timeStamp'][i]
+                    trx_in_day = 0
+                    trx_out_day = 0
+                else:
+                    day = df_t['timeStamp'][i].strftime("%Y-%m-%d")
+
+        first_date = df_t['timeStamp'][0]
+        last_date = df_t['timeStamp'].iloc[-1]  # TODO : When Liq == 0
+
+    ## Statistics
+    # Unification for Native
+    if (native):
+        df_t = dftemp
+    # Group by
+    from_trx = df_t.groupby('from').agg({'value': ['sum','count']})
+    from_trx.set_axis(['value_out', 'count_out'], axis=1, inplace=True)
+    to_trx = df_t.groupby('to').agg({'value': ['sum','count']})
+    to_trx.set_axis(['value_in', 'count_in'], axis=1, inplace=True)
+
+    # Merge
+    trx_total = from_trx.join(to_trx)
+    trx_total['wallet'] = trx_total.index
+    trx_total = trx_total.sort_values(["wallet"])
+    trx_total.reset_index(drop=True, inplace=True)
+    trx_total.fillna(0, inplace=True)
+
+    total = []
+    # JSON Bubbles file
+    for i in trx_total.index: 
+        wallet = trx_total["wallet"][i]
+
+        child = [{"name": "IN", 
+                  "size": round(trx_total["value_in"][i] / 1e+18, 2),
+                  "count": int(trx_total["count_in"][i])}]
+        child.append({"name": "OUT", 
+                      "size": round(trx_total["value_out"][i] / 1e+18, 2),
+                      "count": int(trx_total["count_out"][i])})
+        item = {"name": wallet, "children": child}
+        total.append(item)
+
+    json_bubbles = {"name": "Schema", "children": total}
+
+    with open('./tmp/bubbles.json', 'w') as outfile:
+        json.dump(json_bubbles, outfile)
+
+    # Add Percentage
+    trx_total["Percentage"] = trx_total["value_in"] * 100 / trx_total['value_out']
+    trx_total_dec = trx_total.sort_values(["Percentage"])
+    trx_total_asc = trx_total.sort_values(["Percentage"], ascending=False)
+
+    # Statistic Percentage
+    e_0 = trx_total[trx_total['Percentage'] == 0]
+    e_0_100 = trx_total[(trx_total['Percentage'] > 0) & (trx_total['Percentage'] < 100)]
+    e_100_241 = trx_total[(trx_total['Percentage'] >= 100) & (trx_total['Percentage'] <= 241)]
+    e_241 = trx_total[trx_total['Percentage'] > 241]
+
+    investments = []
+    investments.append({"name": "Total Loses", "value": len(e_0)})
+    investments.append({"name": "Loses", "value": len(e_0_100)})
+    investments.append({"name": "Earnings", "value": len(e_100_241)})
+    investments.append({"name": "Top Profit", "value": len(e_241)})
+
+    # Input decoded
+    # ABI
+    contract_abi = data['getabi']
+    logger.info(f"ABI type : {type(contract_abi)}")
+
+    ABI = json.loads(contract_abi)
+    # ABI = json.loads(ABI)
+    # ABI = contract_abi
+
+    df_hash = df_transaction["hash"][0:]
+    input_constructor = df_transaction["input"][0]
+    input_column = df_transaction["input"][1:]
+
+    decoder = InputDecoder(ABI)
+    constructor_call = decoder.decode_constructor((input_constructor),)
+
+    functions = []
+    functions.append(constructor_call.name)
+    arguments = []
+    arguments.append(str(constructor_call.arguments))
+    for i in input_column:
+        try:
+            # print(i)
+            func_call = decoder.decode_function((i),)
+            functions.append(func_call.name)
+            arguments.append(str(func_call.arguments))
+        except:
+            functions.append("Not decoded")
+            arguments.append("Not decoded")
+
+    df_decoded = pd.DataFrame({"hash": df_hash, "funct": functions, "args": arguments})
+    # df_decoded = pd.DataFrame({"hash": df_hash, "funct": functions})
+    dict_decoded = df_decoded.to_dict()
+
+    with open('./tmp/decoded.json', 'w') as outfile:
+        json.dump(dict_decoded, outfile)
+
+    # Functions stats
+    funct_stats = df_decoded['funct'].value_counts()
+    funct_stats_json = []
+    for i in funct_stats.index: 
+        funct_stats_json.append({"name": str(i), "value": int(funct_stats[i])})
+
+    json_stats = {"contract": address_contract,
+                  "fdate": first_date.strftime("%Y/%m/%d - %H:%M:%S"),
+                  "ldate": last_date.strftime("%Y/%m/%d - %H:%M:%S"),
+                  "token_name": token_name,
+                  "native": int(native),
+                  "creator": contract_creator,
+                  "max_liq": max_liq,
+                  "max_liq_date": max_liq_date.strftime("%Y/%m/%d - %H:%M:%S"),
+                  "volume": volume,
+                  "wallets": unique_wallets,
+                  "investments": investments,
+                  "funct_stats": funct_stats_json,
+                #   "funct_stats": investments,
+                  "trx_out": trx_out,
+                  "trx_in": trx_in}
+
+    with open('./tmp/stats.json', 'w') as outfile:
+        json.dump(json_stats, outfile)
+
+    # Liquidity graph
+    json_liq = liq_series
+
+    with open('./tmp/liq.json', 'w') as outfile:
+        json.dump(json_liq, outfile)
+
+    # Trans Volume graph
+    json_trans_vol = [{"name": "Trans OUT",
+                      "series": trx_out_series},
+                      {"name": "Trans IN",
+                      "series": trx_in_series}]
+
+    with open('./tmp/trans_series.json', 'w') as outfile:
+        json.dump(json_trans_vol, outfile)
+
+    # Transaction resume
+    trans_ok = len(df_transaction[df_transaction['isError'] == 0])
+    trans_error = len(df_transaction[df_transaction['isError'] != 0])
+
+    trans_resume = [{'name': 'Transactions OK', 'value': trans_ok}, 
+                    {'name': 'Transactions ERROR', 'value': trans_error}]
+
+    with open('./tmp/transaction_resume.json', 'w') as outfile:
+        json.dump(trans_resume, outfile)
+
+    # Transfer resume
+    if (native):  # TODO : For native
+        trans_in = len(dftemp_transaction)
+        trans_out = len(dftemp_i)
+    else:
+        trans_in = len(df_t[df_t['from'].str.contains(address_contract, case=False)])
+        trans_out = len(df_t[df_t['to'].str.contains(address_contract, case=False)])
+
+    trans_io = [{'name': 'Transfers IN', 'value': trans_in}, 
+                {'name': 'Transfers OUT', 'value': trans_out}]
+
+    with open('./tmp/transfer_resume.json', 'w') as outfile:
+        json.dump(trans_io, outfile)
+
+    toc = time.perf_counter()
+    logger.info(f"Preprocess Statistic file in {toc - tic:0.4f} seconds")
+
+    return 0
