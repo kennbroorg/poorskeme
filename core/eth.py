@@ -14,6 +14,7 @@ import coloredlogs, logging
 
 from web3_input_decoder import InputDecoder, decode_constructor
 import traceback
+import datetime
 # import urllib.request
 
 
@@ -80,7 +81,7 @@ async def eth_json_collect(contract_address, block_from, block_to, key, chunk=30
     print('Source Code')
     print(json_obj_source_code)
 
-    # TODO : Implement in future
+    # NOTE : Implement in future
     # get_circulating_supply_by_contract_address - Get circulating supply of token by its contract address
     # async with BscScan(key) as client:
     #     json_result = await client.get_circulating_supply_by_contract_address(
@@ -328,8 +329,7 @@ async def eth_json_collect(contract_address, block_from, block_to, key, chunk=30
     with open(filename, 'w') as outfile:
         json.dump(json_total, outfile)
 
-    # TODO : Get Logs
-    # TODO : Increase performanco with async
+    # PERF : Increase performanco with async
 
     eth_json_process(filename)
 
@@ -376,7 +376,7 @@ def eth_json_process(filename):
     with open('./tmp/internals.json', 'w') as outfile:
         json.dump(internals, outfile)
 
-    # TODO : Restore
+    # FIX : Restore
     # logs = data['logs']
     # with open('./tmp/logs.json', 'w') as outfile:
     #     json.dump(logs, outfile)
@@ -391,13 +391,13 @@ def eth_json_process(filename):
     df_transaction = pd.read_json('./tmp/transactions.json')
     df_t = pd.read_json('./tmp/transfers.json')
     df_i = pd.read_json('./tmp/internals.json')
-    # df_l = pd.read_json('./tmp/logs.json') # TODO : Restore
+    # df_l = pd.read_json('./tmp/logs.json') # FIX : Restore
 
     # For DEBUG (remove)
     df_transaction.to_csv('./tmp/transaction.csv')
     df_t.to_csv('./tmp/transfers.csv')
     df_i.to_csv('./tmp/internals.csv')
-    # df_l.to_csv('./tmp/logs.csv') # TODO : Restore
+    # df_l.to_csv('./tmp/logs.csv') # FIX : Restore
 
     native = False
     if (df_i.size > df_t.size):
@@ -425,23 +425,18 @@ def eth_json_process(filename):
                              'isError']]
         df_int_1['file'] = 'int'
 
-    print(df_trx_1.info())
-    print(df_trx_1.head())
-
     if (not df_t.empty):
-        print(df_tra_1.info())
-        print(df_tra_1.head())
         pd_uni = pd.concat([df_uni, df_tra_1], axis=0)
         df_uni = pd.DataFrame(pd_uni)
     if (not df_i.empty):
-        print(df_int_1.info())
-        print(df_int_1.head())
         pd_uni = pd.concat([df_uni, df_int_1], axis=0)
         df_uni = pd.DataFrame(pd_uni)
 
     print(df_uni.info())
     print(df_uni.head())
-    exit(0)
+
+    df_uni = df_uni.sort_values(by=['timeStamp','file'], ascending=False)  
+    df_uni.to_csv('./tmp/uni.csv')
 
     # Get contract creator
     contract_creator = df_transaction["from"][0]
@@ -453,7 +448,8 @@ def eth_json_process(filename):
         volume = round(volume / 2, 2)
         # volume = round((df_transaction['value'].sum() / 1e+18, 2 + df_i['value'].sum() / 1e+18) / 2, 2)
     else:
-        token = df_t.groupby('tokenSymbol').agg({'value': ['sum','count']})  # TODO: Use for anomalies
+        # NOTE : Display another tokens
+        token = df_t.groupby('tokenSymbol').agg({'value': ['sum','count']})  # NOTE: Use for anomalies
         token = token.sort_values(by=[('value','count')], ascending=False)  
         token_name = token.index[0]
         # volume = round(token.iloc[0,0] / 1e+18, 2)
@@ -471,25 +467,28 @@ def eth_json_process(filename):
     liq_series = []
     trx_in_series = []
     trx_out_series = []
+    first = True
     day = ''
     day_prev = ''
     day_prev_complete = ''
     if (native):
-        dftemp_transaction = df_transaction[df_transaction['isError'] == 0]
-        dftemp_transaction = dftemp_transaction[['timeStamp','from', 'to', 'value']]
-        dftemp_transaction = dftemp_transaction[dftemp_transaction["value"] != 0]
+        # NOTE : I replace the dftemp for df_uni. Remove if it's working
+        dftemp = df_uni
+        # dftemp_transaction = df_transaction[df_transaction['isError'] == 0]
+        # dftemp_transaction = dftemp_transaction[['timeStamp','from', 'to', 'value']]
+        # dftemp_transaction = dftemp_transaction[dftemp_transaction["value"] != 0]
 
-        dftemp_i = df_i[['timeStamp', 'from', 'to', 'value']]
-        dftemp = pd.concat([dftemp_transaction, dftemp_i],
-                           join='inner', ignore_index=True)
-        dftemp = dftemp.sort_values(["timeStamp"])
+        # dftemp_i = df_i[['timeStamp', 'from', 'to', 'value']]
+        # dftemp = pd.concat([dftemp_transaction, dftemp_i],
+        #                    join='inner', ignore_index=True)
+        # dftemp = dftemp.sort_values(["timeStamp"])
 
         unique_wallets = len(dftemp['from'].unique())
 
         for i in dftemp.index: 
             value = round(dftemp["value"][i] / 1e+18, 2)
-            address_from = dftemp["from"][i]
-            address_to = dftemp["to"][i]
+            address_from = str(dftemp["from"][i])
+            address_to = str(dftemp["to"][i])
 
             if (address_from == address_contract):
                 liq = liq - value
@@ -505,29 +504,32 @@ def eth_json_process(filename):
             else:
                 remain = remain + value
 
-            if (day == ''):
+            if (first):
+            # if (day.empty):
                 # day = df_t['timeStamp'][i].strftime("%Y-%m-%d")
-                day = df_i['timeStamp'][i].strftime("%Y-%m-%d")
+                day = dftemp['timeStamp'][i].dt.strftime("%Y-%m-%d")
+                # day = df_i['timeStamp'][i].strftime("%Y-%m-%d")
                 day_prev = day
                 day_prev_complete = dftemp['timeStamp'][i]
-            elif (day_prev != day):
-                liq_series.append({"name": day_prev_complete.strftime("%Y-%m-%dT%H:%M:%S.009Z"),
+                first = False
+            elif (str(day_prev) != str(day)):
+                liq_series.append({"name": day_prev_complete.dt.strftime("%Y-%m-%dT%H:%M:%S.009Z"),
                                 "value": liq})
-                trx_in_series.append({"name": day_prev_complete.strftime("%Y-%m-%dT%H:%M:%S.009Z"),
+                trx_in_series.append({"name": day_prev_complete.dt.strftime("%Y-%m-%dT%H:%M:%S.009Z"),
                                       "value": trx_in_day})
-                trx_out_series.append({"name": day_prev_complete.strftime("%Y-%m-%dT%H:%M:%S.009Z"),
+                trx_out_series.append({"name": day_prev_complete.dt.strftime("%Y-%m-%dT%H:%M:%S.009Z"),
                                        "value": trx_out_day})
                 day_prev = day
                 day_prev_complete = dftemp['timeStamp'][i]
                 trx_in_day = 0
                 trx_out_day = 0
             else:
-                day = dftemp['timeStamp'][i].strftime("%Y-%m-%d")
+                day = dftemp['timeStamp'][i].dt.strftime("%Y-%m-%d")
 
         first_date = dftemp['timeStamp'][0]
         last_date = dftemp['timeStamp'].iloc[-1]  # TODO : When Liq == 0
 
-    else:
+    else:  # NOTE : Not native
         unique_wallets = len(df_t['from'].unique())
         for i in df_t.index: 
             if (df_t["tokenSymbol"][i] == token_name):
@@ -624,7 +626,7 @@ def eth_json_process(filename):
     investments.append({"name": "Top Profit", "value": len(e_241)})
 
     # Input decoded
-    # TODO : Enhance decoder
+    # PERF : Enhance decoder
     # ABI
     contract_abi = data['getabi']
     logger.info(f"ABI type : {type(contract_abi)}")
