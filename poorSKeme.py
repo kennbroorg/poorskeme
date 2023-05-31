@@ -10,8 +10,8 @@ import yaml
 import textwrap
 # import time
 # import os.path
-import requests
-from bscscan import BscScan
+# import requests
+# from bscscan import BscScan
 
 import multiprocessing
 import http.server
