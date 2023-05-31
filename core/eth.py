@@ -13,6 +13,9 @@ from termcolor import colored
 import coloredlogs, logging
 
 from web3_input_decoder import InputDecoder, decode_constructor
+import traceback
+import urllib.request
+
 
 # create a logger object.
 logger = logging.getLogger(__name__)
@@ -181,14 +184,14 @@ async def eth_json_collect(contract_address, block_from, block_to, key, chunk=30
             json_object = response.json()['result']
 
             if (len(json_object) > 0):
-                logger.info(f"TRANSACTIONS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
+                logger.info(f"TRANSFERS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
             else:
-                logger.info(f"TRANSACTIONS - From : {startblock} - To : {endblock} - TRANSACTION NOT FOUND")
+                logger.info(f"TRANSFERS - From : {startblock} - To : {endblock} - TRANSFERS NOT FOUND")
 
             json_total += json_object
 
         except AssertionError:
-            logger.info(f"TRANSFER - From : {startblock} - To : {endblock} - TRANSFER NOT FOUND")
+            logger.info(f"TRANSFERS - From : {startblock} - To : {endblock} - TRANSFERS NOT FOUND")
 
         startblock += chunk + 1
         endblock += chunk + 1
@@ -234,9 +237,9 @@ async def eth_json_collect(contract_address, block_from, block_to, key, chunk=30
             json_object = response.json()['result']
 
             if (len(json_object) > 0):
-                logger.info(f"TRANSACTIONS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
+                logger.info(f"INTERNALS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
             else:
-                logger.info(f"TRANSACTIONS - From : {startblock} - To : {endblock} - TRANSACTION NOT FOUND")
+                logger.info(f"INTERNALS - From : {startblock} - To : {endblock} - INTERNALS NOT FOUND")
 
             json_total += json_object
 
@@ -259,6 +262,56 @@ async def eth_json_collect(contract_address, block_from, block_to, key, chunk=30
     print('Internals')
     print(json_internals)
 
+    logger.info(" ")
+    logger.info("=====================================================")
+    logger.info(f"Collecting logs...")
+    logger.info("=====================================================")
+    startblock = block_from
+    endblock = block_from + chunk
+
+    json_total = []
+    while startblock < block_to:
+        try:
+            # async with BscScan(key) as client:
+            #     json_result = await client.get_internal_txs_by_address(
+            #             address=contract_address,
+            #             startblock=startblock,
+            #             endblock=endblock,
+            #             sort="asc"
+            #         )
+            # json_str = json.dumps(json_result)
+            # json_object = json.loads(json_str)
+            url = 'https://api.etherscan.io/api?module=logs&action=getLogs&address=' + contract_address + \
+                  '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
+            response = requests.get(url)
+            json_object = response.json()['result']
+
+            if (len(json_object) > 0):
+                logger.info(f"LOGS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
+            else:
+                logger.info(f"LOGS - From : {startblock} - To : {endblock} - LOGS NOT FOUND")
+
+            json_total += json_object
+
+        except AssertionError:
+            logger.info(f"LOGS - From : {startblock} - To : {endblock} - LOGS NOT FOUND")
+
+        startblock += chunk + 1
+        endblock += chunk + 1
+
+    diff = int(block_to) - int(block_from)
+    logger.info(" ")
+    logger.info("=====================================================")
+    logger.info("  LOGS TOTAL")
+    logger.info("=====================================================")
+    logger.info(f"  From : {block_from} - To : {block_to}")
+    logger.info(f"  Diff : {diff} - Total TRX : {len(json_total)}")
+    logger.info("=====================================================")
+
+    json_logs = json_total
+    print('Logs')
+    print(json_logs)
+
     # Consolidate data
     json_total = {"contract": json_contract,
                   # "getabi": json_str_contract_abi,
@@ -268,15 +321,20 @@ async def eth_json_collect(contract_address, block_from, block_to, key, chunk=30
                   # "total_supply": json_obj_total_supply,
                   "transactions": json_transaction,
                   "transfers": json_transfer,
-                  "internals": json_internals}
+                  "internals": json_internals,
+                  "logs": json_logs}
 
     filename = "contract-eth-" + contract_address + ".json"
     with open(filename, 'w') as outfile:
         json.dump(json_total, outfile)
 
+    # TODO : Get Logs
+    # TODO : Increase performanco with async
+
     eth_json_process(filename)
 
 
+#################################################################################################3
 def eth_json_process(filename):
     # Validate file
     if (not os.path.exists(filename)):
@@ -318,6 +376,10 @@ def eth_json_process(filename):
     with open('./tmp/internals.json', 'w') as outfile:
         json.dump(internals, outfile)
 
+    logs = data['logs']
+    with open('./tmp/logs.json', 'w') as outfile:
+        json.dump(logs, outfile)
+
     toc = time.perf_counter()
     logger.info(f"Split file in {toc - tic:0.4f} seconds")
 
@@ -328,6 +390,13 @@ def eth_json_process(filename):
     df_transaction = pd.read_json('./tmp/transactions.json')
     df_t = pd.read_json('./tmp/transfers.json')
     df_i = pd.read_json('./tmp/internals.json')
+    df_l = pd.read_json('./tmp/logs.json')
+
+    # For DEBUG (remove)
+    df_transaction.to_csv('./tmp/transaction.csv')
+    df_t.to_csv('./tmp/transfers.csv')
+    df_i.to_csv('./tmp/internals.csv')
+    df_l.to_csv('./tmp/logs.csv')
 
     native = False
     if (df_i.size > df_t.size):
@@ -517,6 +586,7 @@ def eth_json_process(filename):
     investments.append({"name": "Top Profit", "value": len(e_241)})
 
     # Input decoded
+    # TODO : Enhance decoder
     # ABI
     contract_abi = data['getabi']
     logger.info(f"ABI type : {type(contract_abi)}")
@@ -524,25 +594,44 @@ def eth_json_process(filename):
     ABI = json.loads(contract_abi)
     # ABI = json.loads(ABI)
     # ABI = contract_abi
+    # TETHER_ABI = json.loads(json.load(contract_abi))
+    # f = urllib.request.urlopen(f"https://api.etherscan.io/api?module=contract&action=getabi&address={contract['contract']}")
+    # TETHER_ABI = json.loads(json.load(f)["result"])
 
     df_hash = df_transaction["hash"][0:]
+    print("df_hash")
+    print(df_hash.head())
     input_constructor = df_transaction["input"][0]
     input_column = df_transaction["input"][1:]
+    print("=============================================")
+    print("INPUT TRX")
+    print("=============================================")
+    print(input_column)
+    print("=============================================")
+    print("INPUT INTERNAL")
+    print("=============================================")
+    print(df_i["input"][1:])
 
     decoder = InputDecoder(ABI)
+    # decoder = InputDecoder(TETHER_ABI)
     constructor_call = decoder.decode_constructor((input_constructor),)
 
     functions = []
     functions.append(constructor_call.name)
     arguments = []
     arguments.append(str(constructor_call.arguments))
+    print("Input Columns")
+    print(input_column)
     for i in input_column:
         try:
-            # print(i)
+            print("=============================================")
+            print(i)
             func_call = decoder.decode_function((i),)
+            print(f"Name: {func_call.name} - Arguments: {func_call.arguments}")
             functions.append(func_call.name)
             arguments.append(str(func_call.arguments))
         except:
+            traceback.print_exc()
             functions.append("Not decoded")
             arguments.append("Not decoded")
 
