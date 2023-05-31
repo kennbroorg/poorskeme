@@ -376,9 +376,10 @@ def eth_json_process(filename):
     with open('./tmp/internals.json', 'w') as outfile:
         json.dump(internals, outfile)
 
-    logs = data['logs']
-    with open('./tmp/logs.json', 'w') as outfile:
-        json.dump(logs, outfile)
+    # TODO : Restore
+    # logs = data['logs']
+    # with open('./tmp/logs.json', 'w') as outfile:
+    #     json.dump(logs, outfile)
 
     toc = time.perf_counter()
     logger.info(f"Split file in {toc - tic:0.4f} seconds")
@@ -390,13 +391,13 @@ def eth_json_process(filename):
     df_transaction = pd.read_json('./tmp/transactions.json')
     df_t = pd.read_json('./tmp/transfers.json')
     df_i = pd.read_json('./tmp/internals.json')
-    df_l = pd.read_json('./tmp/logs.json')
+    # df_l = pd.read_json('./tmp/logs.json') # TODO : Restore
 
     # For DEBUG (remove)
     df_transaction.to_csv('./tmp/transaction.csv')
     df_t.to_csv('./tmp/transfers.csv')
     df_i.to_csv('./tmp/internals.csv')
-    df_l.to_csv('./tmp/logs.csv')
+    # df_l.to_csv('./tmp/logs.csv') # TODO : Restore
 
     native = False
     if (df_i.size > df_t.size):
@@ -406,21 +407,42 @@ def eth_json_process(filename):
         logger.info(f"Detect NOT NATIVE token")
 
     # Get unified transaction-internals-transfers
-    dftemp_transaction = df_transaction[df_transaction['isError'] == 0]
-    dftemp_transaction = dftemp_transaction[['timeStamp','from', 'to', 'value']]
-    dftemp_transaction = dftemp_transaction[dftemp_transaction["value"] != 0]
     df_trx_0 = df_transaction[df_transaction['isError'] == 0]
-    df_trx_1 = df_trx_0[['timeStamp',
-                         'hash', 
-                         'from', 
-                         'to', 
-                         'value', 
-                         'isError', 
-                         'input']]
+    df_trx_1 = df_trx_0[['timeStamp', 'hash', 'from', 'to', 'value', 'input', 
+                         'isError']]
+    df_trx_1['file'] = 'trx'
+    df_uni = df_trx_1
+
+    if (not df_t.empty):
+        df_tra_0 = df_t
+        df_tra_1 = df_tra_0[['timeStamp', 'hash', 'from', 'to', 'value', 'input']]
+        df_tra_1['isError'] = 0
+        df_tra_1['file'] = 'tra'
+
+    if (not df_i.empty):
+        df_int_0 = df_i
+        df_int_1 = df_int_0[['timeStamp', 'hash', 'from', 'to', 'value', 'input',
+                             'isError']]
+        df_int_1['file'] = 'int'
 
     print(df_trx_1.info())
     print(df_trx_1.head())
+
+    if (not df_t.empty):
+        print(df_tra_1.info())
+        print(df_tra_1.head())
+        pd_uni = pd.concat([df_uni, df_tra_1], axis=0)
+        df_uni = pd.DataFrame(pd_uni)
+    if (not df_i.empty):
+        print(df_int_1.info())
+        print(df_int_1.head())
+        pd_uni = pd.concat([df_uni, df_int_1], axis=0)
+        df_uni = pd.DataFrame(pd_uni)
+
+    print(df_uni.info())
+    print(df_uni.head())
     exit(0)
+
     # Get contract creator
     contract_creator = df_transaction["from"][0]
 
