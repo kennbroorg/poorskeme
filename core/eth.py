@@ -7,14 +7,14 @@ import pandas as pd
 import time
 import os.path
 import requests
-from bscscan import BscScan
+# from bscscan import BscScan
 
 from termcolor import colored
 import coloredlogs, logging
 
 from web3_input_decoder import InputDecoder, decode_constructor
 import traceback
-import urllib.request
+# import urllib.request
 
 
 # create a logger object.
@@ -338,7 +338,7 @@ async def eth_json_collect(contract_address, block_from, block_to, key, chunk=30
 def eth_json_process(filename):
     # Validate file
     if (not os.path.exists(filename)):
-        raise("JSON File not found")
+        raise FileNotFoundError("JSON File not found")
 
     # Read JSON file
     tic = time.perf_counter()
@@ -405,6 +405,22 @@ def eth_json_process(filename):
     else: 
         logger.info(f"Detect NOT NATIVE token")
 
+    # Get unified transaction-internals-transfers
+    dftemp_transaction = df_transaction[df_transaction['isError'] == 0]
+    dftemp_transaction = dftemp_transaction[['timeStamp','from', 'to', 'value']]
+    dftemp_transaction = dftemp_transaction[dftemp_transaction["value"] != 0]
+    df_trx_0 = df_transaction[df_transaction['isError'] == 0]
+    df_trx_1 = df_trx_0[['timeStamp',
+                         'hash', 
+                         'from', 
+                         'to', 
+                         'value', 
+                         'isError', 
+                         'input']]
+
+    print(df_trx_1.info())
+    print(df_trx_1.head())
+    exit(0)
     # Get contract creator
     contract_creator = df_transaction["from"][0]
 
