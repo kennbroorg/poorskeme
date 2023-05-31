@@ -270,6 +270,11 @@ def bsc_json_process(filename):
     df_t = pd.read_json('./tmp/transfers.json')
     df_i = pd.read_json('./tmp/internals.json')
 
+    # For DEBUG (remove)
+    df_transaction.to_csv('./tmp/transaction.csv')
+    df_t.to_csv('./tmp/transfers.csv')
+    df_i.to_csv('./tmp/internals.csv')
+
     native = False
     if (df_i.size > df_t.size):
         native = True
