@@ -36,8 +36,6 @@ async def eth_json_collect(contract_address, block_from, block_to, key, chunk=30
     logger.info("Collecting Contract data")
     logger.info("=====================================================")
 
-    # url = 'https://api.bscscan.com/api?module=account&action=txlist&address=' + contract_address + '&startblock=0&endblock=99999999' + \
-    #     '&page=1&offset=1&sort=asc&apikey=' + key 
     url = 'https://api.etherscan.io/api?module=account&action=txlist&address=' + contract_address + '&startblock=0&endblock=99999999' + \
         '&page=1&offset=1&sort=asc&apikey=' + key
     response = requests.get(url)
@@ -53,33 +51,16 @@ async def eth_json_collect(contract_address, block_from, block_to, key, chunk=30
                      "transaction_creation": first_block['hash'],
                      "date_creation": first_block['timeStamp'],
                      "creator": first_block['from']}
-    print('First Block')
-    print(json_contract)
 
     # contract
     url = 'https://api.etherscan.io/api?module=contract&action=getabi&address=' + contract_address + '&apikey=' + key
     response = requests.get(url)
 
-    # async with BscScan(key) as client:
-    #     json_result = await client.get_contract_abi(
-    #             contract_address=contract_address,
-    #         )
-    # json_str_contract_abi = json.dumps(json_result)
     json_obj_contract_abi = response.json()['result']
-    print('ABI')
-    print(json_obj_contract_abi)
 
-    # async with BscScan(key) as client:
-    #     json_result = await client.get_contract_source_code(
-    #             contract_address=contract_address,
-    #         )
-    # json_str_source_code = json.dumps(json_result)
-    # json_obj_source_code = json.loads(json_str_source_code)
     url = 'https://api.etherscan.io/api?module=contract&action=getsourcecode&address=' + contract_address + '&apikey=' + key
     response = requests.get(url)
     json_obj_source_code = response.json()['result']
-    print('Source Code')
-    print(json_obj_source_code)
 
     # NOTE : Implement in future
     # get_circulating_supply_by_contract_address - Get circulating supply of token by its contract address
@@ -90,6 +71,7 @@ async def eth_json_collect(contract_address, block_from, block_to, key, chunk=30
     # json_str_circ_supply = json.dumps(json_result)
     # json_obj_circ_supply = json.loads(json_str_circ_supply)
 
+    # NOTE : Implement in future
     # get_total_supply_by_contract_address - Get circulating supply of token by its contract address
     # async with BscScan(key) as client:
     #     json_result = await client.get_total_supply_by_contract_address(
@@ -116,15 +98,6 @@ async def eth_json_collect(contract_address, block_from, block_to, key, chunk=30
     json_total = []
     while startblock < block_to:
         try:
-    #         async with BscScan(key) as client:
-    #             json_result = await client.get_normal_txs_by_address(
-    #                     address=contract_address,
-    #                     startblock=startblock,
-    #                     endblock=endblock,
-    #                     sort="asc"
-    #                 )
-    #         json_str = json.dumps(json_result)
-    #         json_object = json.loads(json_str)
             url = 'https://api.etherscan.io/api?module=account&action=txlist&address=' + contract_address + \
                   '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
             response = requests.get(url)
@@ -166,21 +139,8 @@ async def eth_json_collect(contract_address, block_from, block_to, key, chunk=30
     json_total = []
     while startblock < block_to:
         try:
-            # async with BscScan(key) as client:
-            #     json_result = await client.get_bep20_token_transfer_events_by_address(
-            #             address=contract_address,
-            #             startblock=startblock,
-            #             endblock=endblock,
-            #             sort="asc"
-            #         )
-            # json_str = json.dumps(json_result)
-            # json_object = json.loads(json_str)
-            # url = 'https://api.etherscan.io/api?module=account&action=tokentx&contractaddress=' + contract_address + \
-            #       '&address=' + address + '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
             url = 'https://api.etherscan.io/api?module=account&action=tokentx&address=' + contract_address + \
                   '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
-            # url = 'https://api.etherscan.io/api?module=account&action=txlist&address=' + contract_address + \
-            #       '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
             response = requests.get(url)
             json_object = response.json()['result']
 
@@ -207,9 +167,6 @@ async def eth_json_collect(contract_address, block_from, block_to, key, chunk=30
     logger.info("=====================================================")
 
     json_transfer = json_total
-    print('Transfers')
-    print(json_transfer)
-    # ERROR : No colecta nada
 
     logger.info(" ")
     logger.info("=====================================================")
@@ -221,19 +178,8 @@ async def eth_json_collect(contract_address, block_from, block_to, key, chunk=30
     json_total = []
     while startblock < block_to:
         try:
-            # async with BscScan(key) as client:
-            #     json_result = await client.get_internal_txs_by_address(
-            #             address=contract_address,
-            #             startblock=startblock,
-            #             endblock=endblock,
-            #             sort="asc"
-            #         )
-            # json_str = json.dumps(json_result)
-            # json_object = json.loads(json_str)
             url = 'https://api.etherscan.io/api?module=account&action=txlistinternal&address=' + contract_address + \
                   '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
-            # url = 'https://api.etherscan.io/api?module=account&action=tokentx&address=' + contract_address + \
-            #       '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
             response = requests.get(url)
             json_object = response.json()['result']
 
@@ -260,8 +206,6 @@ async def eth_json_collect(contract_address, block_from, block_to, key, chunk=30
     logger.info("=====================================================")
 
     json_internals = json_total
-    print('Internals')
-    print(json_internals)
 
     logger.info(" ")
     logger.info("=====================================================")
@@ -273,15 +217,6 @@ async def eth_json_collect(contract_address, block_from, block_to, key, chunk=30
     json_total = []
     while startblock < block_to:
         try:
-            # async with BscScan(key) as client:
-            #     json_result = await client.get_internal_txs_by_address(
-            #             address=contract_address,
-            #             startblock=startblock,
-            #             endblock=endblock,
-            #             sort="asc"
-            #         )
-            # json_str = json.dumps(json_result)
-            # json_object = json.loads(json_str)
             url = 'https://api.etherscan.io/api?module=logs&action=getLogs&address=' + contract_address + \
                   '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
             response = requests.get(url)
@@ -334,7 +269,6 @@ async def eth_json_collect(contract_address, block_from, block_to, key, chunk=30
     eth_json_process(filename)
 
 
-#################################################################################################3
 def eth_json_process(filename):
     # Validate file
     if (not os.path.exists(filename)):
@@ -392,7 +326,7 @@ def eth_json_process(filename):
     df_i = pd.read_json('./tmp/internals.json')
     df_l = pd.read_json('./tmp/logs.json')
 
-    # For DEBUG (remove)
+    # HACK : For DEBUG (remove)
     df_transaction.to_csv('./tmp/transaction.csv')
     df_t.to_csv('./tmp/transfers.csv')
     df_i.to_csv('./tmp/internals.csv')
@@ -436,12 +370,15 @@ def eth_json_process(filename):
 
     df_uni = df_uni.sort_values(by=['timeStamp','file'], ascending=False)  
     df_uni.to_csv('./tmp/uni.csv')
-
+    with open('./tmp/uni.json', 'w') as outfile:
+        df_uni_json = df_uni.to_json(outfile)
+    
     # Get contract creator
     contract_creator = df_transaction["from"][0]
 
     # TODO : Determine decimal digits in base of range 
-    # Get token and volume
+
+    # Get token and volume NOTE : Remove death code
     if (native):
         token_name = "ETH"
         # volume = round(df_transaction['value'].sum() / 1e+18, 2) + round(df_i['value'].sum() / 1e+18, 2)
@@ -500,18 +437,16 @@ def eth_json_process(filename):
                 liq_raw = liq_raw - int(value_raw)
                 trx_out = trx_out + value
                 trx_out_day = trx_out_day + value
-                print(f"Liq: {liq_raw} (-)")  # WARNING :
             elif (address_to == address_contract):
                 liq = liq + value
                 liq_raw = liq_raw + int(value_raw)
                 volume_raw = volume_raw + int(value_raw)
                 trx_in = trx_in + value
                 trx_in_day = trx_in_day + value
-                print(f"Liq: {liq_raw} (+)")  # WARNING : 
                 # WARNING : Remove max_liq
-                if (max_liq < liq):
-                    max_liq = liq
-                    max_liq_date = dftemp["timeStamp"][i]
+                # if (max_liq < liq):
+                #     max_liq = liq
+                #     max_liq_date = dftemp["timeStamp"][i]
                 if (max_liq_raw < liq_raw):
                     max_liq_raw = liq_raw
                     max_liq_date = dftemp["timeStamp"][i]
@@ -539,9 +474,9 @@ def eth_json_process(filename):
         first_date = dftemp['timeStamp'][0]
         last_date = dftemp['timeStamp'].iloc[-1]  # TODO : When Liq == 0
 
-        print(f"liq_raw: {liq_raw} - liq: {liq}")
-        print(f"MAX liq_raw: {max_liq_raw} - MAX liq: {max_liq}")
-        print(f"Volume raw: {volume_raw} - Volume: {volume}")
+        # print(f"liq_raw: {liq_raw} - liq: {liq}")
+        # print(f"MAX liq_raw: {max_liq_raw} - MAX liq: {max_liq}")
+        # print(f"Volume raw: {volume_raw} - Volume: {volume}")
 
     else:  # NOTE : Not native
         unique_wallets = len(df_t['from'].unique())
@@ -562,9 +497,9 @@ def eth_json_process(filename):
                     liq_raw = liq_raw + int(value_raw)
                     trx_in = trx_in + value
                     trx_in_day = trx_in_day + value
-                    if (max_liq < liq):
-                        max_liq = liq
-                        max_liq_date = df_t["timeStamp"][i]
+                    # if (max_liq < liq):
+                    #     max_liq = liq
+                    #     max_liq_date = df_t["timeStamp"][i]
                     if (max_liq_raw < liq_raw):
                         max_liq_raw = liq_raw
                         max_liq_date = df_t["timeStamp"][i]
@@ -600,8 +535,8 @@ def eth_json_process(filename):
     from_trx = df_t.groupby('from').agg({'value': ['sum','count']})
     # from_trx.set_axis(['value_out', 'count_out'], axis=1, inplace=False)
     from_trx_axis = from_trx.set_axis(['value_out', 'count_out'], axis=1)
-    print(from_trx_axis.info())
-    print(from_trx_axis.head())
+    # print(from_trx_axis.info())
+    # print(from_trx_axis.head())
     to_trx = df_t.groupby('to').agg({'value': ['sum','count']})
     # to_trx.set_axis(['value_in', 'count_in'], axis=1, inplace=True)
     to_trx_axis = to_trx.set_axis(['value_in', 'count_in'], axis=1)
