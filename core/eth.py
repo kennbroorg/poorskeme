@@ -376,10 +376,9 @@ def eth_json_process(filename):
     with open('./tmp/internals.json', 'w') as outfile:
         json.dump(internals, outfile)
 
-    # FIX : Restore
-    # logs = data['logs']
-    # with open('./tmp/logs.json', 'w') as outfile:
-    #     json.dump(logs, outfile)
+    logs = data['logs']
+    with open('./tmp/logs.json', 'w') as outfile:
+        json.dump(logs, outfile)
 
     toc = time.perf_counter()
     logger.info(f"Split file in {toc - tic:0.4f} seconds")
@@ -391,13 +390,13 @@ def eth_json_process(filename):
     df_transaction = pd.read_json('./tmp/transactions.json')
     df_t = pd.read_json('./tmp/transfers.json')
     df_i = pd.read_json('./tmp/internals.json')
-    # df_l = pd.read_json('./tmp/logs.json') # FIX : Restore
+    df_l = pd.read_json('./tmp/logs.json')
 
     # For DEBUG (remove)
     df_transaction.to_csv('./tmp/transaction.csv')
     df_t.to_csv('./tmp/transfers.csv')
     df_i.to_csv('./tmp/internals.csv')
-    # df_l.to_csv('./tmp/logs.csv') # FIX : Restore
+    df_l.to_csv('./tmp/logs.csv')
 
     native = False
     if (df_i.size > df_t.size):
@@ -426,10 +425,10 @@ def eth_json_process(filename):
         df_int_1['file'] = 'int'
 
     if (not df_t.empty):
-        pd_uni = pd.concat([df_uni, df_tra_1], axis=0)
+        pd_uni = pd.concat([df_uni, df_tra_1], axis=0, ignore_index=True)
         df_uni = pd.DataFrame(pd_uni)
     if (not df_i.empty):
-        pd_uni = pd.concat([df_uni, df_int_1], axis=0)
+        pd_uni = pd.concat([df_uni, df_int_1], axis=0, ignore_index=True)
         df_uni = pd.DataFrame(pd_uni)
 
     print(df_uni.info())
@@ -441,11 +440,13 @@ def eth_json_process(filename):
     # Get contract creator
     contract_creator = df_transaction["from"][0]
 
+    # TODO : Determine decimal digits in base of range 
     # Get token and volume
     if (native):
         token_name = "ETH"
-        volume = round(df_transaction['value'].sum() / 1e+18, 2) + round(df_i['value'].sum() / 1e+18, 2)
-        volume = round(volume / 2, 2)
+        # volume = round(df_transaction['value'].sum() / 1e+18, 2) + round(df_i['value'].sum() / 1e+18, 2)
+        volume = df_transaction['value'].sum() + df_i['value'].sum()
+        volume = round(volume / 1e+18, 2)
         # volume = round((df_transaction['value'].sum() / 1e+18, 2 + df_i['value'].sum() / 1e+18) / 2, 2)
     else:
         # NOTE : Display another tokens
@@ -481,50 +482,49 @@ def eth_json_process(filename):
         # dftemp_i = df_i[['timeStamp', 'from', 'to', 'value']]
         # dftemp = pd.concat([dftemp_transaction, dftemp_i],
         #                    join='inner', ignore_index=True)
-        # dftemp = dftemp.sort_values(["timeStamp"])
+        dftemp = dftemp.sort_values(["timeStamp"])
 
         unique_wallets = len(dftemp['from'].unique())
 
         for i in dftemp.index: 
-            value = round(dftemp["value"][i] / 1e+18, 2)
-            address_from = str(dftemp["from"][i])
-            address_to = str(dftemp["to"][i])
+            value_raw = dftemp["value"][i]
+            value = round(value_raw / 1e+18, 2)
+            address_from = dftemp["from"][i]
+            address_to = dftemp["to"][i]
 
             if (address_from == address_contract):
                 liq = liq - value
                 trx_out = trx_out + value
                 trx_out_day = trx_out_day + value
+                print(f"Liq: {liq} (-)")
             elif (address_to == address_contract):
                 liq = liq + value
                 trx_in = trx_in + value
                 trx_in_day = trx_in_day + value
+                print(f"Liq: {liq} (+)")
                 if (max_liq < liq):
                     max_liq = liq
                     max_liq_date = dftemp["timeStamp"][i]
             else:
                 remain = remain + value
 
-            if (first):
-            # if (day.empty):
-                # day = df_t['timeStamp'][i].strftime("%Y-%m-%d")
-                day = dftemp['timeStamp'][i].dt.strftime("%Y-%m-%d")
-                # day = df_i['timeStamp'][i].strftime("%Y-%m-%d")
+            if (day == ''):
+                day = dftemp['timeStamp'][i].strftime("%Y-%m-%d")
                 day_prev = day
                 day_prev_complete = dftemp['timeStamp'][i]
-                first = False
-            elif (str(day_prev) != str(day)):
-                liq_series.append({"name": day_prev_complete.dt.strftime("%Y-%m-%dT%H:%M:%S.009Z"),
+            elif (day_prev != day):
+                liq_series.append({"name": day_prev_complete.strftime("%Y-%m-%dT%H:%M:%S.009Z"),
                                 "value": liq})
-                trx_in_series.append({"name": day_prev_complete.dt.strftime("%Y-%m-%dT%H:%M:%S.009Z"),
+                trx_in_series.append({"name": day_prev_complete.strftime("%Y-%m-%dT%H:%M:%S.009Z"),
                                       "value": trx_in_day})
-                trx_out_series.append({"name": day_prev_complete.dt.strftime("%Y-%m-%dT%H:%M:%S.009Z"),
+                trx_out_series.append({"name": day_prev_complete.strftime("%Y-%m-%dT%H:%M:%S.009Z"),
                                        "value": trx_out_day})
                 day_prev = day
                 day_prev_complete = dftemp['timeStamp'][i]
                 trx_in_day = 0
                 trx_out_day = 0
             else:
-                day = dftemp['timeStamp'][i].dt.strftime("%Y-%m-%d")
+                day = dftemp['timeStamp'][i].strftime("%Y-%m-%d")
 
         first_date = dftemp['timeStamp'][0]
         last_date = dftemp['timeStamp'].iloc[-1]  # TODO : When Liq == 0
@@ -578,12 +578,16 @@ def eth_json_process(filename):
         df_t = dftemp
     # Group by
     from_trx = df_t.groupby('from').agg({'value': ['sum','count']})
-    from_trx.set_axis(['value_out', 'count_out'], axis=1, inplace=True)
+    # from_trx.set_axis(['value_out', 'count_out'], axis=1, inplace=False)
+    from_trx_axis = from_trx.set_axis(['value_out', 'count_out'], axis=1)
+    print(from_trx_axis.info())
+    print(from_trx_axis.head())
     to_trx = df_t.groupby('to').agg({'value': ['sum','count']})
-    to_trx.set_axis(['value_in', 'count_in'], axis=1, inplace=True)
+    # to_trx.set_axis(['value_in', 'count_in'], axis=1, inplace=True)
+    to_trx_axis = to_trx.set_axis(['value_in', 'count_in'], axis=1)
 
     # Merge
-    trx_total = from_trx.join(to_trx)
+    trx_total = from_trx_axis.join(to_trx_axis)
     trx_total['wallet'] = trx_total.index
     trx_total = trx_total.sort_values(["wallet"])
     trx_total.reset_index(drop=True, inplace=True)
@@ -639,18 +643,18 @@ def eth_json_process(filename):
     # TETHER_ABI = json.loads(json.load(f)["result"])
 
     df_hash = df_transaction["hash"][0:]
-    print("df_hash")
-    print(df_hash.head())
+    # print("df_hash")
+    # print(df_hash.head())
     input_constructor = df_transaction["input"][0]
     input_column = df_transaction["input"][1:]
-    print("=============================================")
-    print("INPUT TRX")
-    print("=============================================")
-    print(input_column)
-    print("=============================================")
-    print("INPUT INTERNAL")
-    print("=============================================")
-    print(df_i["input"][1:])
+    # print("=============================================")
+    # print("INPUT TRX")
+    # print("=============================================")
+    # print(input_column)
+    # print("=============================================")
+    # print("INPUT INTERNAL")
+    # print("=============================================")
+    # print(df_i["input"][1:])
 
     decoder = InputDecoder(ABI)
     # decoder = InputDecoder(TETHER_ABI)
@@ -660,18 +664,18 @@ def eth_json_process(filename):
     functions.append(constructor_call.name)
     arguments = []
     arguments.append(str(constructor_call.arguments))
-    print("Input Columns")
-    print(input_column)
+    # print("Input Columns")
+    # print(input_column)
     for i in input_column:
         try:
-            print("=============================================")
-            print(i)
+            # print("=============================================")
+            # print(i)
             func_call = decoder.decode_function((i),)
-            print(f"Name: {func_call.name} - Arguments: {func_call.arguments}")
+            # print(f"Name: {func_call.name} - Arguments: {func_call.arguments}")
             functions.append(func_call.name)
             arguments.append(str(func_call.arguments))
         except:
-            traceback.print_exc()
+            # traceback.print_exc()
             functions.append("Not decoded")
             arguments.append("Not decoded")
 
@@ -733,9 +737,11 @@ def eth_json_process(filename):
         json.dump(trans_resume, outfile)
 
     # Transfer resume
-    if (native):  # TODO : For native
-        trans_in = len(dftemp_transaction)
-        trans_out = len(dftemp_i)
+    if (native):  # NOTE : For native
+        # trans_in = len(dftemp_transaction)  # TODO : Remove value = 0
+        trans_in = len(dftemp[dftemp['file'] == 'trx'])  # TODO : Remove value = 0
+        # trans_out = len(dftemp_i)
+        trans_out = len(dftemp[dftemp['file'] == 'int'])
     else:
         trans_in = len(df_t[df_t['from'].str.contains(address_contract, case=False)])
         trans_out = len(df_t[df_t['to'].str.contains(address_contract, case=False)])
