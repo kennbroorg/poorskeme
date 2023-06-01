@@ -14,7 +14,17 @@ import coloredlogs, logging
 
 # create a logger object.
 logger = logging.getLogger(__name__)
-coloredlogs.install(level='DEBUG')
+# coloredlogs.install(level='DEBUG')
+
+__author__ = "KennBro"
+__copyright__ = "Copyright 2023, Personal Research"
+__credits__ = ["KennBro"]
+__license__ = "GPL"
+__version__ = "1.0.1"
+__maintainer__ = "KennBro"
+__email__ = "kennbro <at> protonmail <dot> com"
+__status__ = "Development"
+
 
 home = Blueprint('home_views', __name__)
 
