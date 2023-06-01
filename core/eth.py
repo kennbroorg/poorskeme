@@ -459,7 +459,10 @@ def eth_json_process(filename):
     # Liquidity and dates
     address_contract = contract["contract"].lower()
     liq = 0
+    liq_raw = 0
     max_liq = 0
+    max_liq_raw = 0
+    volume_raw = 0
     trx_out = 0 
     trx_in = 0
     trx_out_day = 0 
@@ -494,16 +497,23 @@ def eth_json_process(filename):
 
             if (address_from == address_contract):
                 liq = liq - value
+                liq_raw = liq_raw - int(value_raw)
                 trx_out = trx_out + value
                 trx_out_day = trx_out_day + value
-                print(f"Liq: {liq} (-)")
+                print(f"Liq: {liq_raw} (-)")  # WARNING :
             elif (address_to == address_contract):
                 liq = liq + value
+                liq_raw = liq_raw + int(value_raw)
+                volume_raw = volume_raw + int(value_raw)
                 trx_in = trx_in + value
                 trx_in_day = trx_in_day + value
-                print(f"Liq: {liq} (+)")
+                print(f"Liq: {liq_raw} (+)")  # WARNING : 
+                # WARNING : Remove max_liq
                 if (max_liq < liq):
                     max_liq = liq
+                    max_liq_date = dftemp["timeStamp"][i]
+                if (max_liq_raw < liq_raw):
+                    max_liq_raw = liq_raw
                     max_liq_date = dftemp["timeStamp"][i]
             else:
                 remain = remain + value
@@ -529,24 +539,34 @@ def eth_json_process(filename):
         first_date = dftemp['timeStamp'][0]
         last_date = dftemp['timeStamp'].iloc[-1]  # TODO : When Liq == 0
 
+        print(f"liq_raw: {liq_raw} - liq: {liq}")
+        print(f"MAX liq_raw: {max_liq_raw} - MAX liq: {max_liq}")
+        print(f"Volume raw: {volume_raw} - Volume: {volume}")
+
     else:  # NOTE : Not native
         unique_wallets = len(df_t['from'].unique())
         for i in df_t.index: 
             if (df_t["tokenSymbol"][i] == token_name):
-                value = round(df_t["value"][i] / 1e+18, 2)
+                value_raw = df_t["value"][i]
+                value = round(value_raw / 1e+18, 2)
                 address_from = df_t["from"][i].lower()
                 address_to = df_t["to"][i].lower()
 
                 if (address_from == address_contract):
                     liq = liq - value
+                    liq_raw = liq_raw - int(value_raw)
                     trx_out = trx_out + value
                     trx_out_day = trx_out_day + value
                 elif (address_to == address_contract):
                     liq = liq + value
+                    liq_raw = liq_raw + int(value_raw)
                     trx_in = trx_in + value
                     trx_in_day = trx_in_day + value
                     if (max_liq < liq):
                         max_liq = liq
+                        max_liq_date = df_t["timeStamp"][i]
+                    if (max_liq_raw < liq_raw):
+                        max_liq_raw = liq_raw
                         max_liq_date = df_t["timeStamp"][i]
                 else:
                     remain = remain + value
@@ -698,9 +718,9 @@ def eth_json_process(filename):
                   "token_name": token_name,
                   "native": int(native),
                   "creator": contract_creator,
-                  "max_liq": max_liq,
+                  "max_liq": round(max_liq_raw / 1e18, 2),
                   "max_liq_date": max_liq_date.strftime("%Y/%m/%d - %H:%M:%S"),
-                  "volume": volume,
+                  "volume": round(volume_raw / 1e18, 2),
                   "wallets": unique_wallets,
                   "investments": investments,
                   "funct_stats": funct_stats_json,
