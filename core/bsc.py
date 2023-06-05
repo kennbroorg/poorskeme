@@ -7,12 +7,13 @@ import pandas as pd
 import time
 import os.path
 import requests
-from bscscan import BscScan
+# from bscscan import BscScan
 
 from termcolor import colored
 import coloredlogs, logging
 
 from web3_input_decoder import InputDecoder, decode_constructor
+
 
 # create a logger object.
 logger = logging.getLogger(__name__)
@@ -48,35 +49,47 @@ async def bsc_json_collect(contract_address, block_from, block_to, key, chunk=30
                      "date_creation": first_block['timeStamp'],
                      "creator": first_block['from']}
     # contract
-    async with BscScan(key) as client:
-        json_result = await client.get_contract_abi(
-                contract_address=contract_address,
-            )
-    json_str_contract_abi = json.dumps(json_result)
-    json_obj_contract_abi = json.loads(json_str_contract_abi)
+    # async with BscScan(key) as client:
+    #     json_result = await client.get_contract_abi(
+    #             contract_address=contract_address,
+    #         )
+    # json_str_contract_abi = json.dumps(json_result)
+    # json_obj_contract_abi = json.loads(json_str_contract_abi)
 
-    async with BscScan(key) as client:
-        json_result = await client.get_contract_source_code(
-                contract_address=contract_address,
-            )
-    json_str_source_code = json.dumps(json_result)
-    json_obj_source_code = json.loads(json_str_source_code)
+    # async with BscScan(key) as client:
+    #     json_result = await client.get_contract_source_code(
+    #             contract_address=contract_address,
+    #         )
+    # json_str_source_code = json.dumps(json_result)
+    # json_obj_source_code = json.loads(json_str_source_code)
 
+    url = 'https://api.bscscan.com/api?module=contract&action=getabi&address=' + contract_address + '&apikey=' + key
+    response = requests.get(url)
+
+    json_obj_contract_abi = response.json()['result']
+
+    url = 'https://api.bscscan.com/api?module=contract&action=getsourcecode&address=' + contract_address + '&apikey=' + key
+    response = requests.get(url)
+    json_obj_source_code = response.json()['result']
+
+
+    # NOTE: Implement in future
     # get_circulating_supply_by_contract_address - Get circulating supply of token by its contract address
-    async with BscScan(key) as client:
-        json_result = await client.get_circulating_supply_by_contract_address(
-                contract_address=contract_address,
-            )
-    json_str_circ_supply = json.dumps(json_result)
-    json_obj_circ_supply = json.loads(json_str_circ_supply)
+    # async with BscScan(key) as client:
+    #     json_result = await client.get_circulating_supply_by_contract_address(
+    #             contract_address=contract_address,
+    #         )
+    # json_str_circ_supply = json.dumps(json_result)
+    # json_obj_circ_supply = json.loads(json_str_circ_supply)
 
+    # NOTE: Implement in future
     # get_total_supply_by_contract_address - Get circulating supply of token by its contract address
-    async with BscScan(key) as client:
-        json_result = await client.get_total_supply_by_contract_address(
-                contract_address=contract_address,
-            )
-    json_str_total_supply = json.dumps(json_result)
-    json_obj_total_supply = json.loads(json_str_total_supply)
+    # async with BscScan(key) as client:
+    #     json_result = await client.get_total_supply_by_contract_address(
+    #             contract_address=contract_address,
+    #         )
+    # json_str_total_supply = json.dumps(json_result)
+    # json_obj_total_supply = json.loads(json_str_total_supply)
 
     logger.info(" ")
     logger.info("=====================================================")
@@ -87,18 +100,34 @@ async def bsc_json_collect(contract_address, block_from, block_to, key, chunk=30
 
     json_total = []
     while startblock < block_to:
-        try:
-            async with BscScan(key) as client:
-                json_result = await client.get_normal_txs_by_address(
-                        address=contract_address,
-                        startblock=startblock,
-                        endblock=endblock,
-                        sort="asc"
-                    )
-            json_str = json.dumps(json_result)
-            json_object = json.loads(json_str)
+        # try:
+        #     async with BscScan(key) as client:
+        #         json_result = await client.get_normal_txs_by_address(
+        #                 address=contract_address,
+        #                 startblock=startblock,
+        #                 endblock=endblock,
+        #                 sort="asc"
+        #             )
+        #     json_str = json.dumps(json_result)
+        #     json_object = json.loads(json_str)
 
-            logger.info(f"TRANSACTIONS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
+        #     logger.info(f"TRANSACTIONS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
+
+        #     json_total += json_object
+
+        # except AssertionError:
+        #     logger.info(f"TRANSACTIONS - From : {startblock} - To : {endblock} - TRANSACTION NOT FOUND")
+
+        try:
+            url = 'https://api.bscscan.com/api?module=account&action=txlist&address=' + contract_address + \
+                  '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
+            response = requests.get(url)
+            json_object = response.json()['result']
+
+            if (len(json_object) > 0):
+                logger.info(f"TRANSACTIONS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
+            else:
+                logger.info(f"TRANSACTIONS - From : {startblock} - To : {endblock} - TRANSACTION NOT FOUND")
 
             json_total += json_object
 
@@ -128,23 +157,39 @@ async def bsc_json_collect(contract_address, block_from, block_to, key, chunk=30
 
     json_total = []
     while startblock < block_to:
-        try:
-            async with BscScan(key) as client:
-                json_result = await client.get_bep20_token_transfer_events_by_address(
-                        address=contract_address,
-                        startblock=startblock,
-                        endblock=endblock,
-                        sort="asc"
-                    )
-            json_str = json.dumps(json_result)
-            json_object = json.loads(json_str)
+        # try:
+        #     async with BscScan(key) as client:
+        #         json_result = await client.get_bep20_token_transfer_events_by_address(
+        #                 address=contract_address,
+        #                 startblock=startblock,
+        #                 endblock=endblock,
+        #                 sort="asc"
+        #             )
+        #     json_str = json.dumps(json_result)
+        #     json_object = json.loads(json_str)
 
-            logger.info(f"TRANSFER - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
+        #     logger.info(f"TRANSFER - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
+
+        #     json_total += json_object
+
+        # except AssertionError:
+        #     logger.info(f"TRANSFER - From : {startblock} - To : {endblock} - TRANSFER NOT FOUND")
+
+        try:
+            url = 'https://api.bscscan.com/api?module=account&action=tokentx&address=' + contract_address + \
+                  '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
+            response = requests.get(url)
+            json_object = response.json()['result']
+
+            if (len(json_object) > 0):
+                logger.info(f"TRANSFERS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
+            else:
+                logger.info(f"TRANSFERS - From : {startblock} - To : {endblock} - TRANSFERS NOT FOUND")
 
             json_total += json_object
 
         except AssertionError:
-            logger.info(f"TRANSFER - From : {startblock} - To : {endblock} - TRANSFER NOT FOUND")
+            logger.info(f"TRANSFERS - From : {startblock} - To : {endblock} - TRANSFERS NOT FOUND")
 
         startblock += chunk + 1
         endblock += chunk + 1
@@ -169,18 +214,34 @@ async def bsc_json_collect(contract_address, block_from, block_to, key, chunk=30
 
     json_total = []
     while startblock < block_to:
-        try:
-            async with BscScan(key) as client:
-                json_result = await client.get_internal_txs_by_address(
-                        address=contract_address,
-                        startblock=startblock,
-                        endblock=endblock,
-                        sort="asc"
-                    )
-            json_str = json.dumps(json_result)
-            json_object = json.loads(json_str)
+        # try:
+        #     async with BscScan(key) as client:
+        #         json_result = await client.get_internal_txs_by_address(
+        #                 address=contract_address,
+        #                 startblock=startblock,
+        #                 endblock=endblock,
+        #                 sort="asc"
+        #             )
+        #     json_str = json.dumps(json_result)
+        #     json_object = json.loads(json_str)
 
-            logger.info(f"INTERNALS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
+        #     logger.info(f"INTERNALS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
+
+        #     json_total += json_object
+
+        # except AssertionError:
+        #     logger.info(f"INTERNALS - From : {startblock} - To : {endblock} - TRANSFER NOT FOUND")
+
+        try:
+            url = 'https://api.bscscan.com/api?module=account&action=txlistinternal&address=' + contract_address + \
+                  '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
+            response = requests.get(url)
+            json_object = response.json()['result']
+
+            if (len(json_object) > 0):
+                logger.info(f"INTERNALS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
+            else:
+                logger.info(f"INTERNALS - From : {startblock} - To : {endblock} - INTERNALS NOT FOUND")
 
             json_total += json_object
 
@@ -201,19 +262,64 @@ async def bsc_json_collect(contract_address, block_from, block_to, key, chunk=30
 
     json_internals = json_total
 
+    logger.info(" ")
+    logger.info("=====================================================")
+    logger.info(f"Collecting logs...")
+    logger.info("=====================================================")
+    startblock = block_from
+    endblock = block_from + chunk
+
+    json_total = []
+    while startblock < block_to:
+        try:
+            url = 'https://api.bscscan.com/api?module=logs&action=getLogs&address=' + contract_address + \
+                  '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
+            response = requests.get(url)
+            json_object = response.json()['result']
+
+            if (len(json_object) > 0):
+                logger.info(f"LOGS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
+            else:
+                logger.info(f"LOGS - From : {startblock} - To : {endblock} - LOGS NOT FOUND")
+
+            json_total += json_object
+
+        except AssertionError:
+            logger.info(f"LOGS - From : {startblock} - To : {endblock} - LOGS NOT FOUND")
+
+        startblock += chunk + 1
+        endblock += chunk + 1
+
+    diff = int(block_to) - int(block_from)
+    logger.info(" ")
+    logger.info("=====================================================")
+    logger.info("  LOGS TOTAL")
+    logger.info("=====================================================")
+    logger.info(f"  From : {block_from} - To : {block_to}")
+    logger.info(f"  Diff : {diff} - Total TRX : {len(json_total)}")
+    logger.info("=====================================================")
+
+    json_logs = json_total
+    # print('Logs')
+    # print(json_logs)
+
     # Consolidate data
     json_total = {"contract": json_contract,
-                  "getabi": json_str_contract_abi,
+                  # "getabi": json_str_contract_abi,
+                  "getabi": json_obj_contract_abi,
                   "source_code": json_obj_source_code,
-                  "circ_supply": json_str_circ_supply,
-                  "total_supply": json_obj_total_supply,
+                  # "circ_supply": json_str_circ_supply,
+                  # "total_supply": json_obj_total_supply,
                   "transactions": json_transaction,
                   "transfers": json_transfer,
-                  "internals": json_internals}
+                  "internals": json_internals,
+                  "logs": json_logs}
 
-    filename = "contract-" + contract_address + ".json"
+    filename = "contract-bsc-" + contract_address + ".json"
     with open(filename, 'w') as outfile:
         json.dump(json_total, outfile)
+
+    # PERF: Increase performanco with async
 
     bsc_json_process(filename)
 
@@ -221,7 +327,7 @@ async def bsc_json_collect(contract_address, block_from, block_to, key, chunk=30
 def bsc_json_process(filename):
     # Validate file
     if (not os.path.exists(filename)):
-        raise("JSON File not found")
+        raise FileNotFoundError("JSON File not found")
 
     # Read JSON file
     tic = time.perf_counter()
@@ -259,35 +365,81 @@ def bsc_json_process(filename):
     with open('./tmp/internals.json', 'w') as outfile:
         json.dump(internals, outfile)
 
+    logs = data['logs']
+    with open('./tmp/logs.json', 'w') as outfile:
+        json.dump(logs, outfile)
+
     toc = time.perf_counter()
     logger.info(f"Split file in {toc - tic:0.4f} seconds")
 
     # Preprocess Statistics
     tic = time.perf_counter()
     
-    # I must reload the files for datatypes (Optimize?)
+    # NOTE: I must reload the files for datatypes (Optimize?)
     df_transaction = pd.read_json('./tmp/transactions.json')
     df_t = pd.read_json('./tmp/transfers.json')
     df_i = pd.read_json('./tmp/internals.json')
+    df_l = pd.read_json('./tmp/logs.json')
 
     # For DEBUG (remove)
     df_transaction.to_csv('./tmp/transaction.csv')
     df_t.to_csv('./tmp/transfers.csv')
     df_i.to_csv('./tmp/internals.csv')
+    df_l.to_csv('./tmp/logs.csv')
 
     native = False
     if (df_i.size > df_t.size):
         native = True
+        logger.info(f"Detect NATIVE token")
+    else: 
+        logger.info(f"Detect NOT NATIVE token")
 
+    # Get unified transaction-internals-transfers
+    df_trx_0 = df_transaction[df_transaction['isError'] == 0]
+    df_trx_1 = df_trx_0[['timeStamp', 'hash', 'from', 'to', 'value', 'input', 
+                         'isError']]
+    df_trx_1['file'] = 'trx'
+    df_uni = df_trx_1
+
+    if (not df_t.empty):
+        df_tra_0 = df_t
+        df_tra_1 = df_tra_0[['timeStamp', 'hash', 'from', 'to', 'value', 'input']]
+        df_tra_1['isError'] = 0
+        df_tra_1['file'] = 'tra'
+
+    if (not df_i.empty):
+        df_int_0 = df_i
+        df_int_1 = df_int_0[['timeStamp', 'hash', 'from', 'to', 'value', 'input',
+                             'isError']]
+        df_int_1['file'] = 'int'
+
+    if (not df_t.empty):
+        pd_uni = pd.concat([df_uni, df_tra_1], axis=0, ignore_index=True)
+        df_uni = pd.DataFrame(pd_uni)
+    if (not df_i.empty):
+        pd_uni = pd.concat([df_uni, df_int_1], axis=0, ignore_index=True)
+        df_uni = pd.DataFrame(pd_uni)
+
+    print(df_uni.info())
+    print(df_uni.head())
+
+    df_uni = df_uni.sort_values(by=['timeStamp','file'], ascending=False)  
+    df_uni.to_csv('./tmp/uni.csv')
+    with open('./tmp/uni.json', 'w') as outfile:
+        df_uni_json = df_uni.to_json(outfile)
+    
     # Get contract creator
     contract_creator = df_transaction["from"][0]
 
-    # Get token and volume
+    # TODO : Determine decimal digits in base of range 
+
+    # Get token and volume NOTE: Remove death code
     if (native):
-        token_name = "Native Token"  # TODO 
+        token_name = "BNB"
         # volume = round(df_transaction['value'].sum() / 1e+18, 2) + round(df_i['value'].sum() / 1e+18, 2)
         volume = round((df_transaction['value'].sum() / 1e+18, 2 + df_i['value'].sum() / 1e+18) / 2, 2)
     else:
+        # NOTE : Display another tokens
         token = df_t.groupby('tokenSymbol').agg({'value': ['sum','count']})  # TODO: Use for anomalies
         token = token.sort_values(by=[('value','count')], ascending=False)  
         token_name = token.index[0]
@@ -297,7 +449,10 @@ def bsc_json_process(filename):
     # Liquidity and dates
     address_contract = contract["contract"].lower()
     liq = 0
+    liq_raw = 0
     max_liq = 0
+    max_liq_raw = 0
+    volume_raw = 0
     trx_out = 0 
     trx_in = 0
     trx_out_day = 0 
@@ -310,32 +465,42 @@ def bsc_json_process(filename):
     day_prev = ''
     day_prev_complete = ''
     if (native):
-        dftemp_transaction = df_transaction[df_transaction['isError'] == 0]
-        dftemp_transaction = dftemp_transaction[['timeStamp','from', 'to', 'value']]
-        dftemp_transaction = dftemp_transaction[dftemp_transaction["value"] != 0]
+        # NOTE : I replace the dftemp for df_uni. Remove if it's working
+        dftemp = df_uni
+        # dftemp_transaction = df_transaction[df_transaction['isError'] == 0]
+        # dftemp_transaction = dftemp_transaction[['timeStamp','from', 'to', 'value']]
+        # dftemp_transaction = dftemp_transaction[dftemp_transaction["value"] != 0]
 
-        dftemp_i = df_i[['timeStamp', 'from', 'to', 'value']]
-        dftemp = pd.concat([dftemp_transaction, dftemp_i],
-                           join='inner', ignore_index=True)
+        # dftemp_i = df_i[['timeStamp', 'from', 'to', 'value']]
+        # dftemp = pd.concat([dftemp_transaction, dftemp_i],
+        #                    join='inner', ignore_index=True)
         dftemp = dftemp.sort_values(["timeStamp"])
 
         unique_wallets = len(dftemp['from'].unique())
 
         for i in dftemp.index: 
-            value = round(dftemp["value"][i] / 1e+18, 2)
+            value_raw = dftemp["value"][i]
+            value = round(value_raw / 1e+18, 2)
             address_from = dftemp["from"][i]
             address_to = dftemp["to"][i]
 
             if (address_from == address_contract):
                 liq = liq - value
+                liq_raw = liq_raw - int(value_raw)
                 trx_out = trx_out + value
                 trx_out_day = trx_out_day + value
             elif (address_to == address_contract):
                 liq = liq + value
+                liq_raw = liq_raw + int(value_raw)
+                volume_raw = volume_raw + int(value_raw)
                 trx_in = trx_in + value
                 trx_in_day = trx_in_day + value
-                if (max_liq < liq):
-                    max_liq = liq
+                # WARNING : Remove max_liq
+                # if (max_liq < liq):
+                #     max_liq = liq
+                #     max_liq_date = dftemp["timeStamp"][i]
+                if (max_liq_raw < liq_raw):
+                    max_liq_raw = liq_raw
                     max_liq_date = dftemp["timeStamp"][i]
             else:
                 remain = remain + value
@@ -359,26 +524,33 @@ def bsc_json_process(filename):
                 day = dftemp['timeStamp'][i].strftime("%Y-%m-%d")
 
         first_date = dftemp['timeStamp'][0]
-        last_date = dftemp['timeStamp'].iloc[-1]  # TODO : When Liq == 0
+        last_date = dftemp['timeStamp'].iloc[-1]  # TODO: When Liq == 0
 
-    else:
+    else:  # NOTE : Not native
         unique_wallets = len(df_t['from'].unique())
         for i in df_t.index: 
             if (df_t["tokenSymbol"][i] == token_name):
-                value = round(df_t["value"][i] / 1e+18, 2)
+                value_raw = df_t["value"][i]
+                value = round(value_raw / 1e+18, 2)
                 address_from = df_t["from"][i].lower()
                 address_to = df_t["to"][i].lower()
 
                 if (address_from == address_contract):
                     liq = liq - value
+                    liq_raw = liq_raw - int(value_raw)
                     trx_out = trx_out + value
                     trx_out_day = trx_out_day + value
                 elif (address_to == address_contract):
                     liq = liq + value
+                    liq_raw = liq_raw + int(value_raw)
+                    volume_raw = volume_raw + int(value_raw)
                     trx_in = trx_in + value
                     trx_in_day = trx_in_day + value
-                    if (max_liq < liq):
-                        max_liq = liq
+                    # if (max_liq < liq):
+                    #     max_liq = liq
+                    #     max_liq_date = df_t["timeStamp"][i]
+                    if (max_liq_raw < liq_raw):
+                        max_liq_raw = liq_raw
                         max_liq_date = df_t["timeStamp"][i]
                 else:
                     remain = remain + value
@@ -410,12 +582,16 @@ def bsc_json_process(filename):
         df_t = dftemp
     # Group by
     from_trx = df_t.groupby('from').agg({'value': ['sum','count']})
-    from_trx.set_axis(['value_out', 'count_out'], axis=1, inplace=True)
+    # from_trx.set_axis(['value_out', 'count_out'], axis=1, inplace=False)
+    from_trx_axis = from_trx.set_axis(['value_out', 'count_out'], axis=1)
+    # print(from_trx_axis.info())
+    # print(from_trx_axis.head())
     to_trx = df_t.groupby('to').agg({'value': ['sum','count']})
-    to_trx.set_axis(['value_in', 'count_in'], axis=1, inplace=True)
+    # to_trx.set_axis(['value_in', 'count_in'], axis=1, inplace=True)
+    to_trx_axis = to_trx.set_axis(['value_in', 'count_in'], axis=1)
 
     # Merge
-    trx_total = from_trx.join(to_trx)
+    trx_total = from_trx_axis.join(to_trx_axis)
     trx_total['wallet'] = trx_total.index
     trx_total = trx_total.sort_values(["wallet"])
     trx_total.reset_index(drop=True, inplace=True)
@@ -446,6 +622,7 @@ def bsc_json_process(filename):
     trx_total_asc = trx_total.sort_values(["Percentage"], ascending=False)
 
     # Statistic Percentage
+    # TODO: Define the correct percentage in base to time period
     e_0 = trx_total[trx_total['Percentage'] == 0]
     e_0_100 = trx_total[(trx_total['Percentage'] > 0) & (trx_total['Percentage'] < 100)]
     e_100_241 = trx_total[(trx_total['Percentage'] >= 100) & (trx_total['Percentage'] <= 241)]
@@ -458,10 +635,12 @@ def bsc_json_process(filename):
     investments.append({"name": "Top Profit", "value": len(e_241)})
 
     # Input decoded
+    # PERF : Enhance decoder
     # ABI
     contract_abi = data['getabi']
+
     ABI = json.loads(contract_abi)
-    ABI = json.loads(ABI)
+    # ABI = json.loads(ABI)
 
     df_hash = df_transaction["hash"][0:]
     input_constructor = df_transaction["input"][0]
@@ -481,6 +660,7 @@ def bsc_json_process(filename):
             functions.append(func_call.name)
             arguments.append(str(func_call.arguments))
         except:
+            # traceback.print_exc()
             functions.append("Not decoded")
             arguments.append("Not decoded")
 
@@ -503,9 +683,9 @@ def bsc_json_process(filename):
                   "token_name": token_name,
                   "native": int(native),
                   "creator": contract_creator,
-                  "max_liq": max_liq,
+                  "max_liq": round(max_liq_raw / 1e18, 2),
                   "max_liq_date": max_liq_date.strftime("%Y/%m/%d - %H:%M:%S"),
-                  "volume": volume,
+                  "volume": round(volume_raw / 1e18, 2),
                   "wallets": unique_wallets,
                   "investments": investments,
                   "funct_stats": funct_stats_json,
@@ -542,7 +722,7 @@ def bsc_json_process(filename):
         json.dump(trans_resume, outfile)
 
     # Transfer resume
-    if (native):  # TODO : For native
+    if (native):  # NOTE: For native
         trans_in = len(dftemp_transaction)
         trans_out = len(dftemp_i)
     else:
