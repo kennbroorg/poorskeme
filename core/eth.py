@@ -13,9 +13,6 @@ from termcolor import colored
 import coloredlogs, logging
 
 from web3_input_decoder import InputDecoder, decode_constructor
-import traceback
-import datetime
-# import urllib.request
 
 
 # create a logger object.
@@ -62,7 +59,7 @@ async def eth_json_collect(contract_address, block_from, block_to, key, chunk=30
     response = requests.get(url)
     json_obj_source_code = response.json()['result']
 
-    # NOTE : Implement in future
+    # NOTE: Implement in future
     # get_circulating_supply_by_contract_address - Get circulating supply of token by its contract address
     # async with BscScan(key) as client:
     #     json_result = await client.get_circulating_supply_by_contract_address(
@@ -71,7 +68,7 @@ async def eth_json_collect(contract_address, block_from, block_to, key, chunk=30
     # json_str_circ_supply = json.dumps(json_result)
     # json_obj_circ_supply = json.loads(json_str_circ_supply)
 
-    # NOTE : Implement in future
+    # NOTE: Implement in future
     # get_total_supply_by_contract_address - Get circulating supply of token by its contract address
     # async with BscScan(key) as client:
     #     json_result = await client.get_total_supply_by_contract_address(
@@ -87,13 +84,13 @@ async def eth_json_collect(contract_address, block_from, block_to, key, chunk=30
     startblock = block_from
     endblock = block_from + chunk
 
-    print("********************************")
-    print(f"Start    : {startblock}")
-    print(f"End      : {endblock}")
-    print(f"Block fr : {block_from}")
-    print(f"Block to : {block_to}")
-    print(f"Chunk    : {chunk}")
-    print("********************************")
+    # print("********************************")
+    # print(f"Start    : {startblock}")
+    # print(f"End      : {endblock}")
+    # print(f"Block fr : {block_from}")
+    # print(f"Block to : {block_to}")
+    # print(f"Chunk    : {chunk}")
+    # print("********************************")
 
     json_total = []
     while startblock < block_to:
@@ -245,8 +242,8 @@ async def eth_json_collect(contract_address, block_from, block_to, key, chunk=30
     logger.info("=====================================================")
 
     json_logs = json_total
-    print('Logs')
-    print(json_logs)
+    # print('Logs')
+    # print(json_logs)
 
     # Consolidate data
     json_total = {"contract": json_contract,
@@ -264,7 +261,7 @@ async def eth_json_collect(contract_address, block_from, block_to, key, chunk=30
     with open(filename, 'w') as outfile:
         json.dump(json_total, outfile)
 
-    # PERF : Increase performanco with async
+    # PERF: Increase performanco with async
 
     eth_json_process(filename)
 
@@ -320,13 +317,13 @@ def eth_json_process(filename):
     # Preprocess Statistics
     tic = time.perf_counter()
     
-    # I must reload the files for datatypes (Optimize?)
+    # NOTE: I must reload the files for datatypes (Optimize?)
     df_transaction = pd.read_json('./tmp/transactions.json')
     df_t = pd.read_json('./tmp/transfers.json')
     df_i = pd.read_json('./tmp/internals.json')
     df_l = pd.read_json('./tmp/logs.json')
 
-    # HACK : For DEBUG (remove)
+    # HACK: For DEBUG (remove)
     df_transaction.to_csv('./tmp/transaction.csv')
     df_t.to_csv('./tmp/transfers.csv')
     df_i.to_csv('./tmp/internals.csv')
@@ -378,7 +375,7 @@ def eth_json_process(filename):
 
     # TODO : Determine decimal digits in base of range 
 
-    # Get token and volume NOTE : Remove death code
+    # Get token and volume NOTE: Remove death code
     if (native):
         token_name = "ETH"
         # volume = round(df_transaction['value'].sum() / 1e+18, 2) + round(df_i['value'].sum() / 1e+18, 2)
@@ -408,10 +405,10 @@ def eth_json_process(filename):
     liq_series = []
     trx_in_series = []
     trx_out_series = []
-    first = True
     day = ''
     day_prev = ''
     day_prev_complete = ''
+
     if (native):
         # NOTE : I replace the dftemp for df_uni. Remove if it's working
         dftemp = df_uni
@@ -472,7 +469,7 @@ def eth_json_process(filename):
                 day = dftemp['timeStamp'][i].strftime("%Y-%m-%d")
 
         first_date = dftemp['timeStamp'][0]
-        last_date = dftemp['timeStamp'].iloc[-1]  # TODO : When Liq == 0
+        last_date = dftemp['timeStamp'].iloc[-1]  # TODO: When Liq == 0
 
         # print(f"liq_raw: {liq_raw} - liq: {liq}")
         # print(f"MAX liq_raw: {max_liq_raw} - MAX liq: {max_liq}")
@@ -495,6 +492,7 @@ def eth_json_process(filename):
                 elif (address_to == address_contract):
                     liq = liq + value
                     liq_raw = liq_raw + int(value_raw)
+                    volume_raw = volume_raw + int(value_raw)
                     trx_in = trx_in + value
                     trx_in_day = trx_in_day + value
                     # if (max_liq < liq):
@@ -573,6 +571,7 @@ def eth_json_process(filename):
     trx_total_asc = trx_total.sort_values(["Percentage"], ascending=False)
 
     # Statistic Percentage
+    # TODO: Define the correct percentage in base to time period
     e_0 = trx_total[trx_total['Percentage'] == 0]
     e_0_100 = trx_total[(trx_total['Percentage'] > 0) & (trx_total['Percentage'] < 100)]
     e_100_241 = trx_total[(trx_total['Percentage'] >= 100) & (trx_total['Percentage'] <= 241)]
@@ -588,45 +587,26 @@ def eth_json_process(filename):
     # PERF : Enhance decoder
     # ABI
     contract_abi = data['getabi']
-    logger.info(f"ABI type : {type(contract_abi)}")
+    # logger.info(f"ABI type : {type(contract_abi)}")
 
     ABI = json.loads(contract_abi)
     # ABI = json.loads(ABI)
-    # ABI = contract_abi
-    # TETHER_ABI = json.loads(json.load(contract_abi))
-    # f = urllib.request.urlopen(f"https://api.etherscan.io/api?module=contract&action=getabi&address={contract['contract']}")
-    # TETHER_ABI = json.loads(json.load(f)["result"])
 
     df_hash = df_transaction["hash"][0:]
-    # print("df_hash")
-    # print(df_hash.head())
     input_constructor = df_transaction["input"][0]
     input_column = df_transaction["input"][1:]
-    # print("=============================================")
-    # print("INPUT TRX")
-    # print("=============================================")
-    # print(input_column)
-    # print("=============================================")
-    # print("INPUT INTERNAL")
-    # print("=============================================")
-    # print(df_i["input"][1:])
 
     decoder = InputDecoder(ABI)
-    # decoder = InputDecoder(TETHER_ABI)
     constructor_call = decoder.decode_constructor((input_constructor),)
 
     functions = []
     functions.append(constructor_call.name)
     arguments = []
     arguments.append(str(constructor_call.arguments))
-    # print("Input Columns")
-    # print(input_column)
     for i in input_column:
         try:
-            # print("=============================================")
             # print(i)
             func_call = decoder.decode_function((i),)
-            # print(f"Name: {func_call.name} - Arguments: {func_call.arguments}")
             functions.append(func_call.name)
             arguments.append(str(func_call.arguments))
         except:
@@ -692,10 +672,8 @@ def eth_json_process(filename):
         json.dump(trans_resume, outfile)
 
     # Transfer resume
-    if (native):  # NOTE : For native
-        # trans_in = len(dftemp_transaction)  # TODO : Remove value = 0
-        trans_in = len(dftemp[dftemp['file'] == 'trx'])  # TODO : Remove value = 0
-        # trans_out = len(dftemp_i)
+    if (native):  # NOTE: For native
+        trans_in = len(dftemp[dftemp['file'] == 'trx'])  # TODO: Remove value = 0
         trans_out = len(dftemp[dftemp['file'] == 'int'])
     else:
         trans_in = len(df_t[df_t['from'].str.contains(address_contract, case=False)])
