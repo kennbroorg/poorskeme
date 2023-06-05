@@ -296,30 +296,6 @@ def r_result(address):
     contract = ast.literal_eval(stats)
 
     if (contract["native"]):
-        # tic = time.perf_counter()
-        # df_transaction = pd.read_json('./tmp/transactions.json')
-        # print(df_transaction.info())
-        # toc = time.perf_counter()
-        # logger.info(f"Read transfers file in {toc - tic:0.4f} seconds")
-        # tic = time.perf_counter()
-        # # df_i = pd.read_json('./tmp/internals.json')
-        # df_t = pd.read_json('./tmp/internals.json')
-        # print(df_t.info())
-        # toc = time.perf_counter()
-        # logger.info(f"Read transfers file in {toc - tic:0.4f} seconds")
-        # tic = time.perf_counter()
-
-        # dftemp_transaction = df_transaction[df_transaction['isError'] == 0]
-        # dftemp_transaction = dftemp_transaction[['timeStamp','from', 'to', 'value']]
-        # dftemp_transaction = dftemp_transaction[dftemp_transaction["value"] != 0]
-
-        # # TODO : This 
-        # dftemp_i = df_i[['timeStamp', 'from', 'to', 'value']]
-        # dftemp = pd.concat([dftemp_transaction, dftemp_i],
-        #                    join='inner', ignore_index=True)
-        # df_t = dftemp.sort_values(["timeStamp"])
-        # print("dftemp")
-
         tic = time.perf_counter()
         df_t = pd.read_json('./tmp/uni.json')
         toc = time.perf_counter()
