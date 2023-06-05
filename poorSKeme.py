@@ -68,7 +68,7 @@ $$ |  $$ | $$$$$$\   $$$$$$\   $$$$$$\        $$ /  \__|$$ |$$  / $$$$$$\  $$$$$
 $$$$$$$  |$$  __$$\ $$  __$$\ $$  __$$\       \$$$$$$\  $$$$$  / $$  __$$\ $$  _$$  _$$\ $$  __$$\ 
 $$  ____/ $$ /  $$ |$$ /  $$ |$$ |  \__|       \____$$\ $$  $$<  $$$$$$$$ |$$ / $$ / $$ |$$$$$$$$ |
 $$ |      $$ |  $$ |$$ |  $$ |$$ |            $$\   $$ |$$ |\$$\ $$   ____|$$ | $$ | $$ |$$   ____|
-$$ |      \$$$$$$  |\$$$$$$  |$$ |            \$$$$$$  |$$ | \$$\\$$$$$$$\ $$ | $$ | $$ |\$$$$$$$\ 
+$$ |      \$$$$$$  |\$$$$$$  |$$ |            \$$$$$$  |$$ | \$$\\\$$$$$$$\ $$ | $$ | $$ |\$$$$$$$\ 
 \__|       \______/  \______/ \__|             \______/ \__|  \__|\_______|\__| \__| \__| \_______|
 
     """)
@@ -83,11 +83,14 @@ $$ |      \$$$$$$  |\$$$$$$  |$$ |            \$$$$$$  |$$ | \$$\\$$$$$$$\ $$ | 
             Examples
             --------
 
-            # Extract TRXs of contract from block to block
-            python3 poorSKeme.py -ct 0xe878BccA052579C9061566Cec154B783Fc5b9fF1 -bf 14040726 -bt 15552901 # To collect
+            # Extract TRXs of contract from block to block (Ethereum Network)
+            python3 poorSKeme.py -bc eth -ct 0xb547027A4CCD46EC98199Fa88AAEDF5aA981Db26 -bt 6496413        # To collect
 
-            # Data Visualization of processed contract information
-            python3 poorSKeme.py -f F/contract-0xe878BccA052579C9061566Cec154B783Fc5b9fF1.json -w
+            # Extract TRXs of contract from block to block (Binance Smart Chain)
+            python3 poorSKeme.py -bc bsc -ct 0xe878BccA052579C9061566Cec154B783Fc5b9fF1 -bt 15552901       # To collect
+
+            # Data Visualization of processed contract information (Binance Smart Chain)
+            python3 poorSKeme.py -bc bsc -f F/contract-0xe878BccA052579C9061566Cec154B783Fc5b9fF1.json -w  # To visualice data
             ''')
 
     group1 = parser.add_argument_group("Get and process data")
@@ -95,7 +98,7 @@ $$ |      \$$$$$$  |\$$$$$$  |$$ |            \$$$$$$  |$$ | \$$\\$$$$$$$\ $$ | 
     group3 = parser.add_argument_group("Start WebServer visualization data")
 
     group1.add_argument('-bc', '--blockchain', choices=["bsc", "eth"], 
-                        default="bsc", help="Select Blockchain (bsc, eth)")
+                        default="eth", help="Select Blockchain (bsc, eth)")
     group1.add_argument('-ct', '--contract',
                         help="address of contract")
     group1.add_argument('-bf', '--block-from', default=0, type=int,
