@@ -300,8 +300,6 @@ async def bsc_json_collect(contract_address, block_from, block_to, key, chunk=30
     logger.info("=====================================================")
 
     json_logs = json_total
-    # print('Logs')
-    # print(json_logs)
 
     # Consolidate data
     json_total = {"contract": json_contract,
@@ -419,9 +417,6 @@ def bsc_json_process(filename):
     if (not df_i.empty):
         pd_uni = pd.concat([df_uni, df_int_1], axis=0, ignore_index=True)
         df_uni = pd.DataFrame(pd_uni)
-
-    print(df_uni.info())
-    print(df_uni.head())
 
     df_uni = df_uni.sort_values(by=['timeStamp','file'], ascending=False)  
     df_uni.to_csv('./tmp/uni.csv')
@@ -584,8 +579,6 @@ def bsc_json_process(filename):
     from_trx = df_t.groupby('from').agg({'value': ['sum','count']})
     # from_trx.set_axis(['value_out', 'count_out'], axis=1, inplace=False)
     from_trx_axis = from_trx.set_axis(['value_out', 'count_out'], axis=1)
-    # print(from_trx_axis.info())
-    # print(from_trx_axis.head())
     to_trx = df_t.groupby('to').agg({'value': ['sum','count']})
     # to_trx.set_axis(['value_in', 'count_in'], axis=1, inplace=True)
     to_trx_axis = to_trx.set_axis(['value_in', 'count_in'], axis=1)
@@ -655,12 +648,10 @@ def bsc_json_process(filename):
     arguments.append(str(constructor_call.arguments))
     for i in input_column:
         try:
-            # print(i)
             func_call = decoder.decode_function((i),)
             functions.append(func_call.name)
             arguments.append(str(func_call.arguments))
         except:
-            # traceback.print_exc()
             functions.append("Not decoded")
             arguments.append("Not decoded")
 

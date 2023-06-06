@@ -84,14 +84,6 @@ async def eth_json_collect(contract_address, block_from, block_to, key, chunk=30
     startblock = block_from
     endblock = block_from + chunk
 
-    # print("********************************")
-    # print(f"Start    : {startblock}")
-    # print(f"End      : {endblock}")
-    # print(f"Block fr : {block_from}")
-    # print(f"Block to : {block_to}")
-    # print(f"Chunk    : {chunk}")
-    # print("********************************")
-
     json_total = []
     while startblock < block_to:
         try:
@@ -123,8 +115,6 @@ async def eth_json_collect(contract_address, block_from, block_to, key, chunk=30
     logger.info("=====================================================")
 
     json_transaction = json_total
-    print('TRXs')
-    print(json_transaction)
 
     logger.info(" ")
     logger.info("=====================================================")
@@ -242,8 +232,6 @@ async def eth_json_collect(contract_address, block_from, block_to, key, chunk=30
     logger.info("=====================================================")
 
     json_logs = json_total
-    # print('Logs')
-    # print(json_logs)
 
     # Consolidate data
     json_total = {"contract": json_contract,
@@ -362,9 +350,6 @@ def eth_json_process(filename):
         pd_uni = pd.concat([df_uni, df_int_1], axis=0, ignore_index=True)
         df_uni = pd.DataFrame(pd_uni)
 
-    print(df_uni.info())
-    print(df_uni.head())
-
     df_uni = df_uni.sort_values(by=['timeStamp','file'], ascending=False)  
     df_uni.to_csv('./tmp/uni.csv')
     with open('./tmp/uni.json', 'w') as outfile:
@@ -471,10 +456,6 @@ def eth_json_process(filename):
         first_date = dftemp['timeStamp'][0]
         last_date = dftemp['timeStamp'].iloc[-1]  # TODO: When Liq == 0
 
-        # print(f"liq_raw: {liq_raw} - liq: {liq}")
-        # print(f"MAX liq_raw: {max_liq_raw} - MAX liq: {max_liq}")
-        # print(f"Volume raw: {volume_raw} - Volume: {volume}")
-
     else:  # NOTE : Not native
         unique_wallets = len(df_t['from'].unique())
         for i in df_t.index: 
@@ -533,8 +514,6 @@ def eth_json_process(filename):
     from_trx = df_t.groupby('from').agg({'value': ['sum','count']})
     # from_trx.set_axis(['value_out', 'count_out'], axis=1, inplace=False)
     from_trx_axis = from_trx.set_axis(['value_out', 'count_out'], axis=1)
-    # print(from_trx_axis.info())
-    # print(from_trx_axis.head())
     to_trx = df_t.groupby('to').agg({'value': ['sum','count']})
     # to_trx.set_axis(['value_in', 'count_in'], axis=1, inplace=True)
     to_trx_axis = to_trx.set_axis(['value_in', 'count_in'], axis=1)
@@ -605,12 +584,10 @@ def eth_json_process(filename):
     arguments.append(str(constructor_call.arguments))
     for i in input_column:
         try:
-            # print(i)
             func_call = decoder.decode_function((i),)
             functions.append(func_call.name)
             arguments.append(str(func_call.arguments))
         except:
-            # traceback.print_exc()
             functions.append("Not decoded")
             arguments.append("Not decoded")
 
