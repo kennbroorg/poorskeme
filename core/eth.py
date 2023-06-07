@@ -28,13 +28,13 @@ __email__ = "kennbro <at> protonmail <dot> com"
 __status__ = "Development"
 
 
-async def bsc_json_collect(contract_address, block_from, block_to, key, chunk=30000):
+async def eth_json_collect(contract_address, block_from, block_to, key, chunk=30000):
     logger.info("=====================================================")
     logger.info("Collecting Contract data")
     logger.info("=====================================================")
 
-    url = 'https://api.bscscan.com/api?module=account&action=txlist&address=' + contract_address + '&startblock=0&endblock=99999999' + \
-        '&page=1&offset=1&sort=asc&apikey=' + key 
+    url = 'https://api.etherscan.io/api?module=account&action=txlist&address=' + contract_address + '&startblock=0&endblock=99999999' + \
+        '&page=1&offset=1&sort=asc&apikey=' + key
     response = requests.get(url)
     first_block = response.json()['result'][0]
 
@@ -48,30 +48,16 @@ async def bsc_json_collect(contract_address, block_from, block_to, key, chunk=30
                      "transaction_creation": first_block['hash'],
                      "date_creation": first_block['timeStamp'],
                      "creator": first_block['from']}
+
     # contract
-    # async with BscScan(key) as client:
-    #     json_result = await client.get_contract_abi(
-    #             contract_address=contract_address,
-    #         )
-    # json_str_contract_abi = json.dumps(json_result)
-    # json_obj_contract_abi = json.loads(json_str_contract_abi)
-
-    # async with BscScan(key) as client:
-    #     json_result = await client.get_contract_source_code(
-    #             contract_address=contract_address,
-    #         )
-    # json_str_source_code = json.dumps(json_result)
-    # json_obj_source_code = json.loads(json_str_source_code)
-
-    url = 'https://api.bscscan.com/api?module=contract&action=getabi&address=' + contract_address + '&apikey=' + key
+    url = 'https://api.etherscan.io/api?module=contract&action=getabi&address=' + contract_address + '&apikey=' + key
     response = requests.get(url)
 
     json_obj_contract_abi = response.json()['result']
 
-    url = 'https://api.bscscan.com/api?module=contract&action=getsourcecode&address=' + contract_address + '&apikey=' + key
+    url = 'https://api.etherscan.io/api?module=contract&action=getsourcecode&address=' + contract_address + '&apikey=' + key
     response = requests.get(url)
     json_obj_source_code = response.json()['result']
-
 
     # NOTE: Implement in future
     # get_circulating_supply_by_contract_address - Get circulating supply of token by its contract address
@@ -100,26 +86,8 @@ async def bsc_json_collect(contract_address, block_from, block_to, key, chunk=30
 
     json_total = []
     while startblock < block_to:
-        # try:
-        #     async with BscScan(key) as client:
-        #         json_result = await client.get_normal_txs_by_address(
-        #                 address=contract_address,
-        #                 startblock=startblock,
-        #                 endblock=endblock,
-        #                 sort="asc"
-        #             )
-        #     json_str = json.dumps(json_result)
-        #     json_object = json.loads(json_str)
-
-        #     logger.info(f"TRANSACTIONS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
-
-        #     json_total += json_object
-
-        # except AssertionError:
-        #     logger.info(f"TRANSACTIONS - From : {startblock} - To : {endblock} - TRANSACTION NOT FOUND")
-
         try:
-            url = 'https://api.bscscan.com/api?module=account&action=txlist&address=' + contract_address + \
+            url = 'https://api.etherscan.io/api?module=account&action=txlist&address=' + contract_address + \
                   '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
             response = requests.get(url)
             json_object = response.json()['result']
@@ -157,26 +125,8 @@ async def bsc_json_collect(contract_address, block_from, block_to, key, chunk=30
 
     json_total = []
     while startblock < block_to:
-        # try:
-        #     async with BscScan(key) as client:
-        #         json_result = await client.get_bep20_token_transfer_events_by_address(
-        #                 address=contract_address,
-        #                 startblock=startblock,
-        #                 endblock=endblock,
-        #                 sort="asc"
-        #             )
-        #     json_str = json.dumps(json_result)
-        #     json_object = json.loads(json_str)
-
-        #     logger.info(f"TRANSFER - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
-
-        #     json_total += json_object
-
-        # except AssertionError:
-        #     logger.info(f"TRANSFER - From : {startblock} - To : {endblock} - TRANSFER NOT FOUND")
-
         try:
-            url = 'https://api.bscscan.com/api?module=account&action=tokentx&address=' + contract_address + \
+            url = 'https://api.etherscan.io/api?module=account&action=tokentx&address=' + contract_address + \
                   '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
             response = requests.get(url)
             json_object = response.json()['result']
@@ -214,26 +164,8 @@ async def bsc_json_collect(contract_address, block_from, block_to, key, chunk=30
 
     json_total = []
     while startblock < block_to:
-        # try:
-        #     async with BscScan(key) as client:
-        #         json_result = await client.get_internal_txs_by_address(
-        #                 address=contract_address,
-        #                 startblock=startblock,
-        #                 endblock=endblock,
-        #                 sort="asc"
-        #             )
-        #     json_str = json.dumps(json_result)
-        #     json_object = json.loads(json_str)
-
-        #     logger.info(f"INTERNALS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
-
-        #     json_total += json_object
-
-        # except AssertionError:
-        #     logger.info(f"INTERNALS - From : {startblock} - To : {endblock} - TRANSFER NOT FOUND")
-
         try:
-            url = 'https://api.bscscan.com/api?module=account&action=txlistinternal&address=' + contract_address + \
+            url = 'https://api.etherscan.io/api?module=account&action=txlistinternal&address=' + contract_address + \
                   '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
             response = requests.get(url)
             json_object = response.json()['result']
@@ -272,7 +204,7 @@ async def bsc_json_collect(contract_address, block_from, block_to, key, chunk=30
     json_total = []
     while startblock < block_to:
         try:
-            url = 'https://api.bscscan.com/api?module=logs&action=getLogs&address=' + contract_address + \
+            url = 'https://api.etherscan.io/api?module=logs&action=getLogs&address=' + contract_address + \
                   '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
             response = requests.get(url)
             json_object = response.json()['result']
@@ -313,16 +245,16 @@ async def bsc_json_collect(contract_address, block_from, block_to, key, chunk=30
                   "internals": json_internals,
                   "logs": json_logs}
 
-    filename = "contract-bsc-" + contract_address + ".json"
+    filename = "contract-eth-" + contract_address + ".json"
     with open(filename, 'w') as outfile:
         json.dump(json_total, outfile)
 
     # PERF: Increase performanco with async
 
-    bsc_json_process(filename)
+    eth_json_process(filename)
 
 
-def bsc_json_process(filename):
+def eth_json_process(filename):
     # Validate file
     if (not os.path.exists(filename)):
         raise FileNotFoundError("JSON File not found")
@@ -379,7 +311,7 @@ def bsc_json_process(filename):
     df_i = pd.read_json('./tmp/internals.json')
     df_l = pd.read_json('./tmp/logs.json')
 
-    # For DEBUG (remove)
+    # HACK: For DEBUG (remove)
     df_transaction.to_csv('./tmp/transaction.csv')
     df_t.to_csv('./tmp/transfers.csv')
     df_i.to_csv('./tmp/internals.csv')
@@ -402,8 +334,8 @@ def bsc_json_process(filename):
     if (not df_t.empty):
         df_tra_0 = df_t
         df_tra_1 = df_tra_0[['timeStamp', 'hash', 'from', 'to', 'value', 'input']]
-        df_tra_1.insert(len(df_tra_1.columns), "isError", 0)
-        df_tra_1.insert(len(df_tra_1.columns), "file", "tra")
+        df_tra_1['isError'] = 0
+        df_tra_1['file'] = 'tra'
 
     if (not df_i.empty):
         df_int_0 = df_i
@@ -430,12 +362,14 @@ def bsc_json_process(filename):
 
     # Get token and volume NOTE: Remove death code
     if (native):
-        token_name = "BNB"
+        token_name = "ETH"
         # volume = round(df_transaction['value'].sum() / 1e+18, 2) + round(df_i['value'].sum() / 1e+18, 2)
-        volume = round((df_transaction['value'].sum() / 1e+18, 2 + df_i['value'].sum() / 1e+18) / 2, 2)
+        volume = df_transaction['value'].sum() + df_i['value'].sum()
+        volume = round(volume / 1e+18, 2)
+        # volume = round((df_transaction['value'].sum() / 1e+18, 2 + df_i['value'].sum() / 1e+18) / 2, 2)
     else:
         # NOTE : Display another tokens
-        token = df_t.groupby('tokenSymbol').agg({'value': ['sum','count']})  # TODO: Use for anomalies
+        token = df_t.groupby('tokenSymbol').agg({'value': ['sum','count']})  # NOTE: Use for anomalies
         token = token.sort_values(by=[('value','count')], ascending=False)  
         token_name = token.index[0]
         # volume = round(token.iloc[0,0] / 1e+18, 2)
@@ -459,6 +393,7 @@ def bsc_json_process(filename):
     day = ''
     day_prev = ''
     day_prev_complete = ''
+
     if (native):
         # NOTE : I replace the dftemp for df_uni. Remove if it's working
         dftemp = df_uni
@@ -501,7 +436,7 @@ def bsc_json_process(filename):
                 remain = remain + value
 
             if (day == ''):
-                day = df_t['timeStamp'][i].strftime("%Y-%m-%d")
+                day = dftemp['timeStamp'][i].strftime("%Y-%m-%d")
                 day_prev = day
                 day_prev_complete = dftemp['timeStamp'][i]
             elif (day_prev != day):
@@ -631,6 +566,7 @@ def bsc_json_process(filename):
     # PERF : Enhance decoder
     # ABI
     contract_abi = data['getabi']
+    # logger.info(f"ABI type : {type(contract_abi)}")
 
     ABI = json.loads(contract_abi)
     # ABI = json.loads(ABI)
@@ -714,8 +650,8 @@ def bsc_json_process(filename):
 
     # Transfer resume
     if (native):  # NOTE: For native
-        trans_in = len(dftemp_transaction)
-        trans_out = len(dftemp_i)
+        trans_in = len(dftemp[dftemp['file'] == 'trx'])  # TODO: Remove value = 0
+        trans_out = len(dftemp[dftemp['file'] == 'int'])
     else:
         trans_in = len(df_t[df_t['from'].str.contains(address_contract, case=False)])
         trans_out = len(df_t[df_t['to'].str.contains(address_contract, case=False)])

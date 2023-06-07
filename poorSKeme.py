@@ -10,8 +10,8 @@ import yaml
 import textwrap
 # import time
 # import os.path
-import requests
-from bscscan import BscScan
+# import requests
+# from bscscan import BscScan
 
 import multiprocessing
 import http.server
@@ -23,6 +23,7 @@ import coloredlogs, logging
 
 from api_poorSKeme import create_application
 from core import bsc
+from core import eth
 
 
 # create a logger object.
@@ -67,7 +68,7 @@ $$ |  $$ | $$$$$$\   $$$$$$\   $$$$$$\        $$ /  \__|$$ |$$  / $$$$$$\  $$$$$
 $$$$$$$  |$$  __$$\ $$  __$$\ $$  __$$\       \$$$$$$\  $$$$$  / $$  __$$\ $$  _$$  _$$\ $$  __$$\ 
 $$  ____/ $$ /  $$ |$$ /  $$ |$$ |  \__|       \____$$\ $$  $$<  $$$$$$$$ |$$ / $$ / $$ |$$$$$$$$ |
 $$ |      $$ |  $$ |$$ |  $$ |$$ |            $$\   $$ |$$ |\$$\ $$   ____|$$ | $$ | $$ |$$   ____|
-$$ |      \$$$$$$  |\$$$$$$  |$$ |            \$$$$$$  |$$ | \$$\\$$$$$$$\ $$ | $$ | $$ |\$$$$$$$\ 
+$$ |      \$$$$$$  |\$$$$$$  |$$ |            \$$$$$$  |$$ | \$$\\\$$$$$$$\ $$ | $$ | $$ |\$$$$$$$\ 
 \__|       \______/  \______/ \__|             \______/ \__|  \__|\_______|\__| \__| \__| \_______|
 
     """)
@@ -82,25 +83,30 @@ $$ |      \$$$$$$  |\$$$$$$  |$$ |            \$$$$$$  |$$ | \$$\\$$$$$$$\ $$ | 
             Examples
             --------
 
-            # Extract TRXs of contract from block to block
-            python3 poorSKeme.py -ct 0xe878BccA052579C9061566Cec154B783Fc5b9fF1 -bf 14040726 -bt 15552901 # To collect
+            # Extract TRXs of contract from block to block (Ethereum Network)
+            python3 poorSKeme.py -bc eth -ct 0xb547027A4CCD46EC98199Fa88AAEDF5aA981Db26 -bt 6496413        # To collect
 
-            # Data Visualization of processed contract information
-            python3 poorSKeme.py -f F/contract-0xe878BccA052579C9061566Cec154B783Fc5b9fF1.json -w
+            # Extract TRXs of contract from block to block (Binance Smart Chain)
+            python3 poorSKeme.py -bc bsc -ct 0xe878BccA052579C9061566Cec154B783Fc5b9fF1 -bt 15552901       # To collect
+
+            # Data Visualization of processed contract information (Binance Smart Chain)
+            python3 poorSKeme.py -bc bsc -f F/contract-0xe878BccA052579C9061566Cec154B783Fc5b9fF1.json -w  # To visualice data
             ''')
 
     group1 = parser.add_argument_group("Get and process data")
     group2 = parser.add_argument_group("Process data from JSON file")
     group3 = parser.add_argument_group("Start WebServer visualization data")
 
-    group1.add_argument('-c', '--chunk', type=int, default=10000,
-                        help='Chunks of blocks')
+    group1.add_argument('-bc', '--blockchain', choices=["bsc", "eth"], 
+                        default="eth", help="Select Blockchain (bsc, eth)")
     group1.add_argument('-ct', '--contract',
                         help="address of contract")
     group1.add_argument('-bf', '--block-from', default=0, type=int,
                         help="Block start")
-    group1.add_argument('-bt', '--block-to', default=9999999, type=int,
+    group1.add_argument('-bt', '--block-to', default=99999999, type=int,
                         help="Block end")
+    group1.add_argument('-c', '--chunk', type=int, default=10000,
+                        help='Chunks of blocks')
 
     group2.add_argument('-f', '--file', type=str,
                         help="JSON file of recolected data")
@@ -125,12 +131,19 @@ $$ |      \$$$$$$  |\$$$$$$  |$$ |            \$$$$$$  |$$ | \$$\\$$$$$$$\ $$ | 
     # Validations
     if (args.contract):
         # asyncio.run(save_json(args.contract, args.block_from, args.block_to, key['bscscan'], chunk=args.chunk))
-        asyncio.run(bsc.bsc_json_collect(args.contract, args.block_from, args.block_to, key['bscscan'], chunk=args.chunk))
         if (args.file):
-            logger.error("Parameter JSON file are discarded because contract is provided")
+            logger.warning("Parameter JSON file are discarded because contract is provided")
+
+        if (args.blockchain == "bsc"):
+            asyncio.run(bsc.bsc_json_collect(args.contract, args.block_from, args.block_to, key['bscscan'], chunk=args.chunk))
+        if (args.blockchain == "eth"):
+            asyncio.run(eth.eth_json_collect(args.contract, args.block_from, args.block_to, key['ethscan'], chunk=args.chunk))
 
     elif (args.file):
-        rc = bsc.bsc_json_process(args.file)
+        if (args.blockchain == "bsc"):
+            rc = bsc.bsc_json_process(args.file)
+        if (args.blockchain == "eth"):
+            rc = eth.eth_json_process(args.file)
 
     else:
         if (args.block_from or args.block_to or args.chunck):
