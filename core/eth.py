@@ -328,7 +328,7 @@ def eth_json_process(filename):
     df_trx_0 = df_transaction[df_transaction['isError'] == 0]
     df_trx_1 = df_trx_0[['timeStamp', 'hash', 'from', 'to', 'value', 'input', 
                          'isError']]
-    df_trx_1['file'] = 'trx'
+    df_trx_1.insert(len(df_trx_1.columns), "file", "trx")
     df_uni = df_trx_1
 
     if (not df_t.empty):
@@ -341,7 +341,7 @@ def eth_json_process(filename):
         df_int_0 = df_i
         df_int_1 = df_int_0[['timeStamp', 'hash', 'from', 'to', 'value', 'input',
                              'isError']]
-        df_int_1['file'] = 'int'
+        df_int_1.insert(len(df_int_1.columns), "file", "int")
 
     if (not df_t.empty):
         pd_uni = pd.concat([df_uni, df_tra_1], axis=0, ignore_index=True)
