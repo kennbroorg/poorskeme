@@ -10,7 +10,7 @@ variables:
 
 install:
   stage: install
-  image: node:14.18.2
+  image: node:16.20.0
   rules:
     - if: $CI_COMMIT_TAG                  # Run this job when a tag is created manually
   script: 
@@ -29,13 +29,13 @@ install:
 
 build:
   stage: build
-  image: node:14.18.2
+  image: node:16.20.0
   rules:
     - if: $CI_COMMIT_TAG                  # Run this job when a tag is created manually
   dependencies:
       - install
   before_script:
-    # - apt-get update -qy
+      - apt-get update -qy
       - apt-get -y install zip unzip
       - echo $CI_JOB_ID
       # Writing GE_JOB_ID variable to environment file, will need the value in the next stage.
