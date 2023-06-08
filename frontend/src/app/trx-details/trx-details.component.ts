@@ -5,7 +5,7 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { NbDialogService } from '@nebular/theme';
 
 import { SingleSeries } from '@swimlane/ngx-charts';
-import { ColumnMode, SelectionType } from '@swimlane/ngx-datatable/';
+import { ColumnMode, SelectionType } from '@swimlane/ngx-datatable';
 import { HighlightLoader, HighlightAutoResult } from 'ngx-highlightjs';
 
 @Component({
