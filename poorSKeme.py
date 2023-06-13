@@ -3,23 +3,15 @@
 
 import sys
 import asyncio
-# import json
-# import pandas as pd
 import argparse
 import yaml
 import textwrap
-# import time
-# import os.path
-# import requests
-# from bscscan import BscScan
 
 import multiprocessing
 import http.server
 import socketserver
 from termcolor import colored
 import coloredlogs, logging
-
-# from web3_input_decoder import InputDecoder, decode_constructor
 
 from api_poorSKeme import create_application
 from core import bsc
@@ -42,7 +34,6 @@ __status__ = "Development"
 
 def flaskServer(ip='127.0.0.1', port=5000):
     app = create_application()
-    # app.run(host=ip, port=port, debug=True)
     logger.info("Flask serving...")
     app.run(port=port, debug=True, host=ip, use_reloader=False)
 
@@ -130,7 +121,6 @@ $$ |      \$$$$$$  |\$$$$$$  |$$ |            \$$$$$$  |$$ | \$$\\\$$$$$$$\ $$ |
 
     # Validations
     if (args.contract):
-        # asyncio.run(save_json(args.contract, args.block_from, args.block_to, key['bscscan'], chunk=args.chunk))
         if (args.file):
             logger.warning("Parameter JSON file are discarded because contract is provided")
 
