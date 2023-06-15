@@ -68,6 +68,10 @@ def r_contract():
     toc = time.perf_counter()
     logger.info(f"Read contract stats file in {toc - tic:0.4f} seconds")
 
+    print(type(source_code))
+    print("====================================")
+    print(source_code)
+    print("====================================")
     # Fix JSON
     sc = ast.literal_eval(source_code)[0]
     abi = sc['ABI']
@@ -538,10 +542,15 @@ def r_trx(trx_hash):
 
         # Code
         source = sc['SourceCode']
-        funct_start = source.index("function " + func_name)
-        func_code = source[funct_start - 4:]
-        funct_end = func_code[12:].index("function ")
-        func_code = func_code[:funct_end]
+        # NOTE: Fallback
+        if (func_name == "fallback"):
+            func_code = sc['fallback_code']
+            diagram = {"name": "fallback: " + sc['fallback_function'], "cssClass": "ngx-org-output", "image": "", "title": "", "childs": []}
+        else:
+            funct_start = source.index("function " + str(func_name))
+            func_code = source[funct_start - 4:]
+            funct_end = func_code[12:].index("function ")
+            func_code = func_code[:funct_end]
 
         result = {"hash": trx_hash,
                     "trx": trx_json,
