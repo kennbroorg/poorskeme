@@ -1,18 +1,19 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 
-import asyncio
+# import asyncio
 import json
+import re
 import pandas as pd
 import time
 import os.path
 import requests
-# from bscscan import BscScan
 
-from termcolor import colored
-import coloredlogs, logging
+# from termcolor import colored
+# import coloredlogs, logging
+import logging
 
-from web3_input_decoder import InputDecoder, decode_constructor
+from web3_input_decoder import InputDecoder # , decode_constructor
 
 
 # create a logger object.
@@ -36,6 +37,12 @@ async def bsc_json_collect(contract_address, block_from, block_to, key, chunk=30
     url = 'https://api.bscscan.com/api?module=account&action=txlist&address=' + contract_address + '&startblock=0&endblock=99999999' + \
         '&page=1&offset=1&sort=asc&apikey=' + key 
     response = requests.get(url)
+
+    # Validate API Key
+    if (response.json()['message'] == "NOTOK"):
+        logger.error("Invalid API Key")
+        raise RuntimeError('Invalid API Key')
+        
     first_block = response.json()['result'][0]
 
     if (block_from == 0):
@@ -48,21 +55,8 @@ async def bsc_json_collect(contract_address, block_from, block_to, key, chunk=30
                      "transaction_creation": first_block['hash'],
                      "date_creation": first_block['timeStamp'],
                      "creator": first_block['from']}
-    # contract
-    # async with BscScan(key) as client:
-    #     json_result = await client.get_contract_abi(
-    #             contract_address=contract_address,
-    #         )
-    # json_str_contract_abi = json.dumps(json_result)
-    # json_obj_contract_abi = json.loads(json_str_contract_abi)
-
-    # async with BscScan(key) as client:
-    #     json_result = await client.get_contract_source_code(
-    #             contract_address=contract_address,
-    #         )
-    # json_str_source_code = json.dumps(json_result)
-    # json_obj_source_code = json.loads(json_str_source_code)
-
+    # contract abi
+    # HACK: Replace by the following call
     url = 'https://api.bscscan.com/api?module=contract&action=getabi&address=' + contract_address + '&apikey=' + key
     response = requests.get(url)
 
@@ -262,42 +256,50 @@ async def bsc_json_collect(contract_address, block_from, block_to, key, chunk=30
 
     json_internals = json_total
 
-    logger.info(" ")
-    logger.info("=====================================================")
-    logger.info(f"Collecting logs...")
-    logger.info("=====================================================")
-    startblock = block_from
-    endblock = block_from + chunk
+    # NOTE: It ins't necesary yet
+    # logger.info(" ")
+    # logger.info("=====================================================")
+    # logger.info(f"Collecting logs...")
+    # logger.info("=====================================================")
+    # startblock = block_from
+    # endblock = block_from + chunk
 
-    json_total = []
-    while startblock < block_to:
-        try:
-            url = 'https://api.bscscan.com/api?module=logs&action=getLogs&address=' + contract_address + \
-                  '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
-            response = requests.get(url)
-            json_object = response.json()['result']
+    # NOTE: It ins't necesary yet
+    # json_total = []
+    # while startblock < block_to:
+    #     try:
+    #         url = 'https://api.bscscan.com/api?module=logs&action=getLogs&address=' + contract_address + \
+    #               '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
+    #         response = requests.get(url)
+    #         json_object = response.json()['result']
 
-            if (len(json_object) > 0):
-                logger.info(f"LOGS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
-            else:
-                logger.info(f"LOGS - From : {startblock} - To : {endblock} - LOGS NOT FOUND")
+    # NOTE: It ins't necesary yet
+    #         if (len(json_object) > 0):
+    #             logger.info(f"LOGS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
+    #         else:
+    #             logger.info(f"LOGS - From : {startblock} - To : {endblock} - LOGS NOT FOUND")
 
-            json_total += json_object
+    # NOTE: It ins't necesary yet
+    #        json_total += json_object
 
-        except AssertionError:
-            logger.info(f"LOGS - From : {startblock} - To : {endblock} - LOGS NOT FOUND")
+    # NOTE: It ins't necesary yet
+    #    except AssertionError:
+    #        logger.info(f"LOGS - From : {startblock} - To : {endblock} - LOGS NOT FOUND")
 
-        startblock += chunk + 1
-        endblock += chunk + 1
+    # NOTE: It ins't necesary yet
+    #    startblock += chunk + 1
+    #    endblock += chunk + 1
 
-    diff = int(block_to) - int(block_from)
-    logger.info(" ")
-    logger.info("=====================================================")
-    logger.info("  LOGS TOTAL")
-    logger.info("=====================================================")
-    logger.info(f"  From : {block_from} - To : {block_to}")
-    logger.info(f"  Diff : {diff} - Total TRX : {len(json_total)}")
-    logger.info("=====================================================")
+    # NOTE: It ins't necesary yet
+    # diff = int(block_to) - int(block_from)
+    # logger.info(" ")
+    # logger.info("=====================================================")
+    # logger.info("  LOGS TOTAL")
+    # logger.info("=====================================================")
+    # logger.info(f"  From : {block_from} - To : {block_to}")
+    # logger.info(f"  Diff : {diff} - Total TRX : {len(json_total)}")
+    # logger.info("=====================================================")
+    json_logs = []
 
     json_logs = json_total
 
@@ -348,6 +350,38 @@ def bsc_json_process(filename):
         json.dump(contract_abi, outfile)
 
     source_code = data['source_code']
+    # NOTE: Search Fallback function
+    json_str_source_code = source_code[0]['SourceCode'] 
+
+    fallback = False
+    fallback_function = ''
+    fallback_code = ''
+    # receive = False  # TODO: 
+
+    fallback_pattern  = r'(fallback[\s+]?\([.*]?\)\s)'
+    fallback_result = re.search(fallback_pattern, json_str_source_code)
+
+    if (fallback_result): 
+        fallback = True
+        fallback_function = fallback_result.group(1)
+    if (not fallback): 
+        # Compatibility
+        fallback_pattern  = r'(function[\s+]?\([.*]?\)\s)'
+        fallback_result = re.search(fallback_pattern, json_str_source_code)
+        if (fallback_result): 
+            fallback = True
+            fallback_function = fallback_result.group(1)
+    # Code
+    if (fallback):
+        funct_start = json_str_source_code.index(fallback_function)
+        fallback_code = json_str_source_code[funct_start - 4:]
+        funct_end = fallback_code[12:].index("function ")
+        fallback_code = fallback_code[:funct_end]
+
+    # source_code[0]['fallback'] = fallback
+    source_code[0]['fallback'] = "true" if fallback else "false"
+    source_code[0]['fallback_function'] = fallback_function
+    source_code[0]['fallback_code'] = fallback_code
     with open('./tmp/sourcecode.json', 'w') as outfile:
         json.dump(source_code, outfile)
 
@@ -629,11 +663,10 @@ def bsc_json_process(filename):
 
     # Input decoded
     # PERF : Enhance decoder
+
     # ABI
     contract_abi = data['getabi']
-
     ABI = json.loads(contract_abi)
-    # ABI = json.loads(ABI)
 
     df_hash = df_transaction["hash"][0:]
     input_constructor = df_transaction["input"][0]
@@ -652,8 +685,13 @@ def bsc_json_process(filename):
             functions.append(func_call.name)
             arguments.append(str(func_call.arguments))
         except:
-            functions.append("Not decoded")
-            arguments.append("Not decoded")
+            # HACK: Fallback
+            if (source_code[0]['fallback'] == "true"):
+                functions.append('fallback')
+                arguments.append("null")
+            else:
+                functions.append("Not decoded")
+                arguments.append("Not decoded")
 
     df_decoded = pd.DataFrame({"hash": df_hash, "funct": functions, "args": arguments})
     # df_decoded = pd.DataFrame({"hash": df_hash, "funct": functions})
