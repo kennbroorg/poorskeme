@@ -597,12 +597,19 @@ def eth_json_process(filename):
     trx_total_dec = trx_total.sort_values(["Percentage"])
     trx_total_asc = trx_total.sort_values(["Percentage"], ascending=False)
 
+    # Anomalies
+    df_anomalies = trx_total_asc[trx_total_asc['wallet'] != address_contract ]
+    df_anomalies = df_anomalies[trx_total_asc['Percentage'] >= 200]
+    df_anomalies['Percentage'] = df_anomalies['Percentage'].astype(int)
+    with open('./tmp/anomalies.json', 'w') as outfile:
+        df_anomalies_json = df_anomalies.to_json(outfile, orient="records")
+
     # Statistic Percentage
     # TODO: Define the correct percentage in base to time period
     e_0 = trx_total[trx_total['Percentage'] == 0]
     e_0_100 = trx_total[(trx_total['Percentage'] > 0) & (trx_total['Percentage'] < 100)]
-    e_100_241 = trx_total[(trx_total['Percentage'] >= 100) & (trx_total['Percentage'] <= 241)]
-    e_241 = trx_total[trx_total['Percentage'] > 241]
+    e_100_241 = trx_total[(trx_total['Percentage'] >= 100) & (trx_total['Percentage'] <= 200)]
+    e_241 = trx_total[trx_total['Percentage'] > 200]
 
     investments = []
     investments.append({"name": "Total Loses", "value": len(e_0)})

@@ -94,24 +94,6 @@ async def bsc_json_collect(contract_address, block_from, block_to, key, chunk=30
 
     json_total = []
     while startblock < block_to:
-        # try:
-        #     async with BscScan(key) as client:
-        #         json_result = await client.get_normal_txs_by_address(
-        #                 address=contract_address,
-        #                 startblock=startblock,
-        #                 endblock=endblock,
-        #                 sort="asc"
-        #             )
-        #     json_str = json.dumps(json_result)
-        #     json_object = json.loads(json_str)
-
-        #     logger.info(f"TRANSACTIONS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
-
-        #     json_total += json_object
-
-        # except AssertionError:
-        #     logger.info(f"TRANSACTIONS - From : {startblock} - To : {endblock} - TRANSACTION NOT FOUND")
-
         try:
             url = 'https://api.bscscan.com/api?module=account&action=txlist&address=' + contract_address + \
                   '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
@@ -151,24 +133,6 @@ async def bsc_json_collect(contract_address, block_from, block_to, key, chunk=30
 
     json_total = []
     while startblock < block_to:
-        # try:
-        #     async with BscScan(key) as client:
-        #         json_result = await client.get_bep20_token_transfer_events_by_address(
-        #                 address=contract_address,
-        #                 startblock=startblock,
-        #                 endblock=endblock,
-        #                 sort="asc"
-        #             )
-        #     json_str = json.dumps(json_result)
-        #     json_object = json.loads(json_str)
-
-        #     logger.info(f"TRANSFER - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
-
-        #     json_total += json_object
-
-        # except AssertionError:
-        #     logger.info(f"TRANSFER - From : {startblock} - To : {endblock} - TRANSFER NOT FOUND")
-
         try:
             url = 'https://api.bscscan.com/api?module=account&action=tokentx&address=' + contract_address + \
                   '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
@@ -208,24 +172,6 @@ async def bsc_json_collect(contract_address, block_from, block_to, key, chunk=30
 
     json_total = []
     while startblock < block_to:
-        # try:
-        #     async with BscScan(key) as client:
-        #         json_result = await client.get_internal_txs_by_address(
-        #                 address=contract_address,
-        #                 startblock=startblock,
-        #                 endblock=endblock,
-        #                 sort="asc"
-        #             )
-        #     json_str = json.dumps(json_result)
-        #     json_object = json.loads(json_str)
-
-        #     logger.info(f"INTERNALS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
-
-        #     json_total += json_object
-
-        # except AssertionError:
-        #     logger.info(f"INTERNALS - From : {startblock} - To : {endblock} - TRANSFER NOT FOUND")
-
         try:
             url = 'https://api.bscscan.com/api?module=account&action=txlistinternal&address=' + contract_address + \
                   '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
@@ -469,7 +415,7 @@ def bsc_json_process(filename):
         volume = round((df_transaction['value'].sum() / 1e+18, 2 + df_i['value'].sum() / 1e+18) / 2, 2)
     else:
         # NOTE : Display another tokens
-        token = df_t.groupby('tokenSymbol').agg({'value': ['sum','count']})  # TODO: Use for anomalies
+        token = df_t.groupby('tokenSymbol').agg({'value': ['sum','count']})
         token = token.sort_values(by=[('value','count')], ascending=False)  
         token_name = token.index[0]
         # volume = round(token.iloc[0,0] / 1e+18, 2)
@@ -647,6 +593,13 @@ def bsc_json_process(filename):
     trx_total["Percentage"] = trx_total["value_in"] * 100 / trx_total['value_out']
     trx_total_dec = trx_total.sort_values(["Percentage"])
     trx_total_asc = trx_total.sort_values(["Percentage"], ascending=False)
+
+    # Anomalies
+    df_anomalies = trx_total_asc[trx_total_asc['wallet'] != address_contract ]
+    df_anomalies = df_anomalies[trx_total_asc['Percentage'] >= 200]
+    df_anomalies['Percentage'] = df_anomalies['Percentage'].astype(int)
+    with open('./tmp/anomalies.json', 'w') as outfile:
+        df_anomalies_json = df_anomalies.to_json(outfile, orient="records")
 
     # Statistic Percentage
     # TODO: Define the correct percentage in base to time period
