@@ -32,6 +32,9 @@ $nb-themes: nb-register-theme((
   // layout-window-mode-padding-top: 2rem,
   layout-padding: 0.5rem 1rem 0.5rem,
 
+  card-scrollbar-color: rgba(102, 217, 255, 0.2),
+  card-scrollbar-background-color	: rgba(0, 0, 0, 0.1),
+  card-scrollbar-width: 2px,
 
   // tabset-tab-active-text-color: rgba(209, 54, 8, 1),
   // tabset-tab-active-underline-color: rgba(209, 54, 8, 1),
