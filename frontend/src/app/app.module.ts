@@ -34,6 +34,7 @@ import { ContractBriefComponent } from './contract-brief/contract-brief.componen
 import { TransfersComponent } from './transfers/transfers.component';
 import { LiqTransComponent } from './liq-trans/liq-trans.component';
 import { TreeContractComponent } from './contract-brief/tree-contract/tree-contract.component';
+import { AnomaliesComponent } from './anomalies/anomalies.component';
 import { TransfersDetailsComponent } from './transfers-details/transfers-details.component';
 
 @NgModule({
@@ -51,6 +52,7 @@ import { TransfersDetailsComponent } from './transfers-details/transfers-details
     ContractCodeComponent,
     DiagramComponent,
     TrxDetailsComponent,
+    AnomaliesComponent,
   ],
   imports: [
     BrowserModule,

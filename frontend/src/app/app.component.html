@@ -134,11 +134,19 @@
 
 
           <!-- TAB8 -->
-          <!-- <nb-tab tabTitle="Anomalies">
+          <nb-tab tabTitle="Anomalies">
+            <div class="row">
+                <div class="col-md-6">
+                    <app-transfers-details (onTrx)="handleTrx($event)" [subject]="subject" [h]="height"></app-transfers-details>
+                </div>
 
-            <p>List of <strong>orders</strong>.</p>
+                <div class="col-md-6">
+                    <app-anomalies (onInfo)="handleInfo($event)"></app-anomalies>
+                    <!-- <app-anomalies></app-anomalies> -->
+                </div>
+            </div>
+          </nb-tab>
 
-          </nb-tab> -->
 
         </nb-tabset>
 
