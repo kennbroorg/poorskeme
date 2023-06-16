@@ -83,41 +83,6 @@ def r_contract():
 
     abi = ast.literal_eval(abi)
 
-    # abi_total = []
-    # for i in abi:
-    #     prop = ''
-    #     input = False 
-    #     output = False 
-    #     head = f"{i['type']}"
-    #     if ('stateMutability' in i):
-    #         prop = prop + f"stateMutability: {i['stateMutability']}"
-    #     if ('anonymous' in i):
-    #         prop = prop + f"anonymous: {i['anonymous']}"
-    #     if ('name' in i):
-    #         head = head + f" - Name: {i['name']} ({prop})"
-
-    #     if ('inputs' in i):
-    #         input = True
-    #         input_content = []
-    #         for j in i['inputs']:
-    #             input_content.append({"name": f"Name: {j['name']} - Type: {j['type']}"})
-
-    #     if ('outputs' in i):
-    #         output = True
-    #         output_content = []
-    #         for j in i['outputs']:
-    #             output_content.append({"name": f"Name: {j['name']} - Type: {j['type']}"})
-
-    #     if (output or input):
-    #         children = []
-    #         if (input):
-    #             children.append({"name": "Input", "children": input_content})
-    #         if (output):
-    #             children.append({"name": "output", "children": output_content})
-    #         abi_item = {"name": head, "children": children}
-        
-    #     abi_total.append(abi_item)
-
     abi_org = []
     const = []
     event = []
@@ -283,6 +248,23 @@ def r_transfers():
     transfers = ast.literal_eval(trans)
 
     return transfers
+
+
+################################################
+# Anomalies
+################################################
+@home.route("/anomalies", methods=["GET"])
+def r_anomalies():
+    
+    tic = time.perf_counter()
+    with open('tmp/anomalies.json', 'r') as f:
+        anomalies = f.read()
+    toc = time.perf_counter()
+    logger.info(f"Read bubble transfer file in {toc - tic:0.4f} seconds")
+
+    anomalies_json = ast.literal_eval(anomalies)
+
+    return jsonify(anomalies_json)
 
 
 ################################################
