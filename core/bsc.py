@@ -850,40 +850,78 @@ async def bsc_json_collect_async(contract_address, block_from, block_to, key, ch
     logger.info("=====================================================")
     logger.info("Collecting Contract transactions")
     logger.info("=====================================================")
+    logger.info("Creating Table t_transactions")
+
+    sql_create_transactions_table = """CREATE TABLE IF NOT EXISTS t_transactions (
+                                       blockNumber text NOT NULL,
+                                       timeStamp text NOT NULL,
+                                       hash text NOT NULL,
+                                       nonce text NOT NULL,
+                                       blockHash text NOT NULL,
+                                       transactionIndex text NOT NULL,
+                                       xfrom text NOT NULL,
+                                       xto text NOT NULL,
+                                       value text NOT NULL,
+                                       gas text NOT NULL,
+                                       gasPrice text NOT NULL,
+                                       isError text NOT NULL,
+                                       txreceipt_status text NOT NULL,
+                                       input text NOT NULL,
+                                       contractAddress text NOT NULL,
+                                       cumulativeGasUsed text NOT NULL,
+                                       gasUsed text NOT NULL,
+                                       confirmations text NOT NULL,
+                                       methodId text NOT NULL,
+                                       functionName text NOT NULL
+                                 );"""
+    cursor.execute(sql_create_transactions_table)
+
+    logger.info("Getting transactions async")
+
     startblock = block_from
     endblock = block_from + chunk
 
     json_total = []
+    urls = []
     while startblock < block_to:
-        try:
-            url = 'https://api.bscscan.com/api?module=account&action=txlist&address=' + contract_address + \
-                  '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
-            response = requests.get(url)
-            json_object = response.json()['result']
-
-            if (len(json_object) > 0):
-                logger.info(f"TRANSACTIONS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
-            else:
-                logger.info(f"TRANSACTIONS - From : {startblock} - To : {endblock} - TRANSACTION NOT FOUND")
-
-            json_total += json_object
-
-        except AssertionError:
-            logger.info(f"TRANSACTIONS - From : {startblock} - To : {endblock} - TRANSACTION NOT FOUND")
-
+        urls.append('https://api.bscscan.com/api?module=account&action=txlist&address=' + contract_address + \
+                  '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key)
         startblock += chunk + 1
         endblock += chunk + 1
 
-    diff = int(block_to) - int(block_from)
-    logger.info(" ")
-    logger.info("=====================================================")
-    logger.info("  TRANSACTIONS TOTAL")
-    logger.info("=====================================================")
-    logger.info(f"  From : {block_from} - To : {block_to}")
-    logger.info(f"  Diff : {diff} - Total TRX : {len(json_total)}")
-    logger.info("=====================================================")
+    print(urls)
+    # while startblock < block_to:
+    #     try:
+    #         url = 'https://api.bscscan.com/api?module=account&action=txlist&address=' + contract_address + \
+    #               '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
+    #         response = requests.get(url)
+    #         json_object = response.json()['result']
 
-    json_transaction = json_total
+    #         if (len(json_object) > 0):
+    #             logger.info(f"TRANSACTIONS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
+    #         else:
+    #             logger.info(f"TRANSACTIONS - From : {startblock} - To : {endblock} - TRANSACTION NOT FOUND")
+
+    #         json_total += json_object
+
+    #     except AssertionError:
+    #         logger.info(f"TRANSACTIONS - From : {startblock} - To : {endblock} - TRANSACTION NOT FOUND")
+
+    #     startblock += chunk + 1
+    #     endblock += chunk + 1
+
+    # diff = int(block_to) - int(block_from)
+    # logger.info(" ")
+    # logger.info("=====================================================")
+    # logger.info("  TRANSACTIONS TOTAL")
+    # logger.info("=====================================================")
+    # logger.info(f"  From : {block_from} - To : {block_to}")
+    # logger.info(f"  Diff : {diff} - Total TRX : {len(json_total)}")
+    # logger.info("=====================================================")
+
+    # json_transaction = json_total
+
+    exit(0)
 
     logger.info(" ")
     logger.info("=====================================================")
