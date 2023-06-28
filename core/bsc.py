@@ -8,6 +8,7 @@ import pandas as pd
 import time
 import os.path
 import requests
+import sqlite3
 
 # from termcolor import colored
 # import coloredlogs, logging
@@ -721,3 +722,308 @@ def bsc_json_process(filename):
     logger.info(f"Preprocess Statistic file in {toc - tic:0.4f} seconds")
 
     return 0
+
+
+async def bsc_json_collect_async(contract_address, block_from, block_to, key, chunk=30000):
+    filedb = "contract-bsc-" + contract_address + ".db"
+    os.remove(filedb)
+    logger.info(f"Creating db {filedb}")
+    connection = sqlite3.connect(filedb)
+    cursor = connection.cursor()
+
+    logger.info("=====================================================")
+    logger.info("Collecting Contract data")
+    logger.info("=====================================================")
+    logger.info("Creating Table t_contract")
+
+    sql_create_contract_table = """CREATE TABLE IF NOT EXISTS t_contract (
+                                   contract text NOT NULL,
+                                   block_from text NOT NULL,
+                                   block_to text NOT NULL,
+                                   first_block text NOT NULL,
+                                   transaction_creation text NOT NULL,
+                                   date_creation text NOT NULL,
+                                   creator text NOT NULL
+                                 );"""
+    cursor.execute(sql_create_contract_table)
+
+    logger.info("Getting first block")
+    url = 'https://api.bscscan.com/api?module=account&action=txlist&address=' + contract_address + '&startblock=0&endblock=99999999' + \
+        '&page=1&offset=1&sort=asc&apikey=' + key 
+    response = requests.get(url)
+
+    # Validate API Key
+    if (response.json()['message'] == "NOTOK"):
+        logger.error("Invalid API Key")
+        os.remove(filedb)
+        raise RuntimeError('Invalid API Key')
+        
+    first_block = response.json()['result'][0]
+
+    if (block_from == 0):
+        block_from = int(first_block['blockNumber'])
+
+    json_contract = {"contract": contract_address, 
+                     "block_from": block_from,
+                     "block_to": block_to, 
+                     "first_block": first_block['blockNumber'],
+                     "transaction_creation": first_block['hash'],
+                     "date_creation": first_block['timeStamp'],
+                     "creator": first_block['from']}
+
+    logger.info("Storing first block")
+    cursor.execute("""INSERT INTO t_contract VALUES (?, ?, ?, ?, ?, ?, ?)""", 
+        (contract_address, block_from, block_to, first_block['blockNumber'], 
+        first_block['hash'], first_block['timeStamp'], first_block['from']))
+
+    connection.commit()
+
+    # # contract abi
+    # url = 'https://api.bscscan.com/api?module=contract&action=getabi&address=' + contract_address + '&apikey=' + key
+    # response = requests.get(url)
+
+    # json_obj_contract_abi = response.json()['result']
+    # print(json_obj_contract_abi)
+
+    # Source code
+    logger.info("Creating Table t_source_abi")
+
+    sql_create_source_abi_table = """CREATE TABLE IF NOT EXISTS t_source_abi (
+                                     SourceCode text NOT NULL,
+                                     ABI text NOT NULL,
+                                     ContractName text NOT NULL,
+                                     CompilerVersion text NOT NULL,
+                                     OptimizationUsed text NOT NULL,
+                                     Runs text NOT NULL,
+                                     ConstructorArguments text NOT NULL,
+                                     EVMVersion text NOT NULL,
+                                     Library text NOT NULL,
+                                     LicenseType text NOT NULL,
+                                     Proxy text NOT NULL,
+                                     Implementation text NOT NULL,
+                                     SwarmSource text NOT NULL
+                                   );"""
+    cursor.execute(sql_create_source_abi_table)
+
+    logger.info("Getting source code and ABI")
+    url = 'https://api.bscscan.com/api?module=contract&action=getsourcecode&address=' + contract_address + '&apikey=' + key
+    response = requests.get(url)
+    json_obj_source_code = response.json()['result'][0]
+
+    logger.info("Storing source code and ABI")
+    cursor.execute("""INSERT INTO t_source_abi VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
+        (json_obj_source_code['SourceCode'],
+         json_obj_source_code['ABI'],
+         json_obj_source_code['ContractName'],
+         json_obj_source_code['CompilerVersion'],
+         json_obj_source_code['OptimizationUsed'],
+         json_obj_source_code['Runs'],
+         json_obj_source_code['ConstructorArguments'],
+         json_obj_source_code['EVMVersion'],
+         json_obj_source_code['Library'],
+         json_obj_source_code['LicenseType'],
+         json_obj_source_code['Proxy'],
+         json_obj_source_code['Implementation'],
+         json_obj_source_code['SwarmSource']))
+
+    connection.commit()
+
+    # NOTE: Implement in future
+    # get_circulating_supply_by_contract_address - Get circulating supply of token by its contract address
+    # async with BscScan(key) as client:
+    #     json_result = await client.get_circulating_supply_by_contract_address(
+    #             contract_address=contract_address,
+    #         )
+    # json_str_circ_supply = json.dumps(json_result)
+    # json_obj_circ_supply = json.loads(json_str_circ_supply)
+
+    # NOTE: Implement in future
+    # get_total_supply_by_contract_address - Get circulating supply of token by its contract address
+    # async with BscScan(key) as client:
+    #     json_result = await client.get_total_supply_by_contract_address(
+    #             contract_address=contract_address,
+    #         )
+    # json_str_total_supply = json.dumps(json_result)
+    # json_obj_total_supply = json.loads(json_str_total_supply)
+
+    logger.info(" ")
+    logger.info("=====================================================")
+    logger.info("Collecting Contract transactions")
+    logger.info("=====================================================")
+    startblock = block_from
+    endblock = block_from + chunk
+
+    json_total = []
+    while startblock < block_to:
+        try:
+            url = 'https://api.bscscan.com/api?module=account&action=txlist&address=' + contract_address + \
+                  '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
+            response = requests.get(url)
+            json_object = response.json()['result']
+
+            if (len(json_object) > 0):
+                logger.info(f"TRANSACTIONS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
+            else:
+                logger.info(f"TRANSACTIONS - From : {startblock} - To : {endblock} - TRANSACTION NOT FOUND")
+
+            json_total += json_object
+
+        except AssertionError:
+            logger.info(f"TRANSACTIONS - From : {startblock} - To : {endblock} - TRANSACTION NOT FOUND")
+
+        startblock += chunk + 1
+        endblock += chunk + 1
+
+    diff = int(block_to) - int(block_from)
+    logger.info(" ")
+    logger.info("=====================================================")
+    logger.info("  TRANSACTIONS TOTAL")
+    logger.info("=====================================================")
+    logger.info(f"  From : {block_from} - To : {block_to}")
+    logger.info(f"  Diff : {diff} - Total TRX : {len(json_total)}")
+    logger.info("=====================================================")
+
+    json_transaction = json_total
+
+    logger.info(" ")
+    logger.info("=====================================================")
+    logger.info(f"Collecting Contract transfers...")
+    logger.info("=====================================================")
+    startblock = block_from
+    endblock = block_from + chunk
+
+    json_total = []
+    while startblock < block_to:
+        try:
+            url = 'https://api.bscscan.com/api?module=account&action=tokentx&address=' + contract_address + \
+                  '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
+            response = requests.get(url)
+            json_object = response.json()['result']
+
+            if (len(json_object) > 0):
+                logger.info(f"TRANSFERS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
+            else:
+                logger.info(f"TRANSFERS - From : {startblock} - To : {endblock} - TRANSFERS NOT FOUND")
+
+            json_total += json_object
+
+        except AssertionError:
+            logger.info(f"TRANSFERS - From : {startblock} - To : {endblock} - TRANSFERS NOT FOUND")
+
+        startblock += chunk + 1
+        endblock += chunk + 1
+
+    diff = int(block_to) - int(block_from)
+    logger.info(" ")
+    logger.info("=====================================================")
+    logger.info("  TRANSFER TOTAL")
+    logger.info("=====================================================")
+    logger.info(f"  From : {block_from} - To : {block_to}")
+    logger.info(f"  Diff : {diff} - Total TRX : {len(json_total)}")
+    logger.info("=====================================================")
+
+    json_transfer = json_total
+
+    logger.info(" ")
+    logger.info("=====================================================")
+    logger.info(f"Collecting Internals transfers...")
+    logger.info("=====================================================")
+    startblock = block_from
+    endblock = block_from + chunk
+
+    json_total = []
+    while startblock < block_to:
+        try:
+            url = 'https://api.bscscan.com/api?module=account&action=txlistinternal&address=' + contract_address + \
+                  '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
+            response = requests.get(url)
+            json_object = response.json()['result']
+
+            if (len(json_object) > 0):
+                logger.info(f"INTERNALS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
+            else:
+                logger.info(f"INTERNALS - From : {startblock} - To : {endblock} - INTERNALS NOT FOUND")
+
+            json_total += json_object
+
+        except AssertionError:
+            logger.info(f"INTERNALS - From : {startblock} - To : {endblock} - TRANSFER NOT FOUND")
+
+        startblock += chunk + 1
+        endblock += chunk + 1
+
+    diff = int(block_to) - int(block_from)
+    logger.info(" ")
+    logger.info("=====================================================")
+    logger.info("  INTERNALS TOTAL")
+    logger.info("=====================================================")
+    logger.info(f"  From : {block_from} - To : {block_to}")
+    logger.info(f"  Diff : {diff} - Total TRX : {len(json_total)}")
+    logger.info("=====================================================")
+
+    json_internals = json_total
+
+    # NOTE: It ins't necesary yet
+    # logger.info(" ")
+    # logger.info("=====================================================")
+    # logger.info(f"Collecting logs...")
+    # logger.info("=====================================================")
+    # startblock = block_from
+    # endblock = block_from + chunk
+
+    # NOTE: It ins't necesary yet
+    # json_total = []
+    # while startblock < block_to:
+    #     try:
+    #         url = 'https://api.bscscan.com/api?module=logs&action=getLogs&address=' + contract_address + \
+    #               '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
+    #         response = requests.get(url)
+    #         json_object = response.json()['result']
+
+    # NOTE: It ins't necesary yet
+    #         if (len(json_object) > 0):
+    #             logger.info(f"LOGS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
+    #         else:
+    #             logger.info(f"LOGS - From : {startblock} - To : {endblock} - LOGS NOT FOUND")
+
+    # NOTE: It ins't necesary yet
+    #        json_total += json_object
+
+    # NOTE: It ins't necesary yet
+    #    except AssertionError:
+    #        logger.info(f"LOGS - From : {startblock} - To : {endblock} - LOGS NOT FOUND")
+
+    # NOTE: It ins't necesary yet
+    #    startblock += chunk + 1
+    #    endblock += chunk + 1
+
+    # NOTE: It ins't necesary yet
+    # diff = int(block_to) - int(block_from)
+    # logger.info(" ")
+    # logger.info("=====================================================")
+    # logger.info("  LOGS TOTAL")
+    # logger.info("=====================================================")
+    # logger.info(f"  From : {block_from} - To : {block_to}")
+    # logger.info(f"  Diff : {diff} - Total TRX : {len(json_total)}")
+    # logger.info("=====================================================")
+    json_logs = []
+
+    json_logs = json_total
+
+    # Consolidate data
+    json_total = {"contract": json_contract,
+                  # "getabi": json_str_contract_abi,
+                  "getabi": json_obj_contract_abi,
+                  "source_code": json_obj_source_code,
+                  # "circ_supply": json_str_circ_supply,
+                  # "total_supply": json_obj_total_supply,
+                  "transactions": json_transaction,
+                  "transfers": json_transfer,
+                  "internals": json_internals,
+                  "logs": json_logs}
+
+    filename = "contract-bsc-" + contract_address + ".json"
+    with open(filename, 'w') as outfile:
+        json.dump(json_total, outfile)
+
+    # PERF: Increase performanco with async
