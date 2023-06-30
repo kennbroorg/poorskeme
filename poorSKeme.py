@@ -125,6 +125,7 @@ $$ |      \$$$$$$  |\$$$$$$  |$$ |            \$$$$$$  |$$ | \$$\\\$$$$$$$\ $$ |
             logger.warning("Parameter JSON file are discarded because contract is provided")
 
         if (args.blockchain == "bsc"):
+            # TODO: Control extension
             # asyncio.run(bsc.bsc_json_collect(args.contract, args.block_from, args.block_to, key['bscscan'], chunk=args.chunk))
             bsc.bsc_json_collect_async(args.contract, args.block_from, args.block_to, key['bscscan'], chunk=args.chunk)
         if (args.blockchain == "eth"):
