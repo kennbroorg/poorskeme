@@ -727,8 +727,8 @@ def bsc_json_process(filename):
     return 0
 
 
-async def create_connection():
-    conn = await aiosqlite.connect("database.db")
+async def create_connection(filedb):
+    conn = await aiosqlite.connect(filedb)
     print(f"Create table - {time.time()}")
     sql_create_transactions_table = """CREATE TABLE IF NOT EXISTS t_transactions (
                                        blockNumber text NOT NULL,
@@ -758,27 +758,25 @@ async def create_connection():
 
 
 async def close_connection(conn):
-    print(f"Close connection - {time.time()}")
     await conn.close()
 
 
 async def get_data(session, url):
-    logger.info(f"Processing - {url}")
+    startblock = url.split("startblock=")[1].split("&endblock=")[0]
+    endblock = url.split("endblock=")[1].split("&sort=")[0]
+    logger.info(f"Processing - TRANSACTIONS from {startblock} to {endblock}")
     async with session.get(url) as response:
         return await response.json()
 
 
 async def fetch_and_store(urls, conn):
-    print("=================================================================") 
-    print(f"Cantidad de URLS: {len(urls)}")
-    print("=================================================================") 
+    total = 0
     async with aiohttp.ClientSession() as session:
         for url in urls:
             response = await get_data(session, url)
-            print(f"DB - {time.time()} - {url}")
+            logger.info(f"DB - Store response")
+            count = 0
             for json_object in response['result']:
-                # await conn.execute(f"INSERT INTO {table_name} (data) VALUES (?)", (json.dumps(response),))
-                # print(f"TYPE {json_object} - {json_object.keys()}")
                 await conn.execute("""INSERT INTO t_transactions VALUES 
                                (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -803,211 +801,120 @@ async def fetch_and_store(urls, conn):
                      json_object['confirmations'],
                      json_object['methodId'],
                      json_object['functionName']))
+                count = count + 1
+                total = total + 1
             await conn.commit()
-
-# async def fetch_and_store(urls, type, connection, cursor):
-
-#     print("=================================================================") 
-#     print(f"Cantidad de URLS: {len(urls)}")
-#     print("=================================================================") 
-
-#     tic_fetch = time.perf_counter()
-#     block_from = urls[0].split("startblock=")[1].split("&endblock=")[0]
-#     block_to = urls[-1].split("endblock=")[1].split("&sort=")[0]
-
-#     # json_total = 0
-#     # async with aiohttp.ClientSession() as session:
-#     #     tasks = [get_data(session, url) for url in urls]
-#     #     response = await asyncio.gather(*tasks)
-
-#     #     json_object = response['result']
-#     #     json_total = json_total + len(json_object)
-
-#     for url in urls:
-#         startblock = url.split("startblock=")[1].split("&endblock=")[0]
-#         endblock = url.split("endblock=")[1].split("&sort=")[0]
-
-
-#         # response = await get_data(session, url)
-#         json_object = response['result']
-#         json_total = json_total + len(json_object)
-
-#         if (len(json_object) > 0):
-#             logger.info(f"TRANSACTIONS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
-#         else:
-#             logger.info(f"TRANSACTIONS - From : {startblock} - To : {endblock} - TRANSACTION NOT FOUND")
-
-#     # sql_create_transactions_table = """CREATE TABLE IF NOT EXISTS t_transactions (
-#     #                                    blockNumber text NOT NULL,
-#     #                                    timeStamp datetime NOT NULL,
-#     #                                    hash text NOT NULL,
-#     #                                    nonce text NOT NULL,
-#     #                                    blockHash text NOT NULL,
-#     #                                    transactionIndex text NOT NULL,
-#     #                                    xfrom text NOT NULL,
-#     #                                    xto text NOT NULL,
-#     #                                    value text NOT NULL,
-#     #                                    gas text NOT NULL,
-#     #                                    gasPrice text NOT NULL,
-#     #                                    isError text NOT NULL,
-#     #                                    txreceipt_status text NOT NULL,
-#     #                                    input text NOT NULL,
-#     #                                    contractAddress text NOT NULL,
-#     #                                    cumulativeGasUsed text NOT NULL,
-#     #                                    gasUsed text NOT NULL,
-#     #                                    confirmations text NOT NULL,
-#     #                                    methodId text NOT NULL,
-#     #                                    functionName text NOT NULL
-#     #                              );"""
-#             # with open(output_file, "a") as outfile:
-#             #     json.dump(response, outfile)
-#             #     outfile.write("\n")
-#         cursor.execute("""INSERT INTO t_transactions VALUES 
-#                        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-#                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-#                        """, 
-#             (json_object['blockNumber'],
-#              json_object['timeStamp'],
-#              json_object['hash'],
-#              json_object['nonce'],
-#              json_object['blockHash'],
-#              json_object['transactionIndex'],
-#              json_object['from'],
-#              json_object['to'],
-#              json_object['value'],
-#              json_object['gas'],
-#              json_object['gasPrice'],
-#              json_object['isError'],
-#              json_object['txreceipt_status'],
-#              json_object['input'],
-#              json_object['contract_address'],
-#              json_object['cumulativeGasUsed'],
-#              json_object['gasUsed'],
-#              json_object['confirmations'],
-#              json_object['methodId'],
-#              json_object['functionName']))
-
-#         connection.commit()
-
-#         # To prevent max requests
-#         await asyncio.sleep(0.2)  # Delay of 0.2 seconds between each request
-
-#     # diff = int(block_to) - int(block_from)
-#     logger.info(" ")
-#     logger.info("=====================================================")
-#     logger.info("  TRANSACTIONS TOTAL")
-#     logger.info("=====================================================")
-#     # logger.info(f"  From : {block_from} - To : {block_to}")
-#     # logger.info(f"  Diff : {diff} - Total TRX : {json_total}")
-#     logger.info("=====================================================")
-#     toc_fetch = time.perf_counter()
-#     logger.info(f"Read file in {toc_fetch - tic_fetch:0.4f} seconds")
-#     logger.info("=====================================================")
+            logger.info(f"DB - Store {count} Records")
+    return total
 
 
 def bsc_json_collect_async(contract_address, block_from, block_to, key, chunk=30000):
     filedb = "contract-bsc-" + contract_address + ".db"
-    os.remove(filedb)
+    try:
+        os.remove(filedb)
+    except:
+        pass
     logger.info(f"Creating db {filedb}")
-    # connection = sqlite3.connect(filedb)
-    # cursor = connection.cursor()
+    connection = sqlite3.connect(filedb)
+    cursor = connection.cursor()
 
-    # logger.info("=====================================================")
-    # logger.info("Collecting Contract data")
-    # logger.info("=====================================================")
-    # logger.info("Creating Table t_contract")
+    logger.info("=====================================================")
+    logger.info("Collecting Contract data")
+    logger.info("=====================================================")
+    logger.info("Creating Table t_contract")
 
-    # sql_create_contract_table = """CREATE TABLE IF NOT EXISTS t_contract (
-    #                                contract text NOT NULL,
-    #                                block_from text NOT NULL,
-    #                                block_to text NOT NULL,
-    #                                first_block text NOT NULL,
-    #                                transaction_creation text NOT NULL,
-    #                                date_creation datetime NOT NULL,
-    #                                creator text NOT NULL
-    #                              );"""
-    # cursor.execute(sql_create_contract_table)
+    sql_create_contract_table = """CREATE TABLE IF NOT EXISTS t_contract (
+                                   contract text NOT NULL,
+                                   block_from text NOT NULL,
+                                   block_to text NOT NULL,
+                                   first_block text NOT NULL,
+                                   transaction_creation text NOT NULL,
+                                   date_creation datetime NOT NULL,
+                                   creator text NOT NULL
+                                 );"""
+    cursor.execute(sql_create_contract_table)
 
-    # logger.info("Getting first block")
-    # url = 'https://api.bscscan.com/api?module=account&action=txlist&address=' + contract_address + '&startblock=0&endblock=99999999' + \
-    #     '&page=1&offset=1&sort=asc&apikey=' + key 
+    logger.info("Getting first block")
+    url = 'https://api.bscscan.com/api?module=account&action=txlist&address=' + contract_address + '&startblock=0&endblock=99999999' + \
+        '&page=1&offset=1&sort=asc&apikey=' + key 
+    response = requests.get(url)
+
+    # Validate API Key
+    if (response.json()['message'] == "NOTOK"):
+        logger.error("Invalid API Key")
+        os.remove(filedb)
+        raise RuntimeError('Invalid API Key')
+        
+    first_block = response.json()['result'][0]
+
+    if (block_from == 0):
+        block_from = int(first_block['blockNumber'])
+
+    json_contract = {"contract": contract_address, 
+                     "block_from": block_from,
+                     "block_to": block_to, 
+                     "first_block": first_block['blockNumber'],
+                     "transaction_creation": first_block['hash'],
+                     "date_creation": first_block['timeStamp'],
+                     "creator": first_block['from']}
+
+    logger.info("Storing first block")
+    cursor.execute("""INSERT INTO t_contract VALUES (?, ?, ?, ?, ?, ?, ?)""", 
+        (contract_address, block_from, block_to, first_block['blockNumber'], 
+        first_block['hash'], first_block['timeStamp'], first_block['from']))
+
+    connection.commit()
+
+    # # contract abi
+    # url = 'https://api.bscscan.com/api?module=contract&action=getabi&address=' + contract_address + '&apikey=' + key
     # response = requests.get(url)
 
-    # # Validate API Key
-    # if (response.json()['message'] == "NOTOK"):
-    #     logger.error("Invalid API Key")
-    #     os.remove(filedb)
-    #     raise RuntimeError('Invalid API Key')
-    #     
-    # first_block = response.json()['result'][0]
+    # json_obj_contract_abi = response.json()['result']
+    # print(json_obj_contract_abi)
 
-    # if (block_from == 0):
-    #     block_from = int(first_block['blockNumber'])
+    # Source code
+    logger.info("Creating Table t_source_abi")
 
-    # json_contract = {"contract": contract_address, 
-    #                  "block_from": block_from,
-    #                  "block_to": block_to, 
-    #                  "first_block": first_block['blockNumber'],
-    #                  "transaction_creation": first_block['hash'],
-    #                  "date_creation": first_block['timeStamp'],
-    #                  "creator": first_block['from']}
+    sql_create_source_abi_table = """CREATE TABLE IF NOT EXISTS t_source_abi (
+                                     SourceCode text NOT NULL,
+                                     ABI text NOT NULL,
+                                     ContractName text NOT NULL,
+                                     CompilerVersion text NOT NULL,
+                                     OptimizationUsed text NOT NULL,
+                                     Runs text NOT NULL,
+                                     ConstructorArguments text NOT NULL,
+                                     EVMVersion text NOT NULL,
+                                     Library text NOT NULL,
+                                     LicenseType text NOT NULL,
+                                     Proxy text NOT NULL,
+                                     Implementation text NOT NULL,
+                                     SwarmSource text NOT NULL
+                                   );"""
+    cursor.execute(sql_create_source_abi_table)
 
-    # logger.info("Storing first block")
-    # cursor.execute("""INSERT INTO t_contract VALUES (?, ?, ?, ?, ?, ?, ?)""", 
-    #     (contract_address, block_from, block_to, first_block['blockNumber'], 
-    #     first_block['hash'], first_block['timeStamp'], first_block['from']))
+    logger.info("Getting source code and ABI")
+    url = 'https://api.bscscan.com/api?module=contract&action=getsourcecode&address=' + contract_address + '&apikey=' + key
+    response = requests.get(url)
+    json_obj_source_code = response.json()['result'][0]
 
-    # connection.commit()
+    logger.info("Storing source code and ABI")
+    cursor.execute("""INSERT INTO t_source_abi VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
+        (json_obj_source_code['SourceCode'],
+         json_obj_source_code['ABI'],
+         json_obj_source_code['ContractName'],
+         json_obj_source_code['CompilerVersion'],
+         json_obj_source_code['OptimizationUsed'],
+         json_obj_source_code['Runs'],
+         json_obj_source_code['ConstructorArguments'],
+         json_obj_source_code['EVMVersion'],
+         json_obj_source_code['Library'],
+         json_obj_source_code['LicenseType'],
+         json_obj_source_code['Proxy'],
+         json_obj_source_code['Implementation'],
+         json_obj_source_code['SwarmSource']))
 
-    # # # contract abi
-    # # url = 'https://api.bscscan.com/api?module=contract&action=getabi&address=' + contract_address + '&apikey=' + key
-    # # response = requests.get(url)
-
-    # # json_obj_contract_abi = response.json()['result']
-    # # print(json_obj_contract_abi)
-
-    # # Source code
-    # logger.info("Creating Table t_source_abi")
-
-    # sql_create_source_abi_table = """CREATE TABLE IF NOT EXISTS t_source_abi (
-    #                                  SourceCode text NOT NULL,
-    #                                  ABI text NOT NULL,
-    #                                  ContractName text NOT NULL,
-    #                                  CompilerVersion text NOT NULL,
-    #                                  OptimizationUsed text NOT NULL,
-    #                                  Runs text NOT NULL,
-    #                                  ConstructorArguments text NOT NULL,
-    #                                  EVMVersion text NOT NULL,
-    #                                  Library text NOT NULL,
-    #                                  LicenseType text NOT NULL,
-    #                                  Proxy text NOT NULL,
-    #                                  Implementation text NOT NULL,
-    #                                  SwarmSource text NOT NULL
-    #                                );"""
-    # cursor.execute(sql_create_source_abi_table)
-
-    # logger.info("Getting source code and ABI")
-    # url = 'https://api.bscscan.com/api?module=contract&action=getsourcecode&address=' + contract_address + '&apikey=' + key
-    # response = requests.get(url)
-    # json_obj_source_code = response.json()['result'][0]
-
-    # logger.info("Storing source code and ABI")
-    # cursor.execute("""INSERT INTO t_source_abi VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
-    #     (json_obj_source_code['SourceCode'],
-    #      json_obj_source_code['ABI'],
-    #      json_obj_source_code['ContractName'],
-    #      json_obj_source_code['CompilerVersion'],
-    #      json_obj_source_code['OptimizationUsed'],
-    #      json_obj_source_code['Runs'],
-    #      json_obj_source_code['ConstructorArguments'],
-    #      json_obj_source_code['EVMVersion'],
-    #      json_obj_source_code['Library'],
-    #      json_obj_source_code['LicenseType'],
-    #      json_obj_source_code['Proxy'],
-    #      json_obj_source_code['Implementation'],
-    #      json_obj_source_code['SwarmSource']))
-
-    # connection.commit()
+    connection.commit()
+    connection.close()
 
     # NOTE: Implement in future
     # get_circulating_supply_by_contract_address - Get circulating supply of token by its contract address
@@ -1028,7 +935,7 @@ def bsc_json_collect_async(contract_address, block_from, block_to, key, chunk=30
     # json_obj_total_supply = json.loads(json_str_total_supply)
 
     # HACK: Remove the next line
-    block_from = 14050726
+    # block_from = 14050726
 
     logger.info("Building URLs")
     startblock = block_from
@@ -1053,7 +960,7 @@ def bsc_json_collect_async(contract_address, block_from, block_to, key, chunk=30
     logger.info("=====================================================")
     logger.info("Creating Table t_transactions")
 
-    conn = asyncio.run(create_connection())
+    conn = asyncio.run(create_connection(filedb))
 
     # sql_create_transactions_table = """CREATE TABLE IF NOT EXISTS t_transactions (
     #                                    blockNumber text NOT NULL,
@@ -1081,9 +988,20 @@ def bsc_json_collect_async(contract_address, block_from, block_to, key, chunk=30
 
     logger.info("Getting transactions async")
 
-    # for url in urls_transactions:
-    #     print(url)
-    asyncio.run(fetch_and_store(urls_transactions, conn))
+    start_time = time.time()
+    total = asyncio.run(fetch_and_store(urls_transactions, conn))
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    requests_per_second = len(urls_transactions) / elapsed_time
+    
+    logger.info(f"=========================================================")
+    logger.info(f" Total requests: {len(urls_transactions)}")
+    logger.info(f" Total Blocks: {len(urls_transactions) * chunk}")
+    logger.info(f" Total TRX: {total}")
+    logger.info(f" Elapsed time: {elapsed_time} seconds")
+    logger.info(f" Requests per second: {requests_per_second}")
+    logger.info(f"=========================================================")
+
     asyncio.run(close_connection(conn))
 
     # asyncio.run(fetch_and_store(urls_transactions, "TRANSACTIONS", connection, cursor))
