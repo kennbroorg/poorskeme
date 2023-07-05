@@ -11,7 +11,7 @@ import requests
 import sqlite3
 import asyncio
 import aiohttp
-import aiosqlite
+# import aiosqlite
 
 # from termcolor import colored
 # import coloredlogs, logging
@@ -727,88 +727,137 @@ def bsc_json_process(filename):
     return 0
 
 
-async def create_connection(filedb):
-    conn = await aiosqlite.connect(filedb)
-    print(f"Create table - {time.time()}")
-    sql_create_transactions_table = """CREATE TABLE IF NOT EXISTS t_transactions (
-                                       blockNumber text NOT NULL,
-                                       timeStamp datetime NOT NULL,
-                                       hash text NOT NULL,
-                                       nonce text NOT NULL,
-                                       blockHash text NOT NULL,
-                                       transactionIndex text NOT NULL,
-                                       xfrom text NOT NULL,
-                                       xto text NOT NULL,
-                                       value text NOT NULL,
-                                       gas text NOT NULL,
-                                       gasPrice text NOT NULL,
-                                       isError text NOT NULL,
-                                       txreceipt_status text NOT NULL,
-                                       input text NOT NULL,
-                                       contractAddress text NOT NULL,
-                                       cumulativeGasUsed text NOT NULL,
-                                       gasUsed text NOT NULL,
-                                       confirmations text NOT NULL,
-                                       methodId text NOT NULL,
-                                       functionName text NOT NULL
-                                 );"""
-    await conn.execute(sql_create_transactions_table)
-    await conn.commit()
-    return conn
-
-
-async def close_connection(conn):
-    await conn.close()
-
-
-async def get_data(session, url):
+async def aio_db_transactions(client_session, url, conn):    
     startblock = url.split("startblock=")[1].split("&endblock=")[0]
     endblock = url.split("endblock=")[1].split("&sort=")[0]
     logger.info(f"Processing - TRANSACTIONS from {startblock} to {endblock}")
-    async with session.get(url) as response:
-        return await response.json()
+
+    async with client_session.get(url) as resp:
+        data = await resp.json()
+
+        for json_object in data['result']:
+            conn.execute("""INSERT INTO t_transactions VALUES 
+                           (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                           """,
+                (json_object['blockNumber'],
+                 json_object['timeStamp'],
+                 json_object['hash'],
+                 json_object['nonce'],
+                 json_object['blockHash'],
+                 json_object['transactionIndex'],
+                 json_object['from'],
+                 json_object['to'],
+                 json_object['value'],
+                 json_object['gas'],
+                 json_object['gasPrice'],
+                 json_object['isError'],
+                 json_object['txreceipt_status'],
+                 json_object['input'],
+                 json_object['contractAddress'],
+                 json_object['cumulativeGasUsed'],
+                 json_object['gasUsed'],
+                 json_object['confirmations'],
+                 json_object['methodId'],
+                 json_object['functionName']))
+
+        conn.commit()
 
 
-async def fetch_and_store(urls, conn):
-    total = 0
-    async with aiohttp.ClientSession() as session:
-        for url in urls:
-            response = await get_data(session, url)
-            logger.info(f"DB - Store response")
-            count = 0
-            for json_object in response['result']:
-                await conn.execute("""INSERT INTO t_transactions VALUES 
+async def aio_db_transfers(client_session, url, conn):    
+    startblock = url.split("startblock=")[1].split("&endblock=")[0]
+    endblock = url.split("endblock=")[1].split("&sort=")[0]
+    logger.info(f"Processing - TRANSFERS from {startblock} to {endblock}")
+
+    async with client_session.get(url) as resp:
+        data = await resp.json()
+
+        for json_object in data['result']:
+            try: 
+                conn.execute("""INSERT INTO t_transfers VALUES 
                                (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                               ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                               """, 
+                               ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                               """,
                     (json_object['blockNumber'],
                      json_object['timeStamp'],
                      json_object['hash'],
                      json_object['nonce'],
                      json_object['blockHash'],
+                     json_object['from'],
+                     json_object['contractAddress'],
+                     json_object['to'],
+                     json_object['value'],
+                     json_object['tokenName'],
+                     json_object['tokenSymbol'],
+                     json_object['tokenDecimal'],
                      json_object['transactionIndex'],
+                     json_object['gas'],
+                     json_object['gasPrice'],
+                     json_object['gasUsed'],
+                     json_object['cumulativeGasUsed'],
+                     json_object['input'],
+                     json_object['confirmations']))
+            except Exception as e:
+                print(e)
+                
+
+        conn.commit()
+
+
+async def aio_db_internals(client_session, url, conn):    
+    startblock = url.split("startblock=")[1].split("&endblock=")[0]
+    endblock = url.split("endblock=")[1].split("&sort=")[0]
+    logger.info(f"Processing - INTERNALS from {startblock} to {endblock}")
+    print(url)
+
+    async with client_session.get(url) as resp:
+        data = await resp.json()
+
+        for json_object in data['result']:
+            try: 
+                conn.execute("""INSERT INTO t_internals VALUES 
+                               (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                               ?, ?)
+                               """,
+                    (json_object['blockNumber'],
+                     json_object['timeStamp'],
                      json_object['from'],
                      json_object['to'],
                      json_object['value'],
-                     json_object['gas'],
-                     json_object['gasPrice'],
-                     json_object['isError'],
-                     json_object['txreceipt_status'],
-                     json_object['input'],
                      json_object['contractAddress'],
-                     json_object['cumulativeGasUsed'],
+                     json_object['input'],
+                     json_object['type'],
+                     json_object['gas'],
                      json_object['gasUsed'],
-                     json_object['confirmations'],
-                     json_object['methodId'],
-                     json_object['functionName']))
-                count = count + 1
-                total = total + 1
-            await conn.commit()
-            logger.info(f"DB - Store {count} Records")
-    return total
+                     json_object['isError'],
+                     json_object['errCode']))
+            except Exception as e:
+                print(e)
+
+        conn.commit()
 
 
-def bsc_json_collect_async(contract_address, block_from, block_to, key, chunk=30000):
+async def async_fetch_and_store(urls, conn, type):
+    Client = aiohttp.ClientSession()
+    Tasks = []
+    for url in urls:
+        if (type == "Transactions"):
+            Tasks.append(aio_db_transactions(client_session=Client, url=url, conn=conn))
+        if (type == "Transfers"):
+            Tasks.append(aio_db_transfers(client_session=Client, url=url, conn=conn))
+        if (type == "Internals"):
+            Tasks.append(aio_db_internals(client_session=Client, url=url, conn=conn))
+        
+    try:
+        await asyncio.gather(*Tasks)
+        await asyncio.sleep(0.2)
+    except:
+        pass
+    finally:
+        await Client.close()
+
+
+def bsc_db_collect_async(contract_address, block_from, block_to, key, chunk=30000):
     filedb = "contract-bsc-" + contract_address + ".db"
     try:
         os.remove(filedb)
@@ -850,13 +899,13 @@ def bsc_json_collect_async(contract_address, block_from, block_to, key, chunk=30
     if (block_from == 0):
         block_from = int(first_block['blockNumber'])
 
-    json_contract = {"contract": contract_address, 
-                     "block_from": block_from,
-                     "block_to": block_to, 
-                     "first_block": first_block['blockNumber'],
-                     "transaction_creation": first_block['hash'],
-                     "date_creation": first_block['timeStamp'],
-                     "creator": first_block['from']}
+    # json_contract = {"contract": contract_address, 
+    #                  "block_from": block_from,
+    #                  "block_to": block_to, 
+    #                  "first_block": first_block['blockNumber'],
+    #                  "transaction_creation": first_block['hash'],
+    #                  "date_creation": first_block['timeStamp'],
+    #                  "creator": first_block['from']}
 
     logger.info("Storing first block")
     cursor.execute("""INSERT INTO t_contract VALUES (?, ?, ?, ?, ?, ?, ?)""", 
@@ -914,7 +963,7 @@ def bsc_json_collect_async(contract_address, block_from, block_to, key, chunk=30
          json_obj_source_code['SwarmSource']))
 
     connection.commit()
-    connection.close()
+    # connection.close()
 
     # NOTE: Implement in future
     # get_circulating_supply_by_contract_address - Get circulating supply of token by its contract address
@@ -960,40 +1009,47 @@ def bsc_json_collect_async(contract_address, block_from, block_to, key, chunk=30
     logger.info("=====================================================")
     logger.info("Creating Table t_transactions")
 
-    conn = asyncio.run(create_connection(filedb))
-
-    # sql_create_transactions_table = """CREATE TABLE IF NOT EXISTS t_transactions (
-    #                                    blockNumber text NOT NULL,
-    #                                    timeStamp datetime NOT NULL,
-    #                                    hash text NOT NULL,
-    #                                    nonce text NOT NULL,
-    #                                    blockHash text NOT NULL,
-    #                                    transactionIndex text NOT NULL,
-    #                                    xfrom text NOT NULL,
-    #                                    xto text NOT NULL,
-    #                                    value text NOT NULL,
-    #                                    gas text NOT NULL,
-    #                                    gasPrice text NOT NULL,
-    #                                    isError text NOT NULL,
-    #                                    txreceipt_status text NOT NULL,
-    #                                    input text NOT NULL,
-    #                                    contractAddress text NOT NULL,
-    #                                    cumulativeGasUsed text NOT NULL,
-    #                                    gasUsed text NOT NULL,
-    #                                    confirmations text NOT NULL,
-    #                                    methodId text NOT NULL,
-    #                                    functionName text NOT NULL
-    #                              );"""
-    # cursor.execute(sql_create_transactions_table)
+    sql_create_transactions_table = """CREATE TABLE IF NOT EXISTS t_transactions (
+                                       blockNumber text NOT NULL,
+                                       timeStamp text NOT NULL,
+                                       hash text NOT NULL,
+                                       nonce text NOT NULL,
+                                       blockHash text NOT NULL,
+                                       transactionIndex text NOT NULL,
+                                       xfrom text NOT NULL,
+                                       xto text NOT NULL,
+                                       value text NOT NULL,
+                                       gas text NOT NULL,
+                                       gasPrice text NOT NULL,
+                                       isError text NOT NULL,
+                                       txreceipt_status text NOT NULL,
+                                       input text NOT NULL,
+                                       contractAddress text NOT NULL,
+                                       cumulativeGasUsed text NOT NULL,
+                                       gasUsed text NOT NULL,
+                                       confirmations text NOT NULL,
+                                       methodId text NOT NULL,
+                                       functionName text NOT NULL
+                                 );"""
+    connection.execute(sql_create_transactions_table)
 
     logger.info("Getting transactions async")
 
     start_time = time.time()
-    total = asyncio.run(fetch_and_store(urls_transactions, conn))
+
+    split_urls = [urls_transactions[i:i + 5] for i in range(0, len(urls_transactions), 5)]
+    for urls in split_urls:
+        asyncio.run(async_fetch_and_store(urls, connection, "Transactions"))
+
     end_time = time.time()
     elapsed_time = end_time - start_time
     requests_per_second = len(urls_transactions) / elapsed_time
     
+    # Get total transactions registered
+    query = f"SELECT COUNT(*) FROM t_transactions"
+    cursor.execute(query)
+    total = cursor.fetchone()[0]
+
     logger.info(f"=========================================================")
     logger.info(f" Total requests: {len(urls_transactions)}")
     logger.info(f" Total Blocks: {len(urls_transactions) * chunk}")
@@ -1001,10 +1057,6 @@ def bsc_json_collect_async(contract_address, block_from, block_to, key, chunk=30
     logger.info(f" Elapsed time: {elapsed_time} seconds")
     logger.info(f" Requests per second: {requests_per_second}")
     logger.info(f"=========================================================")
-
-    asyncio.run(close_connection(conn))
-
-    # asyncio.run(fetch_and_store(urls_transactions, "TRANSACTIONS", connection, cursor))
 
     # while startblock < block_to:
     #     try:
@@ -1037,85 +1089,178 @@ def bsc_json_collect_async(contract_address, block_from, block_to, key, chunk=30
 
     # json_transaction = json_total
 
-    exit(0)
-
     logger.info(" ")
     logger.info("=====================================================")
     logger.info(f"Collecting Contract transfers...")
     logger.info("=====================================================")
-    startblock = block_from
-    endblock = block_from + chunk
+    logger.info("Creating Table t_transfers")
 
-    json_total = []
-    while startblock < block_to:
-        try:
-            url = 'https://api.bscscan.com/api?module=account&action=tokentx&address=' + contract_address + \
-                  '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
-            response = requests.get(url)
-            json_object = response.json()['result']
+    sql_create_transfers_table = """CREATE TABLE IF NOT EXISTS t_transfers (
+                                       blockNumber text NOT NULL,
+                                       timeStamp text NOT NULL,
+                                       hash text NOT NULL,
+                                       nonce text NOT NULL,
+                                       blockHash text NOT NULL,
+                                       xfrom text NOT NULL,
+                                       contractAddress text NOT NULL,
+                                       xto text NOT NULL,
+                                       value text NOT NULL,
+                                       tokenName text NOT NULL,
+                                       tokenSymbol text NOT NULL,
+                                       tokenDecimal text NOT NULL,
+                                       transactionIndex text NOT NULL,
+                                       gas text NOT NULL,
+                                       gasPrice text NOT NULL,
+                                       gasUsed text NOT NULL,
+                                       cumulativeGasUsed text NOT NULL,
+                                       input text NOT NULL,
+                                       confirmations text NOT NULL
+                                 );"""
+    connection.execute(sql_create_transfers_table)
 
-            if (len(json_object) > 0):
-                logger.info(f"TRANSFERS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
-            else:
-                logger.info(f"TRANSFERS - From : {startblock} - To : {endblock} - TRANSFERS NOT FOUND")
+    logger.info("Getting transfers async")
 
-            json_total += json_object
+    start_time = time.time()
 
-        except AssertionError:
-            logger.info(f"TRANSFERS - From : {startblock} - To : {endblock} - TRANSFERS NOT FOUND")
+    split_urls = [urls_transfers[i:i + 5] for i in range(0, len(urls_transfers), 5)]
+    for urls in split_urls:
+        asyncio.run(async_fetch_and_store(urls, connection, "Transfers"))
 
-        startblock += chunk + 1
-        endblock += chunk + 1
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    requests_per_second = len(urls_transfers) / elapsed_time
+    
+    # Get total transactions registered
+    query = f"SELECT COUNT(*) FROM t_transfers"
+    cursor.execute(query)
+    total = cursor.fetchone()[0]
 
-    diff = int(block_to) - int(block_from)
-    logger.info(" ")
-    logger.info("=====================================================")
-    logger.info("  TRANSFER TOTAL")
-    logger.info("=====================================================")
-    logger.info(f"  From : {block_from} - To : {block_to}")
-    logger.info(f"  Diff : {diff} - Total TRX : {len(json_total)}")
-    logger.info("=====================================================")
+    logger.info(f"=========================================================")
+    logger.info(f" Total requests: {len(urls_transfers)}")
+    logger.info(f" Total Blocks: {len(urls_transfers) * chunk}")
+    logger.info(f" Total TRX: {total}")
+    logger.info(f" Elapsed time: {elapsed_time} seconds")
+    logger.info(f" Requests per second: {requests_per_second}")
+    logger.info(f"=========================================================")
 
-    json_transfer = json_total
+    # startblock = block_from
+    # endblock = block_from + chunk
+
+    # json_total = []
+    # while startblock < block_to:
+    #     try:
+    #         url = 'https://api.bscscan.com/api?module=account&action=tokentx&address=' + contract_address + \
+    #               '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
+    #         response = requests.get(url)
+    #         json_object = response.json()['result']
+
+    #         if (len(json_object) > 0):
+    #             logger.info(f"TRANSFERS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
+    #         else:
+    #             logger.info(f"TRANSFERS - From : {startblock} - To : {endblock} - TRANSFERS NOT FOUND")
+
+    #         json_total += json_object
+
+    #     except AssertionError:
+    #         logger.info(f"TRANSFERS - From : {startblock} - To : {endblock} - TRANSFERS NOT FOUND")
+
+    #     startblock += chunk + 1
+    #     endblock += chunk + 1
+
+    # diff = int(block_to) - int(block_from)
+    # logger.info(" ")
+    # logger.info("=====================================================")
+    # logger.info("  TRANSFER TOTAL")
+    # logger.info("=====================================================")
+    # logger.info(f"  From : {block_from} - To : {block_to}")
+    # logger.info(f"  Diff : {diff} - Total TRX : {len(json_total)}")
+    # logger.info("=====================================================")
+
+    # json_transfer = json_total
 
     logger.info(" ")
     logger.info("=====================================================")
     logger.info(f"Collecting Internals transfers...")
     logger.info("=====================================================")
-    startblock = block_from
-    endblock = block_from + chunk
+    logger.info("Creating Table t_internals")
 
-    json_total = []
-    while startblock < block_to:
-        try:
-            url = 'https://api.bscscan.com/api?module=account&action=txlistinternal&address=' + contract_address + \
-                  '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
-            response = requests.get(url)
-            json_object = response.json()['result']
+    sql_create_internals_table = """CREATE TABLE IF NOT EXISTS t_internals (
+                                       blockNumber text NOT NULL,
+                                       timeStamp datetime NOT NULL,
+                                       xfrom text NOT NULL,
+                                       xto text NOT NULL,
+                                       value text NOT NULL,
+                                       contractAddress text NOT NULL,
+                                       input text NOT NULL,
+                                       type text NOT NULL,
+                                       gas text NOT NULL,
+                                       gasUsed text NOT NULL,
+                                       isError text NOT NULL,
+                                       errCode text NOT NULL
+                                 );"""
+    connection.execute(sql_create_internals_table)
 
-            if (len(json_object) > 0):
-                logger.info(f"INTERNALS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
-            else:
-                logger.info(f"INTERNALS - From : {startblock} - To : {endblock} - INTERNALS NOT FOUND")
+    logger.info("Getting internals async")
 
-            json_total += json_object
+    start_time = time.time()
 
-        except AssertionError:
-            logger.info(f"INTERNALS - From : {startblock} - To : {endblock} - TRANSFER NOT FOUND")
+    split_urls = [urls_internals[i:i + 5] for i in range(0, len(urls_internals), 5)]
+    for urls in split_urls:
+        asyncio.run(async_fetch_and_store(urls, connection, "Internals"))
 
-        startblock += chunk + 1
-        endblock += chunk + 1
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    requests_per_second = len(urls_internals) / elapsed_time
+    
+    # Get total transactions registered
+    query = f"SELECT COUNT(*) FROM t_internals"
+    cursor.execute(query)
+    total = cursor.fetchone()[0]
 
-    diff = int(block_to) - int(block_from)
-    logger.info(" ")
-    logger.info("=====================================================")
-    logger.info("  INTERNALS TOTAL")
-    logger.info("=====================================================")
-    logger.info(f"  From : {block_from} - To : {block_to}")
-    logger.info(f"  Diff : {diff} - Total TRX : {len(json_total)}")
-    logger.info("=====================================================")
+    logger.info(f"=========================================================")
+    logger.info(f" Total requests: {len(urls_internals)}")
+    logger.info(f" Total Blocks: {len(urls_internals) * chunk}")
+    logger.info(f" Total TRX: {total}")
+    logger.info(f" Elapsed time: {elapsed_time} seconds")
+    logger.info(f" Requests per second: {requests_per_second}")
+    logger.info(f"=========================================================")
 
-    json_internals = json_total
+    connection.close()
+
+    # startblock = block_from
+    # endblock = block_from + chunk
+
+    # json_total = []
+    # while startblock < block_to:
+    #     try:
+    #         url = 'https://api.bscscan.com/api?module=account&action=txlistinternal&address=' + contract_address + \
+    #               '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
+    #         response = requests.get(url)
+    #         json_object = response.json()['result']
+
+    #         if (len(json_object) > 0):
+    #             logger.info(f"INTERNALS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
+    #         else:
+    #             logger.info(f"INTERNALS - From : {startblock} - To : {endblock} - INTERNALS NOT FOUND")
+
+    #         json_total += json_object
+
+    #     except AssertionError:
+    #         logger.info(f"INTERNALS - From : {startblock} - To : {endblock} - TRANSFER NOT FOUND")
+
+    #     startblock += chunk + 1
+    #     endblock += chunk + 1
+
+    # diff = int(block_to) - int(block_from)
+    # logger.info(" ")
+    # logger.info("=====================================================")
+    # logger.info("  INTERNALS TOTAL")
+    # logger.info("=====================================================")
+    # logger.info(f"  From : {block_from} - To : {block_to}")
+    # logger.info(f"  Diff : {diff} - Total TRX : {len(json_total)}")
+    # logger.info("=====================================================")
+
+    # json_internals = json_total
 
     # NOTE: It ins't necesary yet
     # logger.info(" ")
@@ -1160,24 +1305,25 @@ def bsc_json_collect_async(contract_address, block_from, block_to, key, chunk=30
     # logger.info(f"  From : {block_from} - To : {block_to}")
     # logger.info(f"  Diff : {diff} - Total TRX : {len(json_total)}")
     # logger.info("=====================================================")
-    json_logs = []
 
-    json_logs = json_total
+    # json_logs = []
 
-    # Consolidate data
-    json_total = {"contract": json_contract,
-                  # "getabi": json_str_contract_abi,
-                  "getabi": json_obj_contract_abi,
-                  "source_code": json_obj_source_code,
-                  # "circ_supply": json_str_circ_supply,
-                  # "total_supply": json_obj_total_supply,
-                  "transactions": json_transaction,
-                  "transfers": json_transfer,
-                  "internals": json_internals,
-                  "logs": json_logs}
+    # json_logs = json_total
 
-    filename = "contract-bsc-" + contract_address + ".json"
-    with open(filename, 'w') as outfile:
-        json.dump(json_total, outfile)
+    # # Consolidate data
+    # json_total = {"contract": json_contract,
+    #               # "getabi": json_str_contract_abi,
+    #               "getabi": json_obj_contract_abi,
+    #               "source_code": json_obj_source_code,
+    #               # "circ_supply": json_str_circ_supply,
+    #               # "total_supply": json_obj_total_supply,
+    #               "transactions": json_transaction,
+    #               "transfers": json_transfer,
+    #               "internals": json_internals,
+    #               "logs": json_logs}
+
+    # filename = "contract-bsc-" + contract_address + ".json"
+    # with open(filename, 'w') as outfile:
+    #     json.dump(json_total, outfile)
 
     # PERF: Increase performanco with async
