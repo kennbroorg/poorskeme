@@ -4,8 +4,9 @@
 
     <div *ngIf="loading">
         <div class="row">
-            <!-- Explanation -->
-            <div class="col-md-12" *ngIf="!process">
+
+            <!-- Explanation Distribution -->
+            <div class="col-md-12" *ngIf="!process && mod=='distribution'">
                 <nb-card style="margin: 7px;">
                     <!-- <nb-card-body class="shiny" style="font-weight: 500; font-size: 20px; "> -->
                     <nb-card-body class="shiny" style="font-weight: 300; font-size: 20px;">
@@ -16,7 +17,7 @@
                     </nb-card-body>
                 </nb-card>
             </div>
-            <div class="col-md-12" *ngIf="!process">
+            <div class="col-md-12" *ngIf="!process && mod=='distribution'">
                 <nb-card style="margin: 7px;">
                     <!-- <nb-card-body class="shiny" style="font-weight: 500; font-size: 20px; "> -->
                     <nb-card-body style="font-weight: 300; font-size: 20px;">
@@ -27,6 +28,38 @@
                           <p class="text-window"> - A coloured bubble with the word <span style="background: rgba(102, 217, 255, 0.4); color: #404041 ; padding-left: 3px; padding-right: 3px;);">OUT</span> inside it, because tokens are leaving the wallet and can generally be associated with the execution of contract functions related to a Deposit</p>
                           <p class="text-window">Larger bubbles will correspond to larger volume flows, and smaller bubbles will correspond to smaller IN/OUT volumes</p>
                           <p class="text-window">The graph can be zoomed and navigated. And clicking on any of the bubbles will display a detail of the selected wallet, showing profit or loss percentages, ratio of IN/OUT transactions, volumes transferred, dates, table detailing all transactions between the selected wallet and the contract, etc</p>
+
+                    </nb-card-body>
+                </nb-card>
+            </div>
+
+            <!-- Explanation Distribution -->
+            <div class="col-md-12" *ngIf="!process && mod=='anomalies'">
+                <nb-card style="margin: 7px;">
+                    <!-- <nb-card-body class="shiny" style="font-weight: 500; font-size: 20px; "> -->
+                    <nb-card-body class="shiny" style="font-weight: 300; font-size: 20px;">
+                        <div class="top-title">
+                            ANOMALIES TABLE
+                        </div>
+                        <div class="fixed-subtitle" style="color:rgba(255, 255, 255, 0.8);">Explanation</div>
+                    </nb-card-body>
+                </nb-card>
+            </div>
+            <div class="col-md-12" *ngIf="!process && mod=='anomalies'">
+                <nb-card style="margin: 7px;">
+                    <nb-card-body style="font-weight: 300; font-size: 20px;">
+
+                          <p class="text-window" style="margin-bottom: 10px;">This table shows the list of wallets that have made a disproportionate profit</p>
+                          <p class="text-window">The columns of the table are :</p>
+                          <p class="text-window"> - <span style="background-color: rgba(102, 217, 255, 0.2); color: #A0A0A1 ; padding-left: 10px; padding-right: 10px;);">WALLET</span> : Address of the wallet</p>
+                          <p class="text-window"> - <span style="background-color: rgba(102, 217, 255, 0.2); color: #A0A0A1 ; padding-left: 10px; padding-right: 10px;);">OUT</span> : Amount of outgoing transactions from the wallet to the contract</p>
+                          <p class="text-window"> - <span style="background-color: rgba(102, 217, 255, 0.2); color: #A0A0A1 ; padding-left: 10px; padding-right: 10px;);">OUT($)</span> : Amount of outgoing assets from the wallet to the contract</p>
+                          <p class="text-window"> - <span style="background-color: rgba(102, 217, 255, 0.2); color: #A0A0A1 ; padding-left: 10px; padding-right: 10px;);">IN</span> : Number of incoming transactions to the wallet from the contract</p>
+                          <p class="text-window"> - <span style="background-color: rgba(102, 217, 255, 0.2); color: #A0A0A1 ; padding-left: 10px; padding-right: 10px;);">IN($)</span> : Amount of incoming assets to the wallet from the contract</p>
+                          <p class="text-window"> - <span style="background-color: rgba(102, 217, 255, 0.2); color: #A0A0A1 ; padding-left: 10px; padding-right: 10px;);">%</span> : Percentage of profit calculated as (IN * 100 / OUT)</p>
+                          <p class="text-window" style="margin-bottom: 10px;">This table allows sorting by any of its columns</p>
+                          <p class="text-window" style="margin-bottom: 10px;">Within this table we can find in the first places the creator of the contract or those who receive commissions from it</p>
+                          <p class="text-window" style="margin-bottom: 10px;">In many cases we can also identify wallets that receive assets from the contract without a logical reason, taking advantage of vulnerabilities or "errors" that in many cases are deliberately placed</p>
 
                     </nb-card-body>
                 </nb-card>

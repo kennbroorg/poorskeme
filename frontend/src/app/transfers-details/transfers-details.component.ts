@@ -17,6 +17,7 @@ export class TransfersDetailsComponent implements OnInit {
   @ViewChild('cardCube', {static: true}) cardContainer!: ElementRef<HTMLElement>;
   @Input() subject!: Subject<string>;
   @Input() public h: any;
+  @Input() public mod: any;
   @Output() onTrx: EventEmitter<string> = new EventEmitter<string>();
 
   h_table: any;
@@ -74,7 +75,7 @@ export class TransfersDetailsComponent implements OnInit {
                     () => console.log('Completed Detail'),
           );
       }
-      console.log(`LOADING: ${this.loading} - PROCESS: ${this.process}`)
+      console.log(`LOADING: ${this.loading} - PROCESS: ${this.process} - MODULE: ${this.mod}`)
     });
 
     this.h_table = this.h;
