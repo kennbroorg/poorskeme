@@ -4,10 +4,15 @@
 # import asyncio
 import json
 import re
+import numpy as np
 import pandas as pd
 import time
 import os.path
+from pandas.core.series import unpack_1tuple
 import requests
+import sqlite3
+import asyncio
+import aiohttp
 
 # from termcolor import colored
 # import coloredlogs, logging
@@ -724,3 +729,919 @@ def eth_json_process(filename):
     logger.info(f"Preprocess Statistic file in {toc - tic:0.4f} seconds")
 
     return 0
+
+
+async def aio_db_transactions(client_session, url, conn):    
+    startblock = url.split("startblock=")[1].split("&endblock=")[0]
+    endblock = url.split("endblock=")[1].split("&sort=")[0]
+    logger.info(f"Processing - TRANSACTIONS from {startblock} to {endblock}")
+
+    async with client_session.get(url) as resp:
+        data = await resp.json()
+
+        for json_object in data['result']:
+            conn.execute("""INSERT INTO t_transactions VALUES 
+                           (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                           """,
+                (json_object['blockNumber'],
+                 json_object['timeStamp'],
+                 json_object['hash'],
+                 json_object['nonce'],
+                 json_object['blockHash'],
+                 json_object['transactionIndex'],
+                 json_object['from'],
+                 json_object['to'],
+                 json_object['value'],
+                 json_object['gas'],
+                 json_object['gasPrice'],
+                 json_object['isError'],
+                 json_object['txreceipt_status'],
+                 json_object['input'],
+                 json_object['contractAddress'],
+                 json_object['cumulativeGasUsed'],
+                 json_object['gasUsed'],
+                 json_object['confirmations'],
+                 json_object['methodId'],
+                 json_object['functionName']))
+
+        conn.commit()
+
+
+async def aio_db_transfers(client_session, url, conn):    
+    startblock = url.split("startblock=")[1].split("&endblock=")[0]
+    endblock = url.split("endblock=")[1].split("&sort=")[0]
+    logger.info(f"Processing - TRANSFERS from {startblock} to {endblock}")
+
+    async with client_session.get(url) as resp:
+        data = await resp.json()
+
+        rows = []
+        for json_object in data['result']:
+
+            rows.append((json_object['blockNumber'],
+                 json_object['timeStamp'],
+                 json_object['hash'],
+                 json_object['nonce'],
+                 json_object['blockHash'],
+                 json_object['from'],
+                 json_object['contractAddress'],
+                 json_object['to'],
+                 json_object['value'],
+                 json_object['tokenName'],
+                 json_object['tokenSymbol'],
+                 json_object['tokenDecimal'],
+                 json_object['transactionIndex'],
+                 json_object['gas'],
+                 json_object['gasPrice'],
+                 json_object['gasUsed'],
+                 json_object['cumulativeGasUsed'],
+                 json_object['input'],
+                 json_object['confirmations']))
+
+        if (rows != []):
+            conn.executemany("""INSERT INTO t_transfers VALUES 
+                             (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                             ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                             """,rows)
+            conn.commit()
+
+
+async def aio_db_internals(client_session, url, conn):    
+    startblock = url.split("startblock=")[1].split("&endblock=")[0]
+    endblock = url.split("endblock=")[1].split("&sort=")[0]
+    logger.info(f"Processing - INTERNALS from {startblock} to {endblock}")
+
+    async with client_session.get(url) as resp:
+        data = await resp.json()
+
+        for json_object in data['result']:
+            try: 
+                conn.execute("""INSERT INTO t_internals VALUES 
+                               (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                               ?, ?, ?)
+                               """,
+                    (json_object['blockNumber'],
+                     json_object['timeStamp'],
+                     json_object['hash'],
+                     json_object['from'],
+                     json_object['to'],
+                     json_object['value'],
+                     json_object['contractAddress'],
+                     json_object['input'],
+                     json_object['type'],
+                     json_object['gas'],
+                     json_object['gasUsed'],
+                     json_object['isError'],
+                     json_object['errCode']))
+            except Exception as e:
+                print(e)
+
+        conn.commit()
+
+
+async def async_fetch_and_store(urls, conn, type):
+    Client = aiohttp.ClientSession()
+    Tasks = []
+    for url in urls:
+        if (type == "Transactions"):
+            Tasks.append(aio_db_transactions(client_session=Client, url=url, conn=conn))
+        if (type == "Transfers"):
+            Tasks.append(aio_db_transfers(client_session=Client, url=url, conn=conn))
+        if (type == "Internals"):
+            Tasks.append(aio_db_internals(client_session=Client, url=url, conn=conn))
+        
+    try:
+        await asyncio.gather(*Tasks)
+        await asyncio.sleep(0.2)
+    except:
+        pass
+    finally:
+        await Client.close()
+
+
+def eth_db_collect_async(contract_address, block_from, block_to, key, chunk=30000):
+    filedb = "contract-eth-" + contract_address + ".db"
+    try:
+        os.remove(filedb)
+    except:
+        pass
+    logger.info(f"Creating db {filedb}")
+    connection = sqlite3.connect(filedb)
+    cursor = connection.cursor()
+
+    logger.info("=====================================================")
+    logger.info("Collecting Contract data")
+    logger.info("=====================================================")
+    logger.info("Creating Table t_contract")
+
+    sql_create_contract_table = """CREATE TABLE IF NOT EXISTS t_contract (
+                                   contract text NOT NULL,
+                                   block_from text NOT NULL,
+                                   block_to text NOT NULL,
+                                   first_block text NOT NULL,
+                                   transaction_creation text NOT NULL,
+                                   date_creation datetime NOT NULL,
+                                   creator text NOT NULL
+                                 );"""
+    cursor.execute(sql_create_contract_table)
+
+    logger.info("Getting first block")
+    url = 'https://api.etherscan.io/api?module=account&action=txlist&address=' + contract_address + '&startblock=0&endblock=99999999' + \
+        '&page=1&offset=1&sort=asc&apikey=' + key
+    response = requests.get(url)
+
+    # Validate API Key
+    if (response.json()['message'] == "NOTOK"):
+        logger.error("Invalid API Key")
+        os.remove(filedb)
+        raise RuntimeError('Invalid API Key')
+        
+    first_block = response.json()['result'][0]
+
+    if (block_from == 0):
+        block_from = int(first_block['blockNumber'])
+
+    logger.info("Storing first block")
+    cursor.execute("""INSERT INTO t_contract VALUES (?, ?, ?, ?, ?, ?, ?)""", 
+        (contract_address, block_from, block_to, first_block['blockNumber'], 
+        first_block['hash'], first_block['timeStamp'], first_block['from']))
+
+    connection.commit()
+
+    # Source code
+    logger.info("Creating Table t_source_abi")
+
+    sql_create_source_abi_table = """CREATE TABLE IF NOT EXISTS t_source_abi (
+                                     SourceCode text NOT NULL,
+                                     ABI text NOT NULL,
+                                     ContractName text NOT NULL,
+                                     CompilerVersion text NOT NULL,
+                                     OptimizationUsed text NOT NULL,
+                                     Runs text NOT NULL,
+                                     ConstructorArguments text NOT NULL,
+                                     EVMVersion text NOT NULL,
+                                     Library text NOT NULL,
+                                     LicenseType text NOT NULL,
+                                     Proxy text NOT NULL,
+                                     Implementation text NOT NULL,
+                                     SwarmSource text NOT NULL
+                                   );"""
+    cursor.execute(sql_create_source_abi_table)
+
+    logger.info("Getting source code and ABI")
+    url = 'https://api.etherscan.io/api?module=contract&action=getsourcecode&address=' + contract_address + '&apikey=' + key
+    response = requests.get(url)
+    json_obj_source_code = response.json()['result'][0]
+
+    logger.info("Storing source code and ABI")
+    cursor.execute("""INSERT INTO t_source_abi VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
+        (json_obj_source_code['SourceCode'],
+         json_obj_source_code['ABI'],
+         json_obj_source_code['ContractName'],
+         json_obj_source_code['CompilerVersion'],
+         json_obj_source_code['OptimizationUsed'],
+         json_obj_source_code['Runs'],
+         json_obj_source_code['ConstructorArguments'],
+         json_obj_source_code['EVMVersion'],
+         json_obj_source_code['Library'],
+         json_obj_source_code['LicenseType'],
+         json_obj_source_code['Proxy'],
+         json_obj_source_code['Implementation'],
+         json_obj_source_code['SwarmSource']))
+
+    connection.commit()
+    # connection.close()
+
+    # NOTE: Implement in future
+    # get_circulating_supply_by_contract_address - Get circulating supply of token by its contract address
+    # async with BscScan(key) as client:
+    #     json_result = await client.get_circulating_supply_by_contract_address(
+    #             contract_address=contract_address,
+    #         )
+    # json_str_circ_supply = json.dumps(json_result)
+    # json_obj_circ_supply = json.loads(json_str_circ_supply)
+
+    # NOTE: Implement in future
+    # get_total_supply_by_contract_address - Get circulating supply of token by its contract address
+    # async with BscScan(key) as client:
+    #     json_result = await client.get_total_supply_by_contract_address(
+    #             contract_address=contract_address,
+    #         )
+    # json_str_total_supply = json.dumps(json_result)
+    # json_obj_total_supply = json.loads(json_str_total_supply)
+
+    logger.info("Building URLs")
+    startblock = block_from
+    endblock = block_from + chunk
+
+    urls_transactions = []
+    urls_internals = []
+    urls_transfers = []
+    while startblock < block_to:
+        urls_transactions.append('https://api.etherscan.io/api?module=account&action=txlist&address=' + contract_address + \
+                  '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key)
+        urls_internals.append('https://api.etherscan.io/api?module=account&action=txlistinternal&address=' + contract_address + \
+                  '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key)
+        urls_transfers.append('https://api.etherscan.io/api?module=account&action=tokentx&address=' + contract_address + \
+                  '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key)
+        startblock += chunk + 1
+        endblock += chunk + 1
+
+    logger.info(" ")
+    logger.info("=====================================================")
+    logger.info("Collecting Contract transactions")
+    logger.info("=====================================================")
+    logger.info("Creating Table t_transactions")
+
+    sql_create_transactions_table = """CREATE TABLE IF NOT EXISTS t_transactions (
+                                       blockNumber integer NOT NULL,
+                                       timeStamp datetime NOT NULL,
+                                       hash text NOT NULL,
+                                       nonce integer NOT NULL,
+                                       blockHash text NOT NULL,
+                                       transactionIndex integer NOT NULL,
+                                       `from` text NOT NULL,
+                                       `to` text NOT NULL,
+                                       value integer NOT NULL,
+                                       gas integer NOT NULL,
+                                       gasPrice integer NOT NULL,
+                                       isError integer NOT NULL,
+                                       txreceipt_status integer NOT NULL,
+                                       input text NOT NULL,
+                                       contractAddress text NOT NULL,
+                                       cumulativeGasUsed integer NOT NULL,
+                                       gasUsed integer NOT NULL,
+                                       confirmations integer NOT NULL,
+                                       methodId text NOT NULL,
+                                       functionName text NOT NULL
+                                 );"""
+    connection.execute(sql_create_transactions_table)
+
+    logger.info("Getting transactions async")
+
+    start_time = time.time()
+
+    split_urls = [urls_transactions[i:i + 5] for i in range(0, len(urls_transactions), 5)]
+    for urls in split_urls:
+        asyncio.run(async_fetch_and_store(urls, connection, "Transactions"))
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    requests_per_second = len(urls_transactions) / elapsed_time
+    
+    # Get total transactions registered
+    query = f"SELECT COUNT(*) FROM t_transactions"
+    cursor.execute(query)
+    total = cursor.fetchone()[0]
+
+    logger.info(f"=========================================================")
+    logger.info(f" Total requests: {len(urls_transactions)}")
+    logger.info(f" Total Blocks: {len(urls_transactions) * chunk}")
+    logger.info(f" Total TRX: {total}")
+    logger.info(f" Elapsed time: {elapsed_time} seconds")
+    logger.info(f" Requests per second: {requests_per_second}")
+    logger.info(f"=========================================================")
+
+    logger.info(" ")
+    logger.info("=====================================================")
+    logger.info(f"Collecting Contract transfers...")
+    logger.info("=====================================================")
+    logger.info("Creating Table t_transfers")
+
+    sql_create_transfers_table = """CREATE TABLE IF NOT EXISTS t_transfers (
+                                       blockNumber integer NOT NULL,
+                                       timeStamp datetime NOT NULL,
+                                       hash text NOT NULL,
+                                       nonce integer NOT NULL,
+                                       blockHash text NOT NULL,
+                                       `from` text NOT NULL,
+                                       contractAddress text NOT NULL,
+                                       `to` text NOT NULL,
+                                       value integer NOT NULL,
+                                       tokenName text NOT NULL,
+                                       tokenSymbol text NOT NULL,
+                                       tokenDecimal integer NOT NULL,
+                                       transactionIndex integer NOT NULL,
+                                       gas integer NOT NULL,
+                                       gasPrice integer NOT NULL,
+                                       gasUsed integer NOT NULL,
+                                       cumulativeGasUsed integer NOT NULL,
+                                       input text NOT NULL,
+                                       confirmations integer NOT NULL
+                                 );"""
+    connection.execute(sql_create_transfers_table)
+
+    logger.info("Getting transfers async")
+
+    start_time = time.time()
+
+    split_urls = [urls_transfers[i:i + 5] for i in range(0, len(urls_transfers), 5)]
+    for urls in split_urls:
+        asyncio.run(async_fetch_and_store(urls, connection, "Transfers"))
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    requests_per_second = len(urls_transfers) / elapsed_time
+    
+    # Get total transactions registered
+    query = f"SELECT COUNT(*) FROM t_transfers"
+    cursor.execute(query)
+    total = cursor.fetchone()[0]
+
+    logger.info(f"=========================================================")
+    logger.info(f" Total requests: {len(urls_transfers)}")
+    logger.info(f" Total Blocks: {len(urls_transfers) * chunk}")
+    logger.info(f" Total TRX: {total}")
+    logger.info(f" Elapsed time: {elapsed_time} seconds")
+    logger.info(f" Requests per second: {requests_per_second}")
+    logger.info(f"=========================================================")
+
+    logger.info(" ")
+    logger.info("=====================================================")
+    logger.info(f"Collecting Internals transfers...")
+    logger.info("=====================================================")
+    logger.info("Creating Table t_internals")
+
+    sql_create_internals_table = """CREATE TABLE IF NOT EXISTS t_internals (
+                                       blockNumber integer NOT NULL,
+                                       timeStamp datetime NOT NULL,
+                                       hash text NOT NULL,
+                                       `from` text NOT NULL,
+                                       `to` text NOT NULL,
+                                       value integer NOT NULL,
+                                       contractAddress text NOT NULL,
+                                       input text NOT NULL,
+                                       type text NOT NULL,
+                                       gas integer NOT NULL,
+                                       gasUsed integer NOT NULL,
+                                       isError integer NOT NULL,
+                                       errCode text NOT NULL
+                                 );"""
+    connection.execute(sql_create_internals_table)
+
+    logger.info("Getting internals async")
+
+    start_time = time.time()
+
+    split_urls = [urls_internals[i:i + 5] for i in range(0, len(urls_internals), 5)]
+    for urls in split_urls:
+        asyncio.run(async_fetch_and_store(urls, connection, "Internals"))
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    requests_per_second = len(urls_internals) / elapsed_time
+    
+    # Get total transactions registered
+    query = f"SELECT COUNT(*) FROM t_internals"
+    cursor.execute(query)
+    total = cursor.fetchone()[0]
+
+    logger.info(f"=========================================================")
+    logger.info(f" Total requests: {len(urls_internals)}")
+    logger.info(f" Total Blocks: {len(urls_internals) * chunk}")
+    logger.info(f" Total TRX: {total}")
+    logger.info(f" Elapsed time: {elapsed_time} seconds")
+    logger.info(f" Requests per second: {requests_per_second}")
+    logger.info(f"=========================================================")
+
+    connection.close()
+
+    # NOTE: It ins't necesary yet
+    # logger.info(" ")
+    # logger.info("=====================================================")
+    # logger.info(f"Collecting logs...")
+    # logger.info("=====================================================")
+    # startblock = block_from
+    # endblock = block_from + chunk
+
+    # NOTE: It ins't necesary yet
+    # json_total = []
+    # while startblock < block_to:
+    #     try:
+    #         url = 'https://api.bscscan.com/api?module=logs&action=getLogs&address=' + contract_address + \
+    #               '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key
+    #         response = requests.get(url)
+    #         json_object = response.json()['result']
+
+    # NOTE: It ins't necesary yet
+    #         if (len(json_object) > 0):
+    #             logger.info(f"LOGS - From : {startblock} - To : {endblock} - Total TRX Block: {len(json_object)}")
+    #         else:
+    #             logger.info(f"LOGS - From : {startblock} - To : {endblock} - LOGS NOT FOUND")
+
+    # NOTE: It ins't necesary yet
+    #        json_total += json_object
+
+    # NOTE: It ins't necesary yet
+    #    except AssertionError:
+    #        logger.info(f"LOGS - From : {startblock} - To : {endblock} - LOGS NOT FOUND")
+
+    # NOTE: It ins't necesary yet
+    #    startblock += chunk + 1
+    #    endblock += chunk + 1
+
+    # NOTE: It ins't necesary yet
+    # diff = int(block_to) - int(block_from)
+    # logger.info(" ")
+    # logger.info("=====================================================")
+    # logger.info("  LOGS TOTAL")
+    # logger.info("=====================================================")
+    # logger.info(f"  From : {block_from} - To : {block_to}")
+    # logger.info(f"  Diff : {diff} - Total TRX : {len(json_total)}")
+    # logger.info("=====================================================")
+
+    # json_logs = []
+
+    # json_logs = json_total
+    return 0
+
+
+def eth_db_process(filename):
+    # Validate file
+    if (not os.path.exists(filename)):
+        raise FileNotFoundError("SQLite db file not found")
+
+    # Split in temporary files
+    if (not os.path.exists('./tmp')):
+        os.makedirs('./tmp')
+
+    # Open db
+    connection = sqlite3.connect(filename)
+    cursor = connection.cursor()
+
+    tic = time.perf_counter()
+    cursor.execute("SELECT * FROM t_contract")
+    row = cursor.fetchone()
+    column_names = [description[0] for description in cursor.description]
+    contract = {column_names[i]: row[i] for i in range(len(column_names))}
+
+    with open('./tmp/contract.json', 'w') as outfile:
+        json.dump(contract, outfile)
+    toc = time.perf_counter()
+    logger.info(f"Get contract info in {toc - tic:0.4f} seconds")
+
+    tic = time.perf_counter()
+    # NOTE: Search Fallback function
+    cursor.execute("SELECT * FROM t_source_abi")
+    row = cursor.fetchone()
+    column_names = [description[0] for description in cursor.description]
+    source_code = {column_names[i]: row[i] for i in range(len(column_names))}
+    json_str_source_code = source_code['SourceCode'] 
+    contract_abi = source_code['ABI']
+
+    fallback = False
+    fallback_function = ''
+    fallback_code = ''
+    # receive = False  # TODO: 
+
+    fallback_pattern  = r'(fallback[\s+]?\([.*]?\)\s)'
+    fallback_result = re.search(fallback_pattern, json_str_source_code)
+
+    if (fallback_result): 
+        fallback = True
+        fallback_function = fallback_result.group(1)
+    if (not fallback): 
+        # Compatibility
+        fallback_pattern  = r'(function[\s+]?\([.*]?\)\s)'
+        fallback_result = re.search(fallback_pattern, json_str_source_code)
+        if (fallback_result): 
+            fallback = True
+            fallback_function = fallback_result.group(1)
+    # Code
+    if (fallback):
+        funct_start = json_str_source_code.index(fallback_function)
+        fallback_code = json_str_source_code[funct_start - 4:]
+        funct_end = fallback_code[12:].index("function ")
+        fallback_code = fallback_code[:funct_end]
+
+    source_code['fallback'] = "true" if fallback else "false"
+    source_code['fallback_function'] = fallback_function
+    source_code['fallback_code'] = fallback_code
+
+    with open('./tmp/sourcecode.json', 'w') as outfile:
+        json.dump(source_code, outfile)
+    with open('./tmp/contract-abi.json', 'w') as outfile:
+        json.dump(contract_abi, outfile)
+    toc = time.perf_counter()
+    logger.info(f"Get Source code and ABI info in {toc - tic:0.4f} seconds")
+
+    # Preprocess Statistics
+    tic = time.perf_counter()
+    
+    # NOTE: Read db to pd
+    # df_transaction = pd.read_json('./tmp/transactions.json')
+    # df_t = pd.read_json('./tmp/transfers.json')
+    # df_i = pd.read_json('./tmp/internals.json')
+    # df_l = pd.read_json('./tmp/logs.json')
+    
+    df_transaction = pd.read_sql_query("SELECT * FROM t_transactions ORDER BY timeStamp ASC", connection, parse_dates=['timeStamp'])
+    df_t = pd.read_sql_query("SELECT * FROM t_transfers ORDER BY timeStamp ASC", connection, parse_dates=['timeStamp'])
+    df_i = pd.read_sql_query("SELECT * FROM t_internals ORDER BY timeStamp ASC", connection, parse_dates=['timeStamp'])
+
+    # Split in JSON files
+    with open('./tmp/transactions.json', 'w') as outfile:
+        df_transaction.to_json(outfile)
+    with open('./tmp/transfers.json', 'w') as outfile:
+        df_t.to_json(outfile)
+    with open('./tmp/internals.json', 'w') as outfile:
+        df_i.to_json(outfile)
+    toc = time.perf_counter()
+    logger.info(f"Split file in {toc - tic:0.4f} seconds")
+
+    # NOTE: For DEBUG (remove)
+    df_transaction.to_csv('./tmp/transaction.csv')
+    df_t.to_csv('./tmp/transfers.csv')
+    df_i.to_csv('./tmp/internals.csv')
+    # df_l.to_csv('./tmp/logs.csv')
+
+    native = False
+    if (df_i.size > df_t.size):
+        native = True
+        logger.info(f"Detect NATIVE token")
+    else: 
+        logger.info(f"Detect NOT NATIVE token")
+
+    # Get unified transaction-internals-transfers
+    df_trx_0 = df_transaction[df_transaction['isError'] == 0]
+    df_trx_1 = df_trx_0[['timeStamp', 'hash', 'from', 'to', 'value', 'input', 
+                         'isError']]
+    df_trx_1.insert(len(df_trx_1.columns), "file", "trx")
+    df_uni = df_trx_1
+
+    if (not df_t.empty):
+        df_tra_0 = df_t
+        df_tra_1 = df_tra_0[['timeStamp', 'hash', 'from', 'to', 'value', 'input']]
+        df_tra_1.insert(len(df_tra_1.columns), "isError", 0)
+        df_tra_1.insert(len(df_tra_1.columns), "file", "tra")
+
+    if (not df_i.empty):
+        df_int_0 = df_i
+        print(df_i.info())
+        print(df_i.head())
+        df_int_1 = df_int_0[['timeStamp', 'hash', 'from', 'to', 'value', 'input',
+                             'isError']]
+        df_int_1.insert(len(df_int_1.columns), "file", "int")
+
+    if (not df_t.empty):
+        pd_uni = pd.concat([df_uni, df_tra_1], axis=0, ignore_index=True)
+        df_uni = pd.DataFrame(pd_uni)
+    if (not df_i.empty):
+        pd_uni = pd.concat([df_uni, df_int_1], axis=0, ignore_index=True)
+        df_uni = pd.DataFrame(pd_uni)
+
+    df_uni = df_uni.sort_values(by=['timeStamp','file'], ascending=False)  
+    df_uni.to_csv('./tmp/uni.csv')
+    with open('./tmp/uni.json', 'w') as outfile:
+        df_uni_json = df_uni.to_json(outfile)
+    
+    # Get contract creator
+    contract_creator = df_transaction["from"][0]
+
+    # TODO : Determine decimal digits in base of range 
+
+    # Get token and volume NOTE: Remove death code
+    if (native):
+        token_name = "ETH"
+        # volume = round(df_transaction['value'].sum() / 1e+18, 2) + round(df_i['value'].sum() / 1e+18, 2)
+        # volume = round((df_transaction['value'].sum() / 1e+18, 2 + df_i['value'].sum() / 1e+18) / 2, 2)
+        volume = df_transaction['value'].sum() + df_i['value'].sum()
+        volume = round(volume / 1e+18, 2)
+    else:
+        # NOTE : Display another tokens
+        token = df_t.groupby('tokenSymbol').agg({'value': ['sum','count']})
+        token = token.sort_values(by=[('value','count')], ascending=False)  
+        token_name = token.index[0]
+        # volume = round(token.iloc[0,0] / 1e+18, 2)
+        volume = round(float(token.iloc[0,0] / 1e+18) / 2, 2)
+
+    # Liquidity and dates
+    address_contract = contract["contract"].lower()
+    liq = 0
+    liq_raw = 0
+    max_liq = 0
+    max_liq_raw = 0
+    volume_raw = 0
+    trx_out = 0 
+    trx_in = 0
+    trx_out_day = 0 
+    trx_in_day = 0
+    remain = 0
+    liq_series = []
+    trx_in_series = []
+    trx_out_series = []
+    day = ''
+    day_prev = ''
+    day_prev_complete = ''
+    if (native):
+        # NOTE : I replace the dftemp for df_uni. Remove if it's working
+        dftemp = df_uni
+        dftemp = dftemp.sort_values(["timeStamp"])
+
+        unique_wallets = len(dftemp['from'].unique())
+
+        for i in dftemp.index: 
+            value_raw = dftemp["value"][i]
+            value = round(value_raw / 1e+18, 2)
+            address_from = dftemp["from"][i]
+            address_to = dftemp["to"][i]
+
+            if (address_from == address_contract):
+                liq = liq - value
+                liq_raw = liq_raw - int(value_raw)
+                trx_out = trx_out + value
+                trx_out_day = trx_out_day + value
+            elif (address_to == address_contract):
+                liq = liq + value
+                liq_raw = liq_raw + int(value_raw)
+                volume_raw = volume_raw + int(value_raw)
+                trx_in = trx_in + value
+                trx_in_day = trx_in_day + value
+                # WARNING : Remove max_liq
+                # if (max_liq < liq):
+                #     max_liq = liq
+                #     max_liq_date = dftemp["timeStamp"][i]
+                if (max_liq_raw < liq_raw):
+                    max_liq_raw = liq_raw
+                    max_liq_date = dftemp["timeStamp"][i]
+            else:
+                remain = remain + value
+
+            if (day == ''):
+                # print(df_t.info())
+                # print(df_t.head())
+                day = dftemp['timeStamp'][i].strftime("%Y-%m-%d")
+                day_prev = day
+                day_prev_complete = dftemp['timeStamp'][i]
+            elif (day_prev != day):
+                liq_series.append({"name": day_prev_complete.strftime("%Y-%m-%dT%H:%M:%S.009Z"),
+                                "value": liq})
+                trx_in_series.append({"name": day_prev_complete.strftime("%Y-%m-%dT%H:%M:%S.009Z"),
+                                      "value": trx_in_day})
+                trx_out_series.append({"name": day_prev_complete.strftime("%Y-%m-%dT%H:%M:%S.009Z"),
+                                       "value": trx_out_day})
+                day_prev = day
+                day_prev_complete = dftemp['timeStamp'][i]
+                trx_in_day = 0
+                trx_out_day = 0
+            else:
+                day = dftemp['timeStamp'][i].strftime("%Y-%m-%d")
+
+        first_date = dftemp['timeStamp'][0]
+        last_date = dftemp['timeStamp'].iloc[-1]  # TODO: When Liq == 0
+
+    else:  # NOTE : Not native
+        unique_wallets = len(df_t['from'].unique())
+        for i in df_t.index: 
+            if (df_t["tokenSymbol"][i] == token_name):
+                value_raw = df_t["value"][i]
+                value = round(value_raw / 1e+18, 2)
+                address_from = df_t["from"][i].lower()
+                address_to = df_t["to"][i].lower()
+
+                if (address_from == address_contract):
+                    liq = liq - value
+                    liq_raw = liq_raw - int(value_raw)
+                    trx_out = trx_out + value
+                    trx_out_day = trx_out_day + value
+                elif (address_to == address_contract):
+                    liq = liq + value
+                    liq_raw = liq_raw + int(value_raw)
+                    volume_raw = volume_raw + int(value_raw)
+                    trx_in = trx_in + value
+                    trx_in_day = trx_in_day + value
+                    if (max_liq_raw < liq_raw):
+                        max_liq_raw = liq_raw
+                        max_liq_date = df_t["timeStamp"][i]
+                else:
+                    remain = remain + value
+
+                if (day == ''):
+                    day = df_t['timeStamp'][i].strftime("%Y-%m-%d")
+                    day_prev = day
+                    day_prev_complete = df_t['timeStamp'][i]
+                elif (day_prev != day):
+                    liq_series.append({"name": day_prev_complete.strftime("%Y-%m-%dT%H:%M:%S.009Z"),
+                                       "value": liq})
+                    trx_in_series.append({"name": day_prev_complete.strftime("%Y-%m-%dT%H:%M:%S.009Z"),
+                                          "value": trx_in_day})
+                    trx_out_series.append({"name": day_prev_complete.strftime("%Y-%m-%dT%H:%M:%S.009Z"),
+                                           "value": trx_out_day})
+                    day_prev = day
+                    day_prev_complete = df_t['timeStamp'][i]
+                    trx_in_day = 0
+                    trx_out_day = 0
+                else:
+                    day = df_t['timeStamp'][i].strftime("%Y-%m-%d")
+
+        first_date = df_t['timeStamp'][0]
+        last_date = df_t['timeStamp'].iloc[-1]  # TODO : When Liq == 0
+
+    ## Statistics
+    # Unification for Native
+    if (native):
+        df_t = dftemp
+    # Group by
+    from_trx = df_t.groupby('from').agg({'value': ['sum','count']})
+    # from_trx.set_axis(['value_out', 'count_out'], axis=1, inplace=False)
+    from_trx_axis = from_trx.set_axis(['value_out', 'count_out'], axis=1)
+    to_trx = df_t.groupby('to').agg({'value': ['sum','count']})
+    # to_trx.set_axis(['value_in', 'count_in'], axis=1, inplace=True)
+    to_trx_axis = to_trx.set_axis(['value_in', 'count_in'], axis=1)
+
+    # Merge
+    trx_total = from_trx_axis.join(to_trx_axis, how='outer')  # NOTE: OUTER
+    trx_total['wallet'] = trx_total.index
+    trx_total = trx_total.sort_values(["wallet"])
+    trx_total.reset_index(drop=True, inplace=True)
+    trx_total.fillna(0, inplace=True)
+
+    total = []
+    # JSON Bubbles file
+    for i in trx_total.index: 
+        wallet = trx_total["wallet"][i]
+
+        child = [{"name": "IN", 
+                  "size": round(trx_total["value_in"][i] / 1e+18, 2),
+                  "count": int(trx_total["count_in"][i])}]
+        child.append({"name": "OUT", 
+                      "size": round(trx_total["value_out"][i] / 1e+18, 2),
+                      "count": int(trx_total["count_out"][i])})
+        item = {"name": wallet, "children": child}
+        total.append(item)
+
+    json_bubbles = {"name": "Schema", "children": total}
+
+    with open('./tmp/bubbles.json', 'w') as outfile:
+        json.dump(json_bubbles, outfile)
+
+    # Add Percentage
+    trx_total["Percentage"] = trx_total["value_in"] * 100 / trx_total['value_out']
+    trx_total.replace([np.inf, -np.inf], 9999999, inplace=True)  # NOTE: Handle division by 0
+    trx_total_dec = trx_total.sort_values(["Percentage"])
+    trx_total_asc = trx_total.sort_values(["Percentage"], ascending=False)
+
+    # Anomalies
+    df_anomalies = trx_total_asc[trx_total_asc['wallet'] != address_contract ]
+    df_anomalies = df_anomalies[trx_total_asc['Percentage'] >= 200]
+    # df_anomalies['Percentage'] = df_anomalies['Percentage'].astype(int)
+    with open('./tmp/anomalies.json', 'w') as outfile:
+        df_anomalies_json = df_anomalies.to_json(outfile, orient="records")
+
+    # Statistic Percentage
+    # TODO: Define the correct percentage in base to time period
+    e_0 = trx_total[trx_total['Percentage'] == 0]
+    e_0_100 = trx_total[(trx_total['Percentage'] > 0) & (trx_total['Percentage'] < 100)]
+    e_100_241 = trx_total[(trx_total['Percentage'] >= 100) & (trx_total['Percentage'] <= 241)]
+    e_241 = trx_total[trx_total['Percentage'] > 241]
+
+    investments = []
+    investments.append({"name": "Total Loses", "value": len(e_0)})
+    investments.append({"name": "Loses", "value": len(e_0_100)})
+    investments.append({"name": "Earnings", "value": len(e_100_241)})
+    investments.append({"name": "Top Profit", "value": len(e_241)})
+
+    # ABI
+    ABI = json.loads(contract_abi)
+
+    df_hash = df_transaction["hash"][0:]
+    input_constructor = df_transaction["input"][0]
+    input_column = df_transaction["input"][1:]
+
+    decoder = InputDecoder(ABI)
+    constructor_call = decoder.decode_constructor((input_constructor),)
+
+    functions = []
+    functions.append(constructor_call.name)
+    arguments = []
+    arguments.append(str(constructor_call.arguments))
+    for i in input_column:
+        try:
+            func_call = decoder.decode_function((i),)
+            functions.append(func_call.name)
+            arguments.append(str(func_call.arguments))
+        except:
+            # HACK: Fallback
+            if (source_code['fallback'] == "true"):
+                functions.append('fallback')
+                arguments.append("null")
+            else:
+                functions.append("Not decoded")
+                arguments.append("Not decoded")
+
+    df_decoded = pd.DataFrame({"hash": df_hash, "funct": functions, "args": arguments})
+    # df_decoded = pd.DataFrame({"hash": df_hash, "funct": functions})
+    dict_decoded = df_decoded.to_dict()
+
+    with open('./tmp/decoded.json', 'w') as outfile:
+        json.dump(dict_decoded, outfile)
+
+    # Functions stats
+    funct_stats = df_decoded['funct'].value_counts()
+    funct_stats_json = []
+    for i in funct_stats.index: 
+        funct_stats_json.append({"name": str(i), "value": int(funct_stats[i])})
+
+    json_stats = {"contract": address_contract,
+                  "fdate": first_date.strftime("%Y/%m/%d - %H:%M:%S"),
+                  "ldate": last_date.strftime("%Y/%m/%d - %H:%M:%S"),
+                  "token_name": token_name,
+                  "native": int(native),
+                  "creator": contract_creator,
+                  "max_liq": round(max_liq_raw / 1e18, 2),
+                  "max_liq_date": max_liq_date.strftime("%Y/%m/%d - %H:%M:%S"),
+                  "volume": round(volume_raw / 1e18, 2),
+                  "wallets": unique_wallets,
+                  "investments": investments,
+                  "funct_stats": funct_stats_json,
+                #   "funct_stats": investments,
+                  "trx_out": trx_out,
+                  "trx_in": trx_in}
+
+    with open('./tmp/stats.json', 'w') as outfile:
+        json.dump(json_stats, outfile)
+
+    # Liquidity graph
+    json_liq = liq_series
+
+    with open('./tmp/liq.json', 'w') as outfile:
+        json.dump(json_liq, outfile)
+
+    # Trans Volume graph
+    json_trans_vol = [{"name": "Trans OUT",
+                      "series": trx_out_series},
+                      {"name": "Trans IN",
+                      "series": trx_in_series}]
+
+    with open('./tmp/trans_series.json', 'w') as outfile:
+        json.dump(json_trans_vol, outfile)
+
+    # Transaction resume
+    trans_ok = len(df_transaction[df_transaction['isError'] == 0])
+    trans_error = len(df_transaction[df_transaction['isError'] != 0])
+
+    trans_resume = [{'name': 'Transactions OK', 'value': trans_ok}, 
+                    {'name': 'Transactions ERROR', 'value': trans_error}]
+
+    with open('./tmp/transaction_resume.json', 'w') as outfile:
+        json.dump(trans_resume, outfile)
+
+    # Transfer resume
+    if (native):  # NOTE: For native
+        trans_in = len(dftemp[dftemp['file'] == 'trx'])  # TODO: Remove value = 0
+        trans_out = len(dftemp[dftemp['file'] == 'int'])
+    else:
+        trans_in = len(df_t[df_t['from'].str.contains(address_contract, case=False)])
+        trans_out = len(df_t[df_t['to'].str.contains(address_contract, case=False)])
+
+    trans_io = [{'name': 'Transfers IN', 'value': trans_in}, 
+                {'name': 'Transfers OUT', 'value': trans_out}]
+
+    with open('./tmp/transfer_resume.json', 'w') as outfile:
+        json.dump(trans_io, outfile)
+
+    toc = time.perf_counter()
+    logger.info(f"Preprocess Statistic file in {toc - tic:0.4f} seconds")
+
+    return 0
+
