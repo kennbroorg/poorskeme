@@ -68,12 +68,9 @@ def r_contract():
     toc = time.perf_counter()
     logger.info(f"Read contract stats file in {toc - tic:0.4f} seconds")
 
-    print(type(source_code))
-    print("====================================")
-    print(source_code)
-    print("====================================")
     # Fix JSON
-    sc = ast.literal_eval(source_code)[0]
+    # sc = ast.literal_eval(source_code)[0]
+    sc = ast.literal_eval(source_code)
     abi = sc['ABI']
     abi = abi.replace("\\", "")
     abi = abi.replace('\"', '"')
@@ -270,6 +267,7 @@ def r_anomalies():
 ################################################
 # Adress details
 ################################################
+# PERF: Use DB instead JSON
 @home.route("/details/<address>")
 def r_result(address):
     # TODO: Verify if the address is the contract
@@ -386,7 +384,8 @@ def r_trx(trx_hash):
         source_code = f.read()
     toc = time.perf_counter()
     logger.info(f"Read contract source code file in {toc - tic:0.4f} seconds")
-    sc = ast.literal_eval(source_code)[0]
+    # sc = ast.literal_eval(source_code)[0]
+    sc = ast.literal_eval(source_code)
     abi = sc['ABI']
     abi = abi.replace("\\", "")
     abi = abi.replace('\"', '"')
