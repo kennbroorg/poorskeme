@@ -68,7 +68,7 @@
                             <p class="text-window"><span style="margin-right: 5px;font-size: 18x;">&#x2611;</span>Ethereum Blockchain support</p>
                             <p class="text-window"><span style="margin-right: 5px;font-size: 18x;">&#x2611;</span>Binance Smart Chain Blockchain support</p>
                             <p class="text-window"><span style="margin-right: 5px;font-size: 18x;">&#x2611;</span>Early detection of scam</p>
-                            <p class="text-window"><span style="margin-right: 5px;font-size: 18x;">&#x2610;</span>Automatic anomaly detection</p>
+                            <p class="text-window"><span style="margin-right: 5px;font-size: 18x;">&#x2611;</span>Automatic anomaly detection</p>
                             <p class="text-window"><span style="margin-right: 5px;font-size: 18x;">&#x2610;</span>...</p>
                             <p class="text-window"><span style="margin-right: 5px;font-size: 18x;">&#x2610;</span>Traceability</p>
                             <p class="text-window"><span style="margin-right: 5px;font-size: 18x;">&#x2610;</span>Wallet identification</p>
@@ -116,7 +116,8 @@
 
                 <div class="col-md-6">
                     <!-- <app-transfers-details [subject]="subject" [h]="height"></app-transfers-details> -->
-                    <app-transfers-details (onTrx)="handleTrx($event)" [subject]="subject" [h]="height"></app-transfers-details>
+                    <app-transfers-details (onTrx)="handleTrx($event)" [subject]="subject" [h]="height" mod="distribution">
+                    </app-transfers-details>
                 </div>
             </div>
           </nb-tab>
@@ -134,11 +135,20 @@
 
 
           <!-- TAB8 -->
-          <!-- <nb-tab tabTitle="Anomalies">
+          <nb-tab tabTitle="Anomalies">
+            <div class="row">
+                <div class="col-md-6">
+                    <app-transfers-details (onTrx)="handleTrx($event)" [subject]="subject" [h]="height" mod="anomalies">
+                    </app-transfers-details>
+                </div>
 
-            <p>List of <strong>orders</strong>.</p>
+                <div class="col-md-6">
+                    <app-anomalies (onInfo)="handleInfo($event)"></app-anomalies>
+                    <!-- <app-anomalies></app-anomalies> -->
+                </div>
+            </div>
+          </nb-tab>
 
-          </nb-tab> -->
 
         </nb-tabset>
 

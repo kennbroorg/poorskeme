@@ -1,0 +1,118 @@
+<nb-card style="margin: 7px; margin-bottom: 12px">
+    <nb-card-body class="shiny" style="font-weight: 500; font-size: 20px;">
+        <div class="top-title">
+            WALLETS WITH HUGE PROFIT
+        </div>
+        <div class="fixed-subtitle" style="color:rgba(255, 255, 255, 0.8);">Anomalies</div>
+    </nb-card-body>
+</nb-card>
+
+<nb-card style="margin: 7px; padding: 0px; overflow: auto; max-height: calc(100vh - 195px);">
+    <nb-card-body style="scrollbar-color: rgba(0, 0, 0, 0.7) rgba(0, 0, 0, 0.1); scrollbar-width: thin;padding: 0px;">
+
+        <div class="row" style="padding: 0px; margin: 0px; opacity: 0.7;">
+            <div class="col-md-12">
+
+                <ngx-datatable
+                    #tableAnomalies
+                    class="bootstrap fullscreen"
+                    [rows]="anomalies"
+                    [columnMode]="ColumnMode.force"
+                    [headerHeight]="40"
+                    [footerHeight]="40"
+                    [selected]="selected"
+                    [selectionType]="SelectionType.single"
+                    (select)="onSelect($event)"
+                >
+
+                    <ngx-datatable-column
+                    name="Wallet" prop="wallet"
+                    title="Wallet"
+                    [resizeable]="false"
+                    [sortable]="false"
+                    [draggable]="false"
+                    [width]="1"
+                    cellClass="hash-class"
+                    ></ngx-datatable-column>
+
+                    <!-- Value out # -->
+                    <ngx-datatable-column
+                    name="#OUT" prop="count_out"
+                    title="OUT (#)"
+                    [resizeable]="false"
+                    [sortable]="true"
+                    [draggable]="false"
+                    cellClass="data-center"
+                    [width]="300"
+                    >
+                        <ng-template let-row="row" let-value="value" ngx-datatable-cell-template style="text-align: right;">
+                            {{ value }}
+                        </ng-template>
+                    </ngx-datatable-column>
+
+                    <!-- Value out $-->
+                    <ngx-datatable-column
+                    name="OUT ($)" prop="value_out"
+                    title="OUT ($)"
+                    [resizeable]="false"
+                    [sortable]="true"
+                    [draggable]="false"
+                    cellClass="number-right"
+                    [width]="250"
+                    >
+                        <ng-template let-row="row" let-value="value" ngx-datatable-cell-template style="text-align: right;">
+                            ($) {{ value / 1e18 | number:'1.2'}}
+                        </ng-template>
+                    </ngx-datatable-column>
+
+                    <!-- Value in # -->
+                    <ngx-datatable-column
+                    name="#IN" prop="count_in"
+                    title="IN (#)"
+                    [resizeable]="false"
+                    [sortable]="true"
+                    [draggable]="false"
+                    cellClass="data-center"
+                    [width]="300"
+                    >
+                        <ng-template let-row="row" let-value="value" ngx-datatable-cell-template style="text-align: right;">
+                            {{ value }}
+                        </ng-template>
+                    </ngx-datatable-column>
+
+                    <!-- Value in $-->
+                    <ngx-datatable-column
+                    name="IN ($)" prop="value_in"
+                    title="IN ($)"
+                    [resizeable]="false"
+                    [sortable]="true"
+                    [draggable]="false"
+                    cellClass="number-right"
+                    [width]="250"
+                    >
+                        <ng-template let-row="row" let-value="value" ngx-datatable-cell-template style="text-align: right;">
+                            ($) {{ value / 1e18 | number:'1.2'}}
+                        </ng-template>
+                    </ngx-datatable-column>
+
+                    <!-- Percent -->
+                    <ngx-datatable-column
+                    name="%" prop="Percentage"
+                    title="%"
+                    [resizeable]="false"
+                    [sortable]="true"
+                    [draggable]="false"
+                    cellClass="number-right"
+                    [width]="250"
+                    >
+                        <ng-template let-row="row" let-value="value" ngx-datatable-cell-template style="text-align: right;">
+                            {{ value }} %
+                        </ng-template>
+                    </ngx-datatable-column>
+
+                </ngx-datatable>
+
+            </div>
+        </div>
+    </nb-card-body>
+</nb-card>
