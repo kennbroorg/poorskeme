@@ -118,29 +118,37 @@ $$ |      \$$$$$$  |\$$$$$$  |$$ |            \$$$$$$  |$$ | \$$\\\$$$$$$$\ $$ |
         logger.error("The level parameter is worng, set to INFO by default")
         coloredlogs.install(level='INFO')
 
-
     # Validations
     if (args.contract):
         if (args.file):
             logger.warning("Parameter JSON file are discarded because contract is provided")
 
         if (args.blockchain == "bsc"):
-            # TODO: Control extension
+            # WARNING: Remove
             # asyncio.run(bsc.bsc_json_collect(args.contract, args.block_from, args.block_to, key['bscscan'], chunk=args.chunk))
-            bsc.bsc_json_collect_async(args.contract, args.block_from, args.block_to, key['bscscan'], chunk=args.chunk)
+            bsc.bsc_db_collect_async(args.contract, args.block_from, args.block_to, key['bscscan'], chunk=args.chunk)
         if (args.blockchain == "eth"):
-            asyncio.run(eth.eth_json_collect(args.contract, args.block_from, args.block_to, key['ethscan'], chunk=args.chunk))
+            # WARNING: Remove
+            # asyncio.run(eth.eth_json_collect(args.contract, args.block_from, args.block_to, key['ethscan'], chunk=args.chunk))
+            eth.eth_db_collect_async(args.contract, args.block_from, args.block_to, key['ethscan'], chunk=args.chunk)
 
     elif (args.file):
         if (args.blockchain == "bsc"):
-            rc = bsc.bsc_json_process(args.file)
+            rc = bsc.bsc_db_process(args.file)
         if (args.blockchain == "eth"):
-            rc = eth.eth_json_process(args.file)
+            rc = eth.eth_db_process(args.file)
+
+    # WARNING: Death code soon
+    # elif (args.file[-4:] == 'json'):
+    #     if (args.blockchain == "bsc"):
+    #         rc = bsc.bsc_json_process(args.file)
+    #     if (args.blockchain == "eth"):
+    #         rc = eth.eth_json_process(args.file)
 
     else:
         if (args.block_from or args.block_to or args.chunck):
             logger.error("The CONTRACT ADDRESS is not specified")
-        # parser.print_help(sys.stderr)
+            raise RuntimeError("The CONTRACT ADDRESS is not specified")
 
     if (args.web):
         sys.stdout.flush()
