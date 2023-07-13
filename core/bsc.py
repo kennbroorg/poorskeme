@@ -12,6 +12,8 @@ import requests
 import sqlite3
 import asyncio
 import aiohttp
+from bs4 import BeautifulSoup
+import cloudscraper
 
 # from termcolor import colored
 # import coloredlogs, logging
@@ -730,7 +732,7 @@ def bsc_json_process(filename):
     return 0
 
 
-async def aio_db_transactions(client_session, url, conn):    
+async def aio_db_transactions(client_session, url, conn, table):    
     startblock = url.split("startblock=")[1].split("&endblock=")[0]
     endblock = url.split("endblock=")[1].split("&sort=")[0]
     logger.info(f"Processing - TRANSACTIONS from {startblock} to {endblock}")
@@ -739,7 +741,7 @@ async def aio_db_transactions(client_session, url, conn):
         data = await resp.json()
 
         for json_object in data['result']:
-            conn.execute("""INSERT INTO t_transactions VALUES 
+            conn.execute(f"""INSERT INTO {table} VALUES 
                            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                            """,
@@ -767,7 +769,7 @@ async def aio_db_transactions(client_session, url, conn):
         conn.commit()
 
 
-async def aio_db_transfers(client_session, url, conn):    
+async def aio_db_transfers(client_session, url, conn, table):    
     startblock = url.split("startblock=")[1].split("&endblock=")[0]
     endblock = url.split("endblock=")[1].split("&sort=")[0]
     logger.info(f"Processing - TRANSFERS from {startblock} to {endblock}")
@@ -799,14 +801,14 @@ async def aio_db_transfers(client_session, url, conn):
                  json_object['confirmations']))
 
         if (rows != []):
-            conn.executemany("""INSERT INTO t_transfers VALUES 
+            conn.executemany(f"""INSERT INTO {table} VALUES 
                              (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                              ?, ?, ?, ?, ?, ?, ?, ?, ?)
                              """,rows)
             conn.commit()
 
 
-async def aio_db_internals(client_session, url, conn):    
+async def aio_db_internals(client_session, url, conn, table):    
     startblock = url.split("startblock=")[1].split("&endblock=")[0]
     endblock = url.split("endblock=")[1].split("&sort=")[0]
     logger.info(f"Processing - INTERNALS from {startblock} to {endblock}")
@@ -815,40 +817,36 @@ async def aio_db_internals(client_session, url, conn):
         data = await resp.json()
 
         for json_object in data['result']:
-            try: 
-                conn.execute("""INSERT INTO t_internals VALUES 
-                               (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                               ?, ?)
-                               """,
-                    (json_object['blockNumber'],
-                     json_object['timeStamp'],
-                     json_object['hash'],
-                     json_object['from'],
-                     json_object['to'],
-                     json_object['value'],
-                     json_object['contractAddress'],
-                     json_object['input'],
-                     json_object['type'],
-                     json_object['gas'],
-                     json_object['gasUsed'],
-                     json_object['isError'],
-                     json_object['errCode']))
-            except Exception as e:
-                print(e)
+            conn.execute(f"""INSERT INTO {table} VALUES 
+                           (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                           """,
+                (json_object['blockNumber'],
+                 json_object['timeStamp'],
+                 json_object['hash'],
+                 json_object['from'],
+                 json_object['to'],
+                 json_object['value'],
+                 json_object['contractAddress'],
+                 json_object['input'],
+                 json_object['type'],
+                 json_object['gas'],
+                 json_object['gasUsed'],
+                 json_object['isError'],
+                 json_object['errCode']))
 
         conn.commit()
 
 
-async def async_fetch_and_store(urls, conn, type):
+async def async_fetch_and_store(urls, conn, type, table):
     Client = aiohttp.ClientSession()
     Tasks = []
     for url in urls:
         if (type == "Transactions"):
-            Tasks.append(aio_db_transactions(client_session=Client, url=url, conn=conn))
+            Tasks.append(aio_db_transactions(client_session=Client, url=url, conn=conn, table=table))
         if (type == "Transfers"):
-            Tasks.append(aio_db_transfers(client_session=Client, url=url, conn=conn))
+            Tasks.append(aio_db_transfers(client_session=Client, url=url, conn=conn, table=table))
         if (type == "Internals"):
-            Tasks.append(aio_db_internals(client_session=Client, url=url, conn=conn))
+            Tasks.append(aio_db_internals(client_session=Client, url=url, conn=conn, table=table))
         
     try:
         await asyncio.gather(*Tasks)
@@ -900,6 +898,7 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, chunk=3000
 
     if (block_from == 0):
         block_from = int(first_block['blockNumber'])
+    contract_creator = first_block['from']
 
     logger.info("Storing first block")
     cursor.execute("""INSERT INTO t_contract VALUES (?, ?, ?, ?, ?, ?, ?)""", 
@@ -977,12 +976,21 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, chunk=3000
     urls_transactions = []
     urls_internals = []
     urls_transfers = []
+    urls_trx_creator = []
+    urls_int_creator = []
+    urls_tra_creator = []
     while startblock < block_to:
         urls_transactions.append('https://api.bscscan.com/api?module=account&action=txlist&address=' + contract_address + \
                   '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key)
         urls_internals.append('https://api.bscscan.com/api?module=account&action=txlistinternal&address=' + contract_address + \
                   '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key)
         urls_transfers.append('https://api.bscscan.com/api?module=account&action=tokentx&address=' + contract_address + \
+                  '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key)
+        urls_trx_creator.append('https://api.bscscan.com/api?module=account&action=txlist&address=' + contract_creator + \
+                  '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key)
+        urls_int_creator.append('https://api.bscscan.com/api?module=account&action=txlistinternal&address=' + contract_creator + \
+                  '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key)
+        urls_tra_creator.append('https://api.bscscan.com/api?module=account&action=tokentx&address=' + contract_creator + \
                   '&startblock=' + str(startblock) + '&endblock=' + str(endblock) + '&sort=asc&apikey=' + key)
         startblock += chunk + 1
         endblock += chunk + 1
@@ -1023,7 +1031,7 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, chunk=3000
 
     split_urls = [urls_transactions[i:i + 5] for i in range(0, len(urls_transactions), 5)]
     for urls in split_urls:
-        asyncio.run(async_fetch_and_store(urls, connection, "Transactions"))
+        asyncio.run(async_fetch_and_store(urls, connection, "Transactions", "t_transactions"))
 
     end_time = time.time()
     elapsed_time = end_time - start_time
@@ -1077,7 +1085,7 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, chunk=3000
 
     split_urls = [urls_transfers[i:i + 5] for i in range(0, len(urls_transfers), 5)]
     for urls in split_urls:
-        asyncio.run(async_fetch_and_store(urls, connection, "Transfers"))
+        asyncio.run(async_fetch_and_store(urls, connection, "Transfers", "t_transfers"))
 
     end_time = time.time()
     elapsed_time = end_time - start_time
@@ -1125,7 +1133,7 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, chunk=3000
 
     split_urls = [urls_internals[i:i + 5] for i in range(0, len(urls_internals), 5)]
     for urls in split_urls:
-        asyncio.run(async_fetch_and_store(urls, connection, "Internals"))
+        asyncio.run(async_fetch_and_store(urls, connection, "Internals", "t_internals"))
 
     end_time = time.time()
     elapsed_time = end_time - start_time
@@ -1143,8 +1151,6 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, chunk=3000
     logger.info(f" Elapsed time: {elapsed_time} seconds")
     logger.info(f" Requests per second: {requests_per_second}")
     logger.info(f"=========================================================")
-
-    connection.close()
 
     # NOTE: It ins't necesary yet
     # logger.info(" ")
@@ -1193,6 +1199,382 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, chunk=3000
     # json_logs = []
 
     # json_logs = json_total
+
+    # NOTE: Get info from wallet creator
+    # - First movement of wallet creator (Block and time)
+    # - Last movement of wallet creator (Block and time) 
+    # - Balance of all assets
+    # - Get Blocks info from contract creator (Refresh button)
+    #   - Contracts deployed
+    #   - TRXs
+    logger.info("=====================================================")
+    logger.info("Collecting Contract Creator data")
+    logger.info("=====================================================")
+    logger.info("Creating Table t_contract_creator")
+
+    sql_create_contract_table = """CREATE TABLE IF NOT EXISTS t_contract_creator (
+                                   wallet text NOT NULL,
+                                   block_from integer NOT NULL,
+                                   block_to text NOT NULL,
+                                   first_block integer NOT NULL,
+                                   first_date datetime NOT NULL,
+                                   first_hash text NOT NULL,
+                                   first_to text NOT NULL,
+                                   first_from text NOT NULL,
+                                   first_value integer NOT NULL,
+                                   first_input text NOT NULL,
+                                   last_block text NOT NULL,
+                                   last_date datetime NOT NULL,
+                                   last_hash text NOT NULL,
+                                   last_to text NOT NULL,
+                                   last_from text NOT NULL,
+                                   last_value integer NOT NULL,
+                                   last_input text NOT NULL
+                                 );"""
+    cursor.execute(sql_create_contract_table)
+
+    logger.info("Getting first block of contract creator")
+
+    url = 'https://api.bscscan.com/api?module=account&action=txlist&address=' + contract_creator + '&startblock=0&endblock=99999999' + \
+        '&page=1&offset=1&sort=asc&apikey=' + key 
+    response = requests.get(url)
+
+    first_block_creator = response.json()['result'][0]
+    # first_block_number = int(first_block_creator['blockNumber'])
+
+    print(f"Block number (first): {first_block_creator['blockNumber']}")
+    print(f"Hash (first) : {first_block_creator['hash']}")
+    print(f"Timestamp (first) : {first_block_creator['timeStamp']}")
+    print(f"From (first) : {first_block_creator['from']}")  # La que es distinta hay que resaltarla y dibujar esta transaccion
+    print(f"To (first) : {first_block_creator['to']}")
+    print(f"Value (first) : {first_block_creator['value']}")
+    print(f"Input (first) : {first_block_creator['input']}")
+    print ("============================================================")
+    # TODO: Do we need internals and BEP20?
+
+    url_home = "https://bscscan.com/address/" + contract_creator 
+    url_tokens = "https://bscscan.com/address-tokenpage?m=normal&a=" + contract_creator
+
+    # Home
+    scraper = cloudscraper.create_scraper()
+    r_home = scraper.get(url_home)
+
+    html_doc = BeautifulSoup(r_home.content, "html.parser")
+    div_card_body_container = html_doc.find_all('div', class_='card-body')
+    balance_container = div_card_body_container[0].find_all('div', class_='row')
+
+    # Balances
+    balances = []
+    # Get BNB
+    balance = balance_container[0].find_all('div')
+    balance_bnb = balance[1].text.split(' ')[0]
+    balances.append(balance_bnb)
+    print(f"Balance de BNB : {balance_bnb}")
+
+    # Get USD del BNB
+    # balance = balance_container[1].find_all('div')
+    # balance_usd = balance[1].text
+    # print(f"Balance de USD : {balance_usd} (Esto es en base a el valor actual, por lo que tenes que actualizarlo)")
+
+    # Get USD de otras
+    # balance = balance_container[2].find('a', id='availableBalanceDropdown')
+    # balance_tok = balance
+    # print(f"Balance de USD : {balance_tok.contents[0].strip()} (Esto es en base a el valor actual, por lo que tenes que actualizarlo)")
+    # print(f"Balance de USD : {balance_tok.span['title']} (Esto es en base a el valor actual, por lo que tenes que actualizarlo)")
+
+    balance_list = balance_container[2].find('ul', class_='list list-unstyled mb-0')
+    token_list = balance_list.find_all('li', class_='list-custom-BEP-20')
+    for i in token_list:
+        balances.append(i.text)
+        # print(f" - {i.text}")
+        # print(f" - {i.a['href']}")
+
+    logger.info("Getting last block of contract creator")
+    # print(f"===============================================")
+    # print(f"= Transacciones ===============================")
+    table = div_card_body_container[2].find_all('table', class_='table table-hover')[0]
+    tbody = table.find('tbody')
+    td = tbody.tr.find_all('td')
+    # print(td)
+    last_block_number = td[3].text
+    last_time_trx = td[4].span.text
+    last_from_trx = td[6].span.text
+    try:
+        last_to_trx = td[8].span.a['href'].split("/")[-1]
+    except Exception:
+        try: 
+            last_to_trx = td[8].a['href'].split("/")[-1]
+        except Exception:
+            last_to_trx = "N/A"
+    last_value_trx = td[9].text
+    print(f"Block : {last_block_number}")
+    print(f"Time : {last_time_trx}")
+    print(f"From : {last_from_trx}")
+    print(f"To : {last_to_trx}")
+    print(f"Value : {last_value_trx}")
+
+    # NOTE: Implement in FUTURE
+    # print(f"===============================================")
+    # print(f"= Internals ===================================")
+    # table = div_card_body_container[2].find_all('table', class_='table table-hover')[1]
+    # tbody = table.find('tbody')
+    # try: 
+    #     td = tbody.tr.find_all('td')
+    #     print(td)
+    #     last_time_int = td[2].span.text
+    #     last_from_int = td[4].text
+    #     last_to_int = td[6].span['title']
+    #     last_value_int = td[7].text
+    #     print(f"Time : {last_time_int}")
+    #     print(f"From : {last_from_int}")
+    #     print(f"To : {last_to_int}")
+    #     print(f"Value : {last_value_int}")
+    # except Exception:
+    #     last_time_int = "N/A"
+    #     last_from_int = "N/A"
+    #     last_to_int = "N/A"
+    #     last_value_int = "N/A"
+    #     print(f"Time : {last_time_int}")
+    #     print(f"From : {last_from_int}")
+    #     print(f"To : {last_to_int}")
+    #     print(f"Value : {last_value_int}")
+
+
+    # NOTE: Implement in FUTURE
+    # print(f"===============================================")
+    # print(f"= BEP20 =======================================")
+    # # Tokens
+    # # r_tokens = requests.get(url_tokens)
+    # r_tokens = scraper.get(url_tokens)
+    # html_tok = BeautifulSoup(r_tokens.text, "html.parser")
+    # # print(r_tokens.content)
+    # # div_card_body_container = html_tok.find_all('div', class_='card-body')
+    # # balance_container = div_card_body_container[0].find_all('div', class_='row')
+    # # table = div_card_body_container[2].find_all('table', class_='table table-hover')[2]
+    # table = html_tok.find('table', class_='table table-hover')
+    # tbody = table.find('tbody')
+    # td = tbody.tr.find_all('td')
+    # print(td)
+    # # print(td.span.text)
+    # # print(td.span['title'])
+    # last_time_bep = td[2].span.text
+    # try: 
+    #     last_from_bep = td[4].span['title']
+    # except Exception:
+    #     try:
+    #         last_from_bep = td[4].a['href'].split("/")[-1]
+    #     except Exception:
+    #         last_from_bep = "N\A"
+    # last_to_bep = td[6].text
+    # last_value_bep = td[7].text
+    # print(f"Time : {last_time_bep}")
+    # print(f"From : {last_from_bep}")
+    # print(f"To : {last_to_bep}")
+    # print(f"Value : {last_value_bep}")
+
+    sql_create_contract_table = """CREATE TABLE IF NOT EXISTS t_contract_creator (
+                                   wallet text NOT NULL,
+                                   block_from integer NOT NULL,
+                                   block_to text NOT NULL,
+                                   first_block integer NOT NULL,
+                                   first_date datetime NOT NULL,
+                                   first_hash text NOT NULL,
+                                   first_to text NOT NULL,
+                                   first_from text NOT NULL,
+                                   first_value integer NOT NULL,
+                                   first_input text NOT NULL,
+                                   last_block text NOT NULL,
+                                   last_date datetime NOT NULL,
+                                   last_hash text NOT NULL,
+                                   last_to text NOT NULL,
+                                   last_from text NOT NULL,
+                                   last_value integer NOT NULL,
+                                   last_input text NOT NULL
+                                 );"""
+
+    logger.info("Storing first and last block info of contract creator")
+    cursor.execute("""INSERT INTO t_contract_creator VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
+        (contract_creator,
+         block_from,
+         block_to,
+         first_block_creator['blockNumber'],
+         first_block_creator['timeStamp'],
+         first_block_creator['hash'],
+         first_block_creator['to'],
+         first_block_creator['from'],
+         first_block_creator['value'],
+         first_block_creator['input'],
+         last_block_number,
+         last_time_trx,
+         "",  # TODO: Falta HASH
+         last_to_trx,
+         last_from_trx,
+         last_value_trx,
+         ""))  # TODO: Input
+ 
+    connection.commit()
+
+    # TODO: Get the tags!!! TRX : 0xe5a4b28559a45c2d003831d4ac905842cea45df394b2eb85ad235bd96e5e443f
+
+    logger.info(" ")
+    logger.info("=====================================================")
+    logger.info("Collecting Contract creator transactions")
+    logger.info("=====================================================")
+    logger.info("Creating Table t_transactions_wallet")
+
+    sql_create_tran_creator_table = """CREATE TABLE IF NOT EXISTS t_transactions_wallet (
+                                       blockNumber integer NOT NULL,
+                                       timeStamp datetime NOT NULL,
+                                       hash text NOT NULL,
+                                       nonce integer NOT NULL,
+                                       blockHash text NOT NULL,
+                                       transactionIndex integer NOT NULL,
+                                       `from` text NOT NULL,
+                                       `to` text NOT NULL,
+                                       value integer NOT NULL,
+                                       gas integer NOT NULL,
+                                       gasPrice integer NOT NULL,
+                                       isError integer NOT NULL,
+                                       txreceipt_status integer NOT NULL,
+                                       input text NOT NULL,
+                                       contractAddress text NOT NULL,
+                                       cumulativeGasUsed integer NOT NULL,
+                                       gasUsed integer NOT NULL,
+                                       confirmations integer NOT NULL,
+                                       methodId text NOT NULL,
+                                       functionName text NOT NULL
+                                 );"""
+    connection.execute(sql_create_tran_creator_table)
+
+    logger.info("Getting transactions of contract creator async")
+
+    start_time = time.time()
+
+    split_urls = [urls_tra_creator[i:i + 5] for i in range(0, len(urls_tra_creator), 5)]
+    for urls in split_urls:
+        asyncio.run(async_fetch_and_store(urls, connection, "Transactions", "t_transactions_wallet"))
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    requests_per_second = len(urls_tra_creator) / elapsed_time
+    
+    # Get total transactions registered
+    query = f"SELECT COUNT(*) FROM t_transactions_wallet"
+    cursor.execute(query)
+    total = cursor.fetchone()[0]
+
+    logger.info(f"=========================================================")
+    logger.info(f" Total requests: {len(urls_tra_creator)}")
+    logger.info(f" Total Blocks: {len(urls_tra_creator) * chunk}")
+    logger.info(f" Total TRX: {total}")
+    logger.info(f" Elapsed time: {elapsed_time} seconds")
+    logger.info(f" Requests per second: {requests_per_second}")
+    logger.info(f"=========================================================")
+    
+    logger.info(" ")
+    logger.info("=====================================================")
+    logger.info(f"Collecting Contract Creator transfers...")
+    logger.info("=====================================================")
+    logger.info("Creating Table t_tra_creator")
+
+    sql_create_tra_creator_table = """CREATE TABLE IF NOT EXISTS t_transfers_wallet (
+                                      blockNumber integer NOT NULL,
+                                      timeStamp datetime NOT NULL,
+                                      hash text NOT NULL,
+                                      nonce integer NOT NULL,
+                                      blockHash text NOT NULL,
+                                      `from` text NOT NULL,
+                                      contractAddress text NOT NULL,
+                                      `to` text NOT NULL,
+                                      value integer NOT NULL,
+                                      tokenName text NOT NULL,
+                                      tokenSymbol text NOT NULL,
+                                      tokenDecimal integer NOT NULL,
+                                      transactionIndex integer NOT NULL,
+                                      gas integer NOT NULL,
+                                      gasPrice integer NOT NULL,
+                                      gasUsed integer NOT NULL,
+                                      cumulativeGasUsed integer NOT NULL,
+                                      input text NOT NULL,
+                                      confirmations integer NOT NULL
+                                 );"""
+    connection.execute(sql_create_tra_creator_table)
+
+    logger.info("Getting transfers contract creator async")
+
+    start_time = time.time()
+
+    split_urls = [urls_tra_creator[i:i + 5] for i in range(0, len(urls_tra_creator), 5)]
+    for urls in split_urls:
+        asyncio.run(async_fetch_and_store(urls, connection, "Transfers", "t_transfers_wallet"))
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    requests_per_second = len(urls_tra_creator) / elapsed_time
+    
+    # Get total transactions registered
+    query = f"SELECT COUNT(*) FROM t_transfers_wallet"
+    cursor.execute(query)
+    total = cursor.fetchone()[0]
+
+    logger.info(f"=========================================================")
+    logger.info(f" Total requests: {len(urls_tra_creator)}")
+    logger.info(f" Total Blocks: {len(urls_tra_creator) * chunk}")
+    logger.info(f" Total TRX: {total}")
+    logger.info(f" Elapsed time: {elapsed_time} seconds")
+    logger.info(f" Requests per second: {requests_per_second}")
+    logger.info(f"=========================================================")
+
+    logger.info(" ")
+    logger.info("=====================================================")
+    logger.info(f"Collecting Internals contract creator transfers...")
+    logger.info("=====================================================")
+    logger.info("Creating Table t_internals_wsllet")
+
+    sql_create_int_creator_table = """CREATE TABLE IF NOT EXISTS t_internals_wallet (
+                                      blockNumber integer NOT NULL,
+                                      timeStamp datetime NOT NULL,
+                                      hash text NOT NULL,
+                                      `from` text NOT NULL,
+                                      `to` text NOT NULL,
+                                      value integer NOT NULL,
+                                      contractAddress text NOT NULL,
+                                      input text NOT NULL,
+                                      type text NOT NULL,
+                                      gas integer NOT NULL,
+                                      gasUsed integer NOT NULL,
+                                      isError integer NOT NULL,
+                                      errCode text NOT NULL
+                                 );"""
+    connection.execute(sql_create_int_creator_table)
+
+    logger.info("Getting internals contract creator async")
+
+    start_time = time.time()
+
+    split_urls = [urls_int_creator[i:i + 5] for i in range(0, len(urls_int_creator), 5)]
+    for urls in split_urls:
+        asyncio.run(async_fetch_and_store(urls, connection, "Internals", "t_internals_wallet"))
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    requests_per_second = len(urls_int_creator) / elapsed_time
+    
+    # Get total transactions registered
+    query = f"SELECT COUNT(*) FROM t_internals_wallet"
+    cursor.execute(query)
+    total = cursor.fetchone()[0]
+
+    logger.info(f"=========================================================")
+    logger.info(f" Total requests: {len(urls_int_creator)}")
+    logger.info(f" Total Blocks: {len(urls_int_creator) * chunk}")
+    logger.info(f" Total TRX: {total}")
+    logger.info(f" Elapsed time: {elapsed_time} seconds")
+    logger.info(f" Requests per second: {requests_per_second}")
+    logger.info(f"=========================================================")
+
+
+    connection.close()
     return 0
 
 
