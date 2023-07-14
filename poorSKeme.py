@@ -32,8 +32,9 @@ __email__ = "kennbro <at> protonmail <dot> com"
 __status__ = "Development"
 
 
-def flaskServer(ip='127.0.0.1', port=5000):
+def flaskServer(ip='127.0.0.1', port=5000, file=None):
     app = create_application()
+    app.config['file'] = file
     logger.info("Flask serving...")
     app.run(port=port, debug=True, host=ip, use_reloader=False)
 
@@ -120,17 +121,20 @@ $$ |      \$$$$$$  |\$$$$$$  |$$ |            \$$$$$$  |$$ | \$$\\\$$$$$$$\ $$ |
 
     # Validations
     if (args.contract):
+        filedb = "contract-" + args.blockchain + "-" + args.contract + ".db"
+
         if (args.file):
-            logger.warning("Parameter JSON file are discarded because contract is provided")
+            logger.warning("Parameter file are discarded because contract is provided")
 
         if (args.blockchain == "bsc"):
             # WARNING: Remove
             # asyncio.run(bsc.bsc_json_collect(args.contract, args.block_from, args.block_to, key['bscscan'], chunk=args.chunk))
-            bsc.bsc_db_collect_async(args.contract, args.block_from, args.block_to, key['bscscan'], chunk=args.chunk)
+            bsc.bsc_db_collect_async(args.contract, args.block_from, args.block_to, key['bscscan'], filedb, chunk=args.chunk)
+
         if (args.blockchain == "eth"):
             # WARNING: Remove
             # asyncio.run(eth.eth_json_collect(args.contract, args.block_from, args.block_to, key['ethscan'], chunk=args.chunk))
-            eth.eth_db_collect_async(args.contract, args.block_from, args.block_to, key['ethscan'], chunk=args.chunk)
+            eth.eth_db_collect_async(args.contract, args.block_from, args.block_to, key['ethscan'], filedb, chunk=args.chunk)
 
     elif (args.file):
         if (args.blockchain == "bsc"):
@@ -152,7 +156,13 @@ $$ |      \$$$$$$  |\$$$$$$  |$$ |            \$$$$$$  |$$ | \$$\\\$$$$$$$\ $$ |
 
     if (args.web):
         sys.stdout.flush()
-        kwargs_flask = {"ip": "127.0.0.1", "port": 5000}
+        # File to process
+        if (args.file):
+            filename = args.file
+        else:
+            filename = filedb
+        
+        kwargs_flask = {"ip": "127.0.0.1", "port": 5000, "file": filename}
         flask_proc = multiprocessing.Process(name='flask',
                                                 target=flaskServer,
                                                 kwargs=kwargs_flask)

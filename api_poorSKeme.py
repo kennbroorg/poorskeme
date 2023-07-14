@@ -1,9 +1,10 @@
 # application.py
 # -*- encoding: utf-8 -*-
 
-from flask import Flask
+from flask import Flask, current_app
 from flask_cors import CORS
 from flask import Blueprint, jsonify
+from flask import g
 
 import time
 import json
@@ -41,6 +42,8 @@ def create_application():
 ################################################
 @home.route("/testing", methods=["GET"])
 def r_testing():
+    file = current_app.config['file']
+    logger.info(f"Read contract file in {file}")
     return jsonify({"testing": "OK"})
 
 

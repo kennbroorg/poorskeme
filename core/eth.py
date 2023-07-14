@@ -860,8 +860,8 @@ async def async_fetch_and_store(urls, conn, type):
         await Client.close()
 
 
-def eth_db_collect_async(contract_address, block_from, block_to, key, chunk=30000):
-    filedb = "contract-eth-" + contract_address + ".db"
+def eth_db_collect_async(contract_address, block_from, block_to, key, filedb, chunk=30000):
+    # filedb = "contract-eth-" + contract_address + ".db"
     try:
         os.remove(filedb)
     except:
