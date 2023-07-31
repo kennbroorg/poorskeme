@@ -598,7 +598,7 @@ def eth_json_process(filename):
         json.dump(json_bubbles, outfile)
 
     # Add Percentage
-    trx_total["Percentage"] = trx_total["value_in"] * 100 / trx_total['value_out']
+    trx_total["Percentage"] = round(trx_total["value_in"] * 100 / trx_total['value_out'], 0)
     trx_total_dec = trx_total.sort_values(["Percentage"])
     trx_total_asc = trx_total.sort_values(["Percentage"], ascending=False)
 
@@ -1516,7 +1516,7 @@ def eth_db_process(filename):
         json.dump(json_bubbles, outfile)
 
     # Add Percentage
-    trx_total["Percentage"] = trx_total["value_in"] * 100 / trx_total['value_out']
+    trx_total["Percentage"] = round(trx_total["value_in"] * 100 / trx_total['value_out'], 0)
     trx_total.replace([np.inf, -np.inf], 9999999, inplace=True)  # NOTE: Handle division by 0
     trx_total_dec = trx_total.sort_values(["Percentage"])
     trx_total_asc = trx_total.sort_values(["Percentage"], ascending=False)
@@ -1524,7 +1524,7 @@ def eth_db_process(filename):
     # Anomalies
     df_anomalies = trx_total_asc[trx_total_asc['wallet'] != address_contract ]
     df_anomalies = df_anomalies[trx_total_asc['Percentage'] >= 200]
-    # df_anomalies['Percentage'] = df_anomalies['Percentage'].astype(int)
+    df_anomalies['Percentage'] = df_anomalies['Percentage'].astype(int)
     with open('./tmp/anomalies.json', 'w') as outfile:
         df_anomalies_json = df_anomalies.to_json(outfile, orient="records")
 
