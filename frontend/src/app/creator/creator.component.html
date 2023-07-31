@@ -1,0 +1,147 @@
+<div class="row">
+
+  <!-- Title -->
+  <div class="col-md-3" style="margin-bottom: 10px;">
+      <nb-card style="margin: 7px;">
+          <!-- <nb-card-body class="shiny" style="font-weight: 500; font-size: 20px; "> -->
+          <nb-card-body style="font-weight: 500; font-size: 20px;">
+              <div class="top-title">
+                  {{creator['block_from']}}
+              </div>
+              <div class="fixed-subtitle">Block from</div>
+          </nb-card-body>
+      </nb-card>
+  </div>
+  <div class="col-md-6" style="margin-bottom: 10px;">
+      <nb-card style="margin: 7px;">
+          <!-- <nb-card-body class="shiny" style="font-weight: 500; font-size: 20px; "> -->
+          <nb-card-body class="shiny" style="font-weight: 500; font-size: 20px;">
+              <div class="top-title">
+                  {{creator['wallet']}}
+              </div>
+              <div class="fixed-subtitle" style="color:rgba(255, 255, 255, 0.8);">Creator Wallet Address</div>
+          </nb-card-body>
+      </nb-card>
+  </div>
+  <div class="col-md-3" style="margin-bottom: 10px;">
+      <nb-card style="margin: 7px;">
+          <!-- <nb-card-body class="shiny" style="font-weight: 500; font-size: 20px; "> -->
+          <nb-card-body style="font-weight: 500; font-size: 20px;">
+              <div class="top-title">
+                  {{creator['block_to']}}
+              </div>
+              <div class="fixed-subtitle">Block to</div>
+          </nb-card-body>
+      </nb-card>
+  </div>
+
+  <!-- Details -->
+  <div class="col-md-12 div-border" style="height: 200px;">
+    <div class="row">
+      <nb-flip-card class="col-md-6">
+        <nb-card-front>
+          <nb-card style="border: none; height: 200px;">
+            <nb-card-body style="font-weight: 500; font-size: 20px; overflow: hidden; padding: 10px;">
+              <div style="width: 100%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-transform: uppercase;">
+                <div style="height: 1px; width: 60%; margin-left: 20%; margin-bottom: 15px; background-color: rgba(102, 217, 255, 0.4);"></div>
+                <table style="width: 80%; margin-left: 10%;">
+                  <tbody>
+                  <tr><td class="t-t">DATE</td><td class="t-d">{{creator['first_date']}}</td></tr>
+                  <tr><td class="t-t">HASH</td><td class="t-d">{{creator['first_hash']}}</td></tr>
+                  <tr><td class="t-t">FROM</td><td class="t-d">{{creator['first_from']}}</td></tr>
+                  <tr><td class="t-t">TO</td><td class="t-d">{{creator['first_to']}}</td></tr>
+                  <tr><td class="t-t">VALUE</td><td class="t-d">{{creator['first_value']}}</td></tr>
+                  </tbody>
+                </table>
+                <div style="height: 1px; width: 60%; margin-left: 20%; margin-top: 15px; background-color: rgba(102, 217, 255, 0.4);"></div>
+              </div>
+              <div class="top-subtitle">
+                First seen
+              </div>
+              <!-- <app-transactions-brief></app-transactions-brief> -->
+            </nb-card-body>
+          </nb-card>
+        </nb-card-front>
+        <nb-card-back>
+          <nb-card style="border: none; height: 200px;">
+            <nb-card-body>
+              <div style="width: 100%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-transform: uppercase;">
+                <div style="height: 1px; width: 60%; margin-left: 20%; margin-bottom: 15px; background-color: rgba(102, 217, 255, 0.4);"></div>
+                <table style="width: 80%; margin-left: 10%;">
+                  <tbody>
+                  <tr><td class="t-t">DATE</td><td class="t-d">{{creator['last_date']}}</td></tr>
+                  <tr><td class="t-t">HASH</td><td class="t-d">{{creator['last_hash']}}</td></tr>
+                  <tr><td class="t-t">FROM</td><td class="t-d">{{creator['last_from']}}</td></tr>
+                  <tr><td class="t-t">TO</td><td class="t-d">{{creator['last_to']}}</td></tr>
+                  <tr><td class="t-t">VALUE</td><td class="t-d">{{creator['last_value']}}</td></tr>
+                  </tbody>
+                </table>
+                <div style="height: 1px; width: 60%; margin-left: 20%; margin-top: 15px; background-color: rgba(102, 217, 255, 0.4);"></div>
+              </div>
+              <div class="top-subtitle">
+                Last seen
+              </div>
+            </nb-card-body>
+          </nb-card>
+        </nb-card-back>
+      </nb-flip-card>
+
+      <nb-flip-card class="col-md-6">
+      <!-- <nb-flip-card style="height: 200px; overflow: hidden;"> -->
+        <nb-card-front>
+          <nb-card style="border: none; height: 200px;">
+          <!-- <nb-card style="height: 150px; overflow: hidden;"> -->
+            <nb-card-body style="font-weight: 500; font-size: 20px; overflow: hidden; padding: 0px;">
+              <div class="top-subtitle">
+                Balances
+              </div>
+              <!-- <app-transactions-brief></app-transactions-brief> -->
+            </nb-card-body>
+          </nb-card>
+        </nb-card-front>
+        <nb-card-back>
+          <nb-card style="border: none; height: 200px;">
+            <nb-card-body>
+              <div class="top-subtitle">
+                Contracts
+              </div>
+            </nb-card-body>
+          </nb-card>
+        </nb-card-back>
+      </nb-flip-card>
+    </div>
+  </div>
+
+  <!-- Wallets -->
+  <nb-card class="col-md-12" style="height: calc(100vh - 10px - 200px - 10px - 200px - 10px);">
+    <nb-card-body style="font-weight: 500; font-size: 20px; overflow: hidden; padding: 0px;">
+      <div id="cardNodes" #cardNodes class="map" style="height: calc(100vh - 10px - 200px - 10px - 200px - 10px);"></div>
+      <div class="top-subtitle">
+        Wallet Action
+      </div>
+      <div class="trx-detail">
+        <!-- <div style="height: 1px; width: 100%; margin-bottom: 15px; background-color: rgba(102, 217, 255, 0.4);"></div> -->
+          <table style="width: 550px;">
+          <!-- <table> -->
+            <tbody>
+            <tr><td class="t-t" colspan="2" style="text-align: center; border-bottom: 1px solid rgba(102, 217, 255, 0.4);">{{ dTRX }}</td></tr>
+            <tr><td class="t-t" style="width: 120px; padding-left: 10px; padding-top: 15px;">WALLET</td><td style="padding-top: 15px;" class="t-d">{{ dWallet }}</td></tr>
+            <tr><td class="t-t" style="width: 120px; padding-left: 10px;">TYPE</td><td class="t-d">{{ dType }}</td></tr>
+            <tr><td class="t-t" style="width: 120px; padding-left: 10px;">QTY (IN)</td><td class="t-d">{{ dQtyIN }}</td></tr>
+            <tr><td class="t-t" style="width: 120px; padding-left: 10px;">VALUE (IN)</td><td class="t-d">{{ dValueIN }} {{dToken}}</td></tr>
+            <tr><td class="t-t" style="width: 120px; padding-left: 10px;">QTY (OUT)</td><td class="t-d">{{ dQtyOUT }}</td></tr>
+            <tr><td class="t-t" style="width: 120px; padding-left: 10px;">VALUE (OUT)</td><td class="t-d">{{ dValueOUT }} {{ dToken }}</td></tr>
+            </tbody>
+          </table>
+        <div style="height: 1px; width: 100%; margin-top: 15px; background-color: rgba(102, 217, 255, 0.4);"></div>
+      </div>
+    </nb-card-body>
+  </nb-card>
+
+  <!-- <nb-card style="width: 100%; height: 98vh;"> -->
+  <!--   <nb-card-body style="padding: 0px; overflow: hidden;"> -->
+  <!--     <div id="cardNodes" #cardNodes class="map"></div> -->
+  <!--   </nb-card-body> -->
+  <!-- </nb-card> -->
+
+</div>
