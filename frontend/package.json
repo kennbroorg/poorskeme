@@ -10,6 +10,7 @@
   },
   "private": true,
   "dependencies": {
+    "3d-force-graph": "^1.71.5",
     "@angular/animations": "^13.2.5",
     "@angular/cdk": "^13.2.5",
     "@angular/compiler": "~13.2.0",
@@ -34,6 +35,8 @@
     "ngx-highlightjs": "^6.1.2",
     "ngx-org-chart": "^1.1.1",
     "parcel": "^2.6.2",
+    "three": "^0.154.0",
+    "three-spritetext": "^1.8.1",
     "tree-ngx": "^4.3.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.11.4"
@@ -50,6 +53,7 @@
     "@types/jasmine": "~3.10.0",
     "@types/jquery": "^3.5.14",
     "@types/node": "^12.11.1",
+    "@types/three": "0.144.0",
     "ajv": "^8.11.0",
     "date-fns": "^2.29.1",
     "install-peers": "^1.0.4",
