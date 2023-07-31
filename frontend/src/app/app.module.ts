@@ -36,6 +36,9 @@ import { LiqTransComponent } from './liq-trans/liq-trans.component';
 import { TreeContractComponent } from './contract-brief/tree-contract/tree-contract.component';
 import { AnomaliesComponent } from './anomalies/anomalies.component';
 import { TransfersDetailsComponent } from './transfers-details/transfers-details.component';
+import { CreatorComponent } from './creator/creator.component';
+
+import { WindowService } from './service/windows.service';
 
 @NgModule({
   declarations: [
@@ -53,6 +56,7 @@ import { TransfersDetailsComponent } from './transfers-details/transfers-details
     DiagramComponent,
     TrxDetailsComponent,
     AnomaliesComponent,
+    CreatorComponent,
   ],
   imports: [
     BrowserModule,
@@ -75,6 +79,7 @@ import { TransfersDetailsComponent } from './transfers-details/transfers-details
     NbDialogModule.forChild()
   ],
   providers: [
+    WindowService,
     {
       provide: HIGHLIGHT_OPTIONS,
       useValue: <HighlightOptions>{
