@@ -14,6 +14,7 @@ import asyncio
 import aiohttp
 from bs4 import BeautifulSoup
 import cloudscraper
+import pyround
 
 # from termcolor import colored
 # import coloredlogs, logging
@@ -859,7 +860,7 @@ async def async_fetch_and_store(urls, conn, type, table):
 
 
 def bsc_db_collect_async(contract_address, block_from, block_to, key, filedb, chunk=30000):
-    # filedb = "contract-bsc-" + contract_address + ".db"
+    
     try:
         os.remove(filedb)
     except:
@@ -875,6 +876,7 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
 
     sql_create_contract_table = """CREATE TABLE IF NOT EXISTS t_contract (
                                    contract text NOT NULL,
+                                   blockchain text NOT NULL,
                                    block_from text NOT NULL,
                                    block_to text NOT NULL,
                                    first_block text NOT NULL,
@@ -902,8 +904,8 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
     contract_creator = first_block['from']
 
     logger.info("Storing first block")
-    cursor.execute("""INSERT INTO t_contract VALUES (?, ?, ?, ?, ?, ?, ?)""", 
-        (contract_address, block_from, block_to, first_block['blockNumber'], 
+    cursor.execute("""INSERT INTO t_contract VALUES (?, ?, ?, ?, ?, ?, ?, ?)""", 
+        (contract_address, 'bsc', block_from, block_to, first_block['blockNumber'], 
         first_block['hash'], first_block['timeStamp'], first_block['from']))
 
     connection.commit()
@@ -1287,8 +1289,6 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
     token_list = balance_list.find_all('li', class_='list-custom-BEP-20')
     for i in token_list:
         balances.append(i.text)
-        # print(f" - {i.text}")
-        # print(f" - {i.a['href']}")
 
     logger.info("Getting last block of contract creator")
     # print(f"===============================================")
@@ -1313,6 +1313,13 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
     print(f"From : {last_from_trx}")
     print(f"To : {last_to_trx}")
     print(f"Value : {last_value_trx}")
+
+    url = f'https://api.bscscan.com/api?module=account&action=txlist&address={contract_creator}' + \
+        f'&startblock={last_block_number}&endblock={last_block_number}' + \
+        f'&page=1&offset=1&sort=asc&apikey={key}'
+    response = requests.get(url)
+
+    last_block_creator = response.json()['result'][-1]
 
     # NOTE: Implement in FUTURE
     # print(f"===============================================")
@@ -1384,13 +1391,15 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
                                    first_from text NOT NULL,
                                    first_value integer NOT NULL,
                                    first_input text NOT NULL,
+                                   first_func text NOT NULL,
                                    last_block text NOT NULL,
                                    last_date datetime NOT NULL,
                                    last_hash text NOT NULL,
                                    last_to text NOT NULL,
                                    last_from text NOT NULL,
                                    last_value integer NOT NULL,
-                                   last_input text NOT NULL
+                                   last_input text NOT NULL,
+                                   last_func text NOT NULL
                                  );"""
 
     logger.info("Storing first and last block info of contract creator")
@@ -1399,19 +1408,27 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
          block_from,
          block_to,
          first_block_creator['blockNumber'],
-         first_block_creator['timeStamp'],
+         first_block_creator['timeStamp'].strftime("%Y/%m/%d - %H:%M:%S"),
          first_block_creator['hash'],
          first_block_creator['to'],
          first_block_creator['from'],
-         first_block_creator['value'],
-         first_block_creator['input'],
-         last_block_number,
-         last_time_trx,
-         "",  # TODO: Falta HASH
-         last_to_trx,
-         last_from_trx,
-         last_value_trx,
-         ""))  # TODO: Input
+         pyround.pyround(first_block_creator['value'],8),
+         first_block_creator['functionName'],
+         last_block_creator['blockNumber'],
+         last_block_creator['timeStamp'].strftime("%Y/%m/%d - %H:%M:%S"),
+         last_block_creator['hash'],
+         last_block_creator['to'],
+         last_block_creator['from'],
+         pyround.pyround(last_block_creator['value'],8),
+         last_block_creator['functionName'],
+         ""))
+         # last_block_number,
+         # last_time_trx,
+         # "",  # TODO: Falta HASH
+         # last_to_trx,
+         # last_from_trx,
+         # pyround.pyround(last_value_trx,8),
+         # ""))  # TODO: Input
  
     connection.commit()
 
@@ -1597,6 +1614,9 @@ def bsc_db_process(filename):
     row = cursor.fetchone()
     column_names = [description[0] for description in cursor.description]
     contract = {column_names[i]: row[i] for i in range(len(column_names))}
+
+    # TODO: Do this in collect stage
+    contract['blockchain'] = 'bsc'
 
     with open('./tmp/contract.json', 'w') as outfile:
         json.dump(contract, outfile)
