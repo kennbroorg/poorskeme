@@ -877,6 +877,7 @@ def eth_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
 
     sql_create_contract_table = """CREATE TABLE IF NOT EXISTS t_contract (
                                    contract text NOT NULL,
+                                   blockchain text NOT NULL,
                                    block_from text NOT NULL,
                                    block_to text NOT NULL,
                                    first_block text NOT NULL,
@@ -903,8 +904,8 @@ def eth_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
         block_from = int(first_block['blockNumber'])
 
     logger.info("Storing first block")
-    cursor.execute("""INSERT INTO t_contract VALUES (?, ?, ?, ?, ?, ?, ?)""", 
-        (contract_address, block_from, block_to, first_block['blockNumber'], 
+    cursor.execute("""INSERT INTO t_contract VALUES (?, ?, ?, ?, ?, ?, ?, ?)""", 
+        (contract_address, 'eth', block_from, block_to, first_block['blockNumber'], 
         first_block['hash'], first_block['timeStamp'], first_block['from']))
 
     connection.commit()
@@ -1215,6 +1216,9 @@ def eth_db_process(filename):
     row = cursor.fetchone()
     column_names = [description[0] for description in cursor.description]
     contract = {column_names[i]: row[i] for i in range(len(column_names))}
+
+    # TODO: Do this in collect stage
+    contract['blockchain'] = 'eth'
 
     with open('./tmp/contract.json', 'w') as outfile:
         json.dump(contract, outfile)
