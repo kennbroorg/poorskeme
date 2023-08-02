@@ -10,6 +10,7 @@ import json
 import pandas as pd
 import ast
 import sqlite3
+import pyround      # TODO: Test and use
 
 import coloredlogs, logging
 
@@ -588,12 +589,11 @@ def r_trans_creator():
     cursor = connection.cursor()
 
     # Get Contract and Creator
-    # TODO: Add blockchain to determine BEP20 or ERC20
     query = f"SELECT contract, creator FROM t_contract"
     cursor.execute(query)
     contract, creator = cursor.fetchone()
-    print(f"contract: {contract}")
-    print(f"creator: {creator}")
+    # print(f"contract: {contract}")
+    # print(f"creator: {creator}")
 
     nodes = []
     nodes_list = []
@@ -617,7 +617,8 @@ def r_trans_creator():
                           "address": df_creator["from"][i][:-2],
                           "type": type, 
                           "trx": "Transactions",
-                          "token": "Native",  # TODO:  Evalute after add blockchain
+                          # "token": "Native",  # TODO:  Evalute after add blockchain
+                          "token": "ETH" if contract['blockchain'] == "eth" else "BNB"
                           "trx_in": 0,
                           "qty_in": 0,
                           "trx_out": float(df_creator["sum_value"][i]),
@@ -640,7 +641,8 @@ def r_trans_creator():
                           "address": df_creator["to"][i][:-2],
                           "type": type, 
                           "trx": "Transactions",
-                          "token": "Native",  # TODO:  Evalute after add blockchain
+                          # "token": "Native",  # TODO:  Evalute after add blockchain
+                          "token": "ETH" if contract['blockchain'] == "eth" else "BNB"
                           "trx_out": 0,
                           "qty_out": 0,
                           "trx_in": float(df_creator["sum_value"][i]),
@@ -671,7 +673,8 @@ def r_trans_creator():
                           "address": df_creator["from"][i][:-2],
                           "type": type, 
                           "trx": "Internals", 
-                          "token": "Native",  # TODO:  Evaluate after add blockchain
+                          # "token": "Native",  # TODO:  Evaluate after add blockchain
+                          "token": "ETH" if contract['blockchain'] == "eth" else "BNB"
                           "trx_in": 0,
                           "qty_in": 0,
                           "trx_out": float(df_creator["sum_value"][i]),
@@ -694,7 +697,8 @@ def r_trans_creator():
                           "address": df_creator["to"][i][:-2],
                           "type": type, 
                           "trx": "Internals", 
-                          "token": "Native",  # TODO:  Evaluate after add blockchain
+                          # "token": "Native",  # TODO:  Evaluate after add blockchain
+                          "token": "ETH" if contract['blockchain'] == "eth" else "BNB"
                           "trx_out": 0,
                           "qty_out": 0,
                           "trx_in": float(df_creator["sum_value"][i]),
@@ -732,7 +736,8 @@ def r_trans_creator():
             nodes.append({"id": df_creator["from"][i], 
                           "address": df_creator["from"][i][:-(len_tk_sym)],
                           "type": type, 
-                          "trx": "BEP-20 Token Transfers",  # TODO:  Evaluate after add blockchain 
+                          # "trx": "BEP-20 Token Transfer",  # TODO:  Evaluate after add blockchain 
+                          "trx": "ERC-20 Token" if contract['blockchain'] == "eth" else "BEP-20 Token"
                           "token": str(df_creator["tokenSymbol"][i]),
                           "trx_in": 0,
                           "qty_in": 0,
@@ -755,7 +760,8 @@ def r_trans_creator():
             nodes.append({"id": df_creator["to"][i], 
                           "address": df_creator["to"][i][:-(len_tk_sym)],
                           "type": type, 
-                          "trx": "BEP-20 Token Transfers",  # TODO:  Evaluate after add blockchain
+                          # "trx": "BEP-20 Token Transfers",  # TODO:  Evaluate after add blockchain
+                          "trx": "ERC-20 Token" if contract['blockchain'] == "eth" else "BEP-20 Token"
                           "token": str(df_creator["tokenSymbol"][i]),
                           "trx_out": 0,
                           "qty_out": 0,
