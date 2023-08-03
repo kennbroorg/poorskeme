@@ -15,6 +15,7 @@ import aiohttp
 from bs4 import BeautifulSoup
 import cloudscraper
 import pyround
+import datetime
 
 # from termcolor import colored
 # import coloredlogs, logging
@@ -1039,7 +1040,7 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
     end_time = time.time()
     elapsed_time = end_time - start_time
     requests_per_second = len(urls_transactions) / elapsed_time
-    
+
     # Get total transactions registered
     query = f"SELECT COUNT(*) FROM t_transactions"
     cursor.execute(query)
@@ -1093,7 +1094,7 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
     end_time = time.time()
     elapsed_time = end_time - start_time
     requests_per_second = len(urls_transfers) / elapsed_time
-    
+
     # Get total transactions registered
     query = f"SELECT COUNT(*) FROM t_transfers"
     cursor.execute(query)
@@ -1141,7 +1142,7 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
     end_time = time.time()
     elapsed_time = end_time - start_time
     requests_per_second = len(urls_internals) / elapsed_time
-    
+
     # Get total transactions registered
     query = f"SELECT COUNT(*) FROM t_internals"
     cursor.execute(query)
@@ -1226,13 +1227,15 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
                                    first_from text NOT NULL,
                                    first_value integer NOT NULL,
                                    first_input text NOT NULL,
+                                   first_func text NOT NULL,
                                    last_block text NOT NULL,
                                    last_date datetime NOT NULL,
                                    last_hash text NOT NULL,
                                    last_to text NOT NULL,
                                    last_from text NOT NULL,
                                    last_value integer NOT NULL,
-                                   last_input text NOT NULL
+                                   last_input text NOT NULL,
+                                   last_func text NOT NULL
                                  );"""
     cursor.execute(sql_create_contract_table)
 
@@ -1245,14 +1248,17 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
     first_block_creator = response.json()['result'][0]
     # first_block_number = int(first_block_creator['blockNumber'])
 
-    print(f"Block number (first): {first_block_creator['blockNumber']}")
-    print(f"Hash (first) : {first_block_creator['hash']}")
-    print(f"Timestamp (first) : {first_block_creator['timeStamp']}")
-    print(f"From (first) : {first_block_creator['from']}")  # La que es distinta hay que resaltarla y dibujar esta transaccion
-    print(f"To (first) : {first_block_creator['to']}")
-    print(f"Value (first) : {first_block_creator['value']}")
-    print(f"Input (first) : {first_block_creator['input']}")
-    print ("============================================================")
+    # first_time = datetime.datetime.timestamp(first_block_creator['timeStamp'])
+    first_time = datetime.datetime.fromtimestamp(int(first_block_creator['timeStamp']))
+
+    # print(f"Block number (first): {first_block_creator['blockNumber']}")
+    # print(f"Hash (first) : {first_block_creator['hash']}")
+    # print(f"Timestamp (first) : {first_block_creator['timeStamp']}")
+    # print(f"From (first) : {first_block_creator['from']}")  # La que es distinta hay que resaltarla y dibujar esta transaccion
+    # print(f"To (first) : {first_block_creator['to']}")
+    # print(f"Value (first) : {first_block_creator['value']}")
+    # print(f"Input (first) : {first_block_creator['input']}")
+    # print ("============================================================")
     # TODO: Do we need internals and BEP20?
 
     url_home = "https://bscscan.com/address/" + contract_creator 
@@ -1271,8 +1277,8 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
     # Get BNB
     balance = balance_container[0].find_all('div')
     balance_bnb = balance[1].text.split(' ')[0]
-    balances.append(balance_bnb)
-    print(f"Balance de BNB : {balance_bnb}")
+    balances.append(f"Balance : {balance_bnb} BNB")
+    # print(f"Balance de BNB : {balance_bnb}")
 
     # Get USD del BNB
     # balance = balance_container[1].find_all('div')
@@ -1308,11 +1314,11 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
         except Exception:
             last_to_trx = "N/A"
     last_value_trx = td[9].text
-    print(f"Block : {last_block_number}")
-    print(f"Time : {last_time_trx}")
-    print(f"From : {last_from_trx}")
-    print(f"To : {last_to_trx}")
-    print(f"Value : {last_value_trx}")
+    # print(f"Block : {last_block_number}")
+    # print(f"Time : {last_time_trx}")
+    # print(f"From : {last_from_trx}")
+    # print(f"To : {last_to_trx}")
+    # print(f"Value : {last_value_trx}")
 
     url = f'https://api.bscscan.com/api?module=account&action=txlist&address={contract_creator}' + \
         f'&startblock={last_block_number}&endblock={last_block_number}' + \
@@ -1320,6 +1326,7 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
     response = requests.get(url)
 
     last_block_creator = response.json()['result'][-1]
+    last_time = datetime.datetime.fromtimestamp(int(last_block_creator['timeStamp']))
 
     # NOTE: Implement in FUTURE
     # print(f"===============================================")
@@ -1380,56 +1387,49 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
     # print(f"To : {last_to_bep}")
     # print(f"Value : {last_value_bep}")
 
-    sql_create_contract_table = """CREATE TABLE IF NOT EXISTS t_contract_creator (
-                                   wallet text NOT NULL,
-                                   block_from integer NOT NULL,
-                                   block_to text NOT NULL,
-                                   first_block integer NOT NULL,
-                                   first_date datetime NOT NULL,
-                                   first_hash text NOT NULL,
-                                   first_to text NOT NULL,
-                                   first_from text NOT NULL,
-                                   first_value integer NOT NULL,
-                                   first_input text NOT NULL,
-                                   first_func text NOT NULL,
-                                   last_block text NOT NULL,
-                                   last_date datetime NOT NULL,
-                                   last_hash text NOT NULL,
-                                   last_to text NOT NULL,
-                                   last_from text NOT NULL,
-                                   last_value integer NOT NULL,
-                                   last_input text NOT NULL,
-                                   last_func text NOT NULL
-                                 );"""
-
     logger.info("Storing first and last block info of contract creator")
-    cursor.execute("""INSERT INTO t_contract_creator VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
+    cursor.execute("""INSERT INTO t_contract_creator VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
         (contract_creator,
          block_from,
          block_to,
          first_block_creator['blockNumber'],
-         first_block_creator['timeStamp'].strftime("%Y/%m/%d - %H:%M:%S"),
+         first_time,
          first_block_creator['hash'],
          first_block_creator['to'],
          first_block_creator['from'],
-         pyround.pyround(first_block_creator['value'],8),
+         pyround.pyround(int(first_block_creator['value']) / 1e+18, 8),
+         first_block_creator['input'],
          first_block_creator['functionName'],
          last_block_creator['blockNumber'],
-         last_block_creator['timeStamp'].strftime("%Y/%m/%d - %H:%M:%S"),
+         last_time,
          last_block_creator['hash'],
          last_block_creator['to'],
          last_block_creator['from'],
-         pyround.pyround(last_block_creator['value'],8),
-         last_block_creator['functionName'],
-         ""))
-         # last_block_number,
-         # last_time_trx,
-         # "",  # TODO: Falta HASH
-         # last_to_trx,
-         # last_from_trx,
-         # pyround.pyround(last_value_trx,8),
-         # ""))  # TODO: Input
+         pyround.pyround(int(last_block_creator['value']) / 1e+18, 8),
+         last_block_creator['input'],
+         last_block_creator['functionName']))
  
+    connection.commit()
+    
+    logger.info("=====================================================")
+    logger.info("Collecting Balance Creator data")
+    logger.info("=====================================================")
+    logger.info("Creating Table t_balance")
+
+    sql_create_balance_table = """CREATE TABLE IF NOT EXISTS t_balance (
+                                   id number NOT NULL,
+                                   balance text NOT NULL
+                                 );"""
+    cursor.execute(sql_create_balance_table)
+
+    logger.info("Storing balances of contract creator")
+    id = 0
+    for balance in balances:
+        # print(f"{balance} - {type(balance)}")
+        id += 1
+        cursor.execute("""INSERT INTO t_balance VALUES (?, ?)""", 
+            (id, balance))
+
     connection.commit()
 
     # TODO: Get the tags!!! TRX : 0xe5a4b28559a45c2d003831d4ac905842cea45df394b2eb85ad235bd96e5e443f
