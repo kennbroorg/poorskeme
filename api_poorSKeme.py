@@ -589,9 +589,9 @@ def r_trans_creator():
     cursor = connection.cursor()
 
     # Get Contract and Creator
-    query = f"SELECT contract, creator FROM t_contract"
+    query = f"SELECT contract, creator, blockchain FROM t_contract"
     cursor.execute(query)
-    contract, creator = cursor.fetchone()
+    contract, creator, blockchain = cursor.fetchone()
     # print(f"contract: {contract}")
     # print(f"creator: {creator}")
 
@@ -618,7 +618,7 @@ def r_trans_creator():
                           "type": type, 
                           "trx": "Transactions",
                           # "token": "Native",  # TODO:  Evalute after add blockchain
-                          "token": "ETH" if contract['blockchain'] == "eth" else "BNB",
+                          "token": "ETH" if blockchain == "eth" else "BNB",
                           "trx_in": 0,
                           "qty_in": 0,
                           "trx_out": float(df_creator["sum_value"][i]),
@@ -642,7 +642,7 @@ def r_trans_creator():
                           "type": type, 
                           "trx": "Transactions",
                           # "token": "Native",  # TODO:  Evalute after add blockchain
-                          "token": "ETH" if contract['blockchain'] == "eth" else "BNB",
+                          "token": "ETH" if blockchain == "eth" else "BNB",
                           "trx_out": 0,
                           "qty_out": 0,
                           "trx_in": float(df_creator["sum_value"][i]),
@@ -674,7 +674,7 @@ def r_trans_creator():
                           "type": type, 
                           "trx": "Internals", 
                           # "token": "Native",  # TODO:  Evaluate after add blockchain
-                          "token": "ETH" if contract['blockchain'] == "eth" else "BNB",
+                          "token": "ETH" if blockchain == "eth" else "BNB",
                           "trx_in": 0,
                           "qty_in": 0,
                           "trx_out": float(df_creator["sum_value"][i]),
@@ -698,7 +698,7 @@ def r_trans_creator():
                           "type": type, 
                           "trx": "Internals", 
                           # "token": "Native",  # TODO:  Evaluate after add blockchain
-                          "token": "ETH" if contract['blockchain'] == "eth" else "BNB",
+                          "token": "ETH" if blockchain == "eth" else "BNB",
                           "trx_out": 0,
                           "qty_out": 0,
                           "trx_in": float(df_creator["sum_value"][i]),
@@ -737,7 +737,7 @@ def r_trans_creator():
                           "address": df_creator["from"][i][:-(len_tk_sym)],
                           "type": type, 
                           # "trx": "BEP-20 Token Transfer",  # TODO:  Evaluate after add blockchain 
-                          "trx": "ERC-20 Token" if contract['blockchain'] == "eth" else "BEP-20 Token",
+                          "trx": "ERC-20 Token" if blockchain == "eth" else "BEP-20 Token",
                           "token": str(df_creator["tokenSymbol"][i]),
                           "trx_in": 0,
                           "qty_in": 0,
@@ -761,7 +761,7 @@ def r_trans_creator():
                           "address": df_creator["to"][i][:-(len_tk_sym)],
                           "type": type, 
                           # "trx": "BEP-20 Token Transfers",  # TODO:  Evaluate after add blockchain
-                          "trx": "ERC-20 Token" if contract['blockchain'] == "eth" else "BEP-20 Token",
+                          "trx": "ERC-20 Token" if blockchain == "eth" else "BEP-20 Token",
                           "token": str(df_creator["tokenSymbol"][i]),
                           "trx_out": 0,
                           "qty_out": 0,
