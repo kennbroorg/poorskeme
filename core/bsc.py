@@ -1468,7 +1468,7 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
 
     start_time = time.time()
 
-    split_urls = [urls_tra_creator[i:i + 5] for i in range(0, len(urls_tra_creator), 5)]
+    split_urls = [urls_tra_creator[i:i + 5] for i in range(0, len(urls_trx_creator), 5)]
     for urls in split_urls:
         asyncio.run(async_fetch_and_store(urls, connection, "Transactions", "t_transactions_wallet"))
 
