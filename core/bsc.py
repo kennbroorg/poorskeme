@@ -1408,7 +1408,7 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
          pyround.pyround(int(last_block_creator['value']) / 1e+18, 8),
          last_block_creator['input'],
          last_block_creator['functionName']))
- 
+
     connection.commit()
     
     logger.info("=====================================================")
@@ -1468,7 +1468,7 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
 
     start_time = time.time()
 
-    split_urls = [urls_tra_creator[i:i + 5] for i in range(0, len(urls_trx_creator), 5)]
+    split_urls = [urls_trx_creator[i:i + 5] for i in range(0, len(urls_trx_creator), 5)]
     for urls in split_urls:
         asyncio.run(async_fetch_and_store(urls, connection, "Transactions", "t_transactions_wallet"))
 
@@ -1488,6 +1488,7 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
     logger.info(f" Elapsed time: {elapsed_time} seconds")
     logger.info(f" Requests per second: {requests_per_second}")
     logger.info(f"=========================================================")
+    exit(0)
     
     logger.info(" ")
     logger.info("=====================================================")
