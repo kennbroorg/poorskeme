@@ -95,6 +95,31 @@
               <div class="top-subtitle">
                 Balances
               </div>
+
+              <!-- <div class="row" style="padding: 0px; margin: 0px; opacity: 0.7;"> -->
+                  <div class="col-md-8 offset-md-2" style="overflow: auto; height: 150px; margin-top: 25px; margin-bottom: 25px; border-left: 1px solid rgba(102, 217, 255, 0.4); border-right: 1px solid rgba(102, 217, 255, 0.4);">
+                      <ngx-datatable
+                          #tableBalances
+                          class="bootstrap"
+                          [rows]="balances"
+                          [columnMode]="ColumnMode.force"
+                          [headerHeight]="0"
+                          [footerHeight]="0"
+                          [loadingIndicator]="li"
+                      >
+                            <ngx-datatable-column
+                            name="Balance" prop="balance"
+                            title="Balance"
+                            [resizeable]="false"
+                            [sortable]="false"
+                            [draggable]="false"
+                            [width]="1"
+                            cellClass="balance"
+                            ></ngx-datatable-column>
+                      </ngx-datatable>
+                  </div>
+              <!-- </div> -->
+
               <!-- <app-transactions-brief></app-transactions-brief> -->
             </nb-card-body>
           </nb-card>
