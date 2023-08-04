@@ -566,15 +566,24 @@ def r_creator():
     filedb = current_app.config['file']
     connection = sqlite3.connect(filedb)
     cursor = connection.cursor()
+
+    # Contract creator blocks
     df_creator = pd.read_sql_query("SELECT * FROM t_contract_creator", connection)
 
     json_format = df_creator.to_json(orient='records')
     json_creator = json.loads(json_format)[0]
 
+    # Contract creator balances
+    df_balances = pd.read_sql_query("SELECT * FROM t_balance", connection)
+
+    json_balances = df_balances.to_json(orient='records')
+    json_balances = json.loads(json_balances)
+
+
     toc = time.perf_counter()
     logger.info(f"Read contract creator info in {toc - tic:0.4f} seconds")
 
-    return jsonify({"creator": json_creator})
+    return jsonify({"creator": json_creator, "balances": json_balances})
 
 
 ################################################
