@@ -870,6 +870,14 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
     connection = sqlite3.connect(filedb)
     cursor = connection.cursor()
 
+    # Internal tagging
+    internal_tagging = []
+    sql_create_tagging_table = """CREATE TABLE IF NOT EXISTS t_tagging (
+                                   wallet text NOT NULL,
+                                   tag text NOT NULL
+                                 );"""
+    cursor.execute(sql_create_tagging_table)
+
     logger.info("=====================================================")
     logger.info("Collecting Contract data")
     logger.info("=====================================================")
@@ -910,6 +918,9 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
         first_block['hash'], first_block['timeStamp'], first_block['from']))
 
     connection.commit()
+    # tag
+    internal_tagging.append({"wallet": contract_address, "tag": "Contract Analysed"})
+    internal_tagging.append({"wallet": first_block['from'], "tag": "Contract Creator"})
 
     # Source code
     logger.info("Creating Table t_source_abi")
@@ -1155,6 +1166,8 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
     logger.info(f" Elapsed time: {elapsed_time} seconds")
     logger.info(f" Requests per second: {requests_per_second}")
     logger.info(f"=========================================================")
+
+    connection.commit()
 
     # NOTE: It ins't necesary yet
     # logger.info(" ")
@@ -1488,7 +1501,6 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
     logger.info(f" Elapsed time: {elapsed_time} seconds")
     logger.info(f" Requests per second: {requests_per_second}")
     logger.info(f"=========================================================")
-    exit(0)
     
     logger.info(" ")
     logger.info("=====================================================")
@@ -1592,7 +1604,94 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
     logger.info(f" Requests per second: {requests_per_second}")
     logger.info(f"=========================================================")
 
+    connection.commit()
 
+    # tags - Transactions - other contract created
+    query = f"SELECT DISTINCT(contractAddress) from t_transactions_wallet WHERE `to` = ''"
+    cursor.execute(query)
+    contracts = cursor.fetchall()
+    for c in contracts:
+        if not any(w.get("wallet") == c for w in internal_tagging):
+            internal_tagging.append({"wallet": c, "tag": "Contract Created"})
+    
+    # tags - Transactions creator
+    query = f"SELECT DISTINCT(`to`) from t_transactions_wallet WHERE (input != '' OR input != '0x') AND `to` != ''"
+    cursor.execute(query)
+    contracts = cursor.fetchall()
+    for c in contracts:
+        if not any(w.get("wallet") == c for w in internal_tagging):
+            internal_tagging.append({"wallet": c, "tag": "Contract"})
+    
+    # tags - Transactions creator
+    query = f"SELECT DISTINCT(contractAddress) from t_transactions_wallet"
+    cursor.execute(query)
+    contracts = cursor.fetchall()
+    for c in contracts:
+        if not any(w.get("wallet") == c for w in internal_tagging):
+            internal_tagging.append({"wallet": c, "tag": "Contract"})
+
+    # tags - Internals creator
+    query = f"SELECT DISTINCT(`to`) from t_internals_wallet WHERE (input != '' OR input != '0x') AND `to` != ''"
+    cursor.execute(query)
+    contracts = cursor.fetchall()
+    for c in contracts:
+        if not any(w.get("wallet") == c for w in internal_tagging):
+            internal_tagging.append({"wallet": c, "tag": "Contract"})
+    
+    # tags - Internals creator
+    query = f"SELECT DISTINCT(contractAddress) from t_internals_wallet"
+    cursor.execute(query)
+    contracts = cursor.fetchall()
+    for c in contracts:
+        if not any(w.get("wallet") == c for w in internal_tagging):
+            internal_tagging.append({"wallet": c, "tag": "Contract"})
+
+    # tags - Transfers creator
+    query = f"SELECT DISTINCT(`to`) from t_transfers_wallet WHERE (input != '' OR input != '0x') AND `to` != ''"
+    cursor.execute(query)
+    contracts = cursor.fetchall()
+    for c in contracts:
+        if not any(w.get("wallet") == c for w in internal_tagging):
+            internal_tagging.append({"wallet": c, "tag": "Contract"})
+    
+    # tags - Transfers creator
+    query = f"SELECT DISTINCT(contractAddress) from t_transfers_wallet"
+    cursor.execute(query)
+    contracts = cursor.fetchall()
+    for c in contracts:
+        if not any(w.get("wallet") == c for w in internal_tagging):
+            internal_tagging.append({"wallet": c, "tag": "Contract"})
+
+    # tags - Transactions
+    query = f"SELECT DISTINCT(contractAddress) from t_transactions"
+    cursor.execute(query)
+    contracts = cursor.fetchall()
+    for c in contracts:
+        if not any(w.get("wallet") == c for w in internal_tagging):
+            internal_tagging.append({"wallet": c, "tag": "Contract"})
+
+    # tags - Internals
+    query = f"SELECT DISTINCT(contractAddress) from t_internals"
+    cursor.execute(query)
+    contracts = cursor.fetchall()
+    for c in contracts:
+        if not any(w.get("wallet") == c for w in internal_tagging):
+            internal_tagging.append({"wallet": c, "tag": "Contract"})
+
+    # tags - Transfers
+    query = f"SELECT DISTINCT(contractAddress) from t_transfers"
+    cursor.execute(query)
+    contracts = cursor.fetchall()
+    for c in contracts:
+        if not any(w.get("wallet") == c for w in internal_tagging):
+            internal_tagging.append({"wallet": c, "tag": "Contract"})
+
+    logger.info("Storing tags")
+    for t in internal_tagging:
+        cursor.execute("""INSERT INTO t_tagging VALUES (?, ?)""", 
+            (t['wallet'], t['tag']))
+
+    connection.commit()
     connection.close()
     return 0
 
