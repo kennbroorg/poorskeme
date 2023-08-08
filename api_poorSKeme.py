@@ -604,6 +604,12 @@ def r_trans_creator():
     # print(f"contract: {contract}")
     # print(f"creator: {creator}")
 
+    # Get tags
+    df_tags = pd.read_sql_query("SELECT * FROM t_tagging", connection)
+
+    json_format = df_tags.to_json(orient='records')
+    json_tags = json.loads(json_format)
+
     nodes = []
     nodes_list = []
     links = []
@@ -615,6 +621,7 @@ def r_trans_creator():
     for i in df_creator.index: 
         # Get Nodes 
         if (df_creator["from"][i] not in nodes_list):
+            tag = ""
             nodes_list.append(df_creator["from"][i])
             if (df_creator["from"][i][:-2] == contract.lower()):
                 type = "contract"
@@ -622,9 +629,13 @@ def r_trans_creator():
                 type = "creator"
             else:
                 type = "wallet"
+                # tag = [t["tag"] for t in json_tags if t["wallet"] == df_creator["from"][i][:-2]][0]
+                tag = next((t["tag"] for t in json_tags if t.get("wallet") == df_creator["from"][i][:-2]), "")
+
             nodes.append({"id": df_creator["from"][i], 
                           "address": df_creator["from"][i][:-2],
                           "type": type, 
+                          "tag": tag, 
                           "trx": "Transactions",
                           # "token": "Native",  # TODO:  Evalute after add blockchain
                           "token": "ETH" if blockchain == "eth" else "BNB",
@@ -638,6 +649,7 @@ def r_trans_creator():
                     node['trx_out'] += float(df_creator["sum_value"][i])
                     node['qty_out'] += int(df_creator["qty"][i])
         if (df_creator["to"][i] not in nodes_list):
+            tag = ""
             nodes_list.append(df_creator["to"][i])
             if (df_creator["to"][i][:-2] == contract.lower()):
                 type = "contract"
@@ -645,10 +657,14 @@ def r_trans_creator():
                 type = "creator"
             else:
                 type = "wallet"
+                # tag = [t["tag"] for t in json_tags if t["wallet"] == df_creator["to"][i][:-2]][0]
+                tag = next((t["tag"] for t in json_tags if t.get("wallet") == df_creator["to"][i][:-2]), "")
+
             # nodes.append({"id": df_creator["to"][i], "type": type, "trx": "BEP-20 Token Transfers"})
             nodes.append({"id": df_creator["to"][i], 
                           "address": df_creator["to"][i][:-2],
                           "type": type, 
+                          "tag": tag, 
                           "trx": "Transactions",
                           # "token": "Native",  # TODO:  Evalute after add blockchain
                           "token": "ETH" if blockchain == "eth" else "BNB",
@@ -671,6 +687,7 @@ def r_trans_creator():
     for i in df_creator.index: 
         # Get Nodes 
         if (df_creator["from"][i] not in nodes_list):
+            tag = ""
             nodes_list.append(df_creator["from"][i])
             if (df_creator["from"][i][:-2] == contract.lower()):
                 type = "contract"
@@ -678,9 +695,12 @@ def r_trans_creator():
                 type = "creator"
             else:
                 type = "wallet"
+                tag = next((t["tag"] for t in json_tags if t.get("wallet") == df_creator["from"][i][:-2]), "")
+
             nodes.append({"id": df_creator["from"][i], 
                           "address": df_creator["from"][i][:-2],
                           "type": type, 
+                          "tag": tag, 
                           "trx": "Internals", 
                           # "token": "Native",  # TODO:  Evaluate after add blockchain
                           "token": "ETH" if blockchain == "eth" else "BNB",
@@ -694,6 +714,7 @@ def r_trans_creator():
                     node['trx_out'] += float(df_creator["sum_value"][i])
                     node['qty_out'] += int(df_creator["qty"][i])
         if (df_creator["to"][i] not in nodes_list):
+            tag = ""
             nodes_list.append(df_creator["to"][i])
             if (df_creator["to"][i][:-2] == contract.lower()):
                 type = "contract"
@@ -701,10 +722,13 @@ def r_trans_creator():
                 type = "creator"
             else:
                 type = "wallet"
+                tag = next((t["tag"] for t in json_tags if t.get("wallet") == df_creator["to"][i][:-2]), "")
+
             # nodes.append({"id": df_creator["to"][i], "type": type, "trx": "BEP-20 Token Transfers"})
             nodes.append({"id": df_creator["to"][i], 
                           "address": df_creator["to"][i][:-2],
                           "type": type, 
+                          "tag": tag, 
                           "trx": "Internals", 
                           # "token": "Native",  # TODO:  Evaluate after add blockchain
                           "token": "ETH" if blockchain == "eth" else "BNB",
@@ -735,6 +759,7 @@ def r_trans_creator():
         # print(f"Creator : {creator.lower()}")
         # Get Nodes 
         if (df_creator["from"][i] not in nodes_list):
+            tag = ""
             nodes_list.append(df_creator["from"][i])
             if (df_creator["from"][i][:-(len_tk_sym)] == contract.lower()):
                 type = "contract"
@@ -742,9 +767,12 @@ def r_trans_creator():
                 type = "creator"
             else:
                 type = "wallet"
+                tag = next((t["tag"] for t in json_tags if t.get("wallet") == df_creator["from"][i][:-2]), "")
+
             nodes.append({"id": df_creator["from"][i], 
                           "address": df_creator["from"][i][:-(len_tk_sym)],
                           "type": type, 
+                          "tag": tag, 
                           # "trx": "BEP-20 Token Transfer",  # TODO:  Evaluate after add blockchain 
                           "trx": "ERC-20 Token" if blockchain == "eth" else "BEP-20 Token",
                           "token": str(df_creator["tokenSymbol"][i]),
@@ -758,6 +786,7 @@ def r_trans_creator():
                     node['trx_out'] += float(df_creator["sum_value"][i])
                     node['qty_out'] += int(df_creator["qty"][i])
         if (df_creator["to"][i] not in nodes_list):
+            tag = ""
             nodes_list.append(df_creator["to"][i])
             if (df_creator["to"][i][:-(len_tk_sym)] == contract.lower()):
                 type = "contract"
@@ -765,10 +794,13 @@ def r_trans_creator():
                 type = "creator"
             else:
                 type = "wallet"
+                tag = next((t["tag"] for t in json_tags if t.get("wallet") == df_creator["to"][i][:-2]), "")
+
             # nodes.append({"id": df_creator["to"][i], "type": type, "trx": "BEP-20 Token Transfers"})
             nodes.append({"id": df_creator["to"][i], 
                           "address": df_creator["to"][i][:-(len_tk_sym)],
                           "type": type, 
+                          "tag": tag, 
                           # "trx": "BEP-20 Token Transfers",  # TODO:  Evaluate after add blockchain
                           "trx": "ERC-20 Token" if blockchain == "eth" else "BEP-20 Token",
                           "token": str(df_creator["tokenSymbol"][i]),
