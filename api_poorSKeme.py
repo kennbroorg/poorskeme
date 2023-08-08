@@ -767,7 +767,7 @@ def r_trans_creator():
                 type = "creator"
             else:
                 type = "wallet"
-                tag = next((t["tag"] for t in json_tags if t.get("wallet") == df_creator["from"][i][:-2]), "")
+                tag = next((t["tag"] for t in json_tags if t.get("wallet") == df_creator["from"][i][:-(len_tk_sym)]), "")
 
             nodes.append({"id": df_creator["from"][i], 
                           "address": df_creator["from"][i][:-(len_tk_sym)],
@@ -794,7 +794,7 @@ def r_trans_creator():
                 type = "creator"
             else:
                 type = "wallet"
-                tag = next((t["tag"] for t in json_tags if t.get("wallet") == df_creator["to"][i][:-2]), "")
+                tag = next((t["tag"] for t in json_tags if t.get("wallet") == df_creator["to"][i][:-(len_tk_sym)]), "")
 
             # nodes.append({"id": df_creator["to"][i], "type": type, "trx": "BEP-20 Token Transfers"})
             nodes.append({"id": df_creator["to"][i], 
