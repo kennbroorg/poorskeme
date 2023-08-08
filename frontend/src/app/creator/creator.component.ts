@@ -89,14 +89,15 @@ export class CreatorComponent implements OnInit {
     // console.log(Window.)
     this.innerWidth = this.windowService.nativeWindow.innerWidth - 72;
     this.innerHeight = this.windowService.nativeWindow.innerHeight - 430;
-    console.log(`!! Inner Width: ${this.innerWidth}`);
-    console.log(`!! Inner Heright: ${this.innerHeight}`);
+    // console.log(`!! Inner Width: ${this.innerWidth}`);
+    // console.log(`!! Inner Heright: ${this.innerHeight}`);
 
 
     const Graph = ForceGraph3D({ controlType: 'orbit' })
       (this.card)
       .nodeThreeObject( (node) => {
         const type = (node as any).type
+        const tag = (node as any).tag
         if (type === "creator") {
           return new THREE.Mesh(
             new THREE.DodecahedronGeometry(7),
@@ -110,6 +111,22 @@ export class CreatorComponent implements OnInit {
             new THREE.BoxGeometry(7, 7, 7),
             new THREE.MeshLambertMaterial({
               color: "#ffffff",
+              transparent: true,
+              opacity: 0.75
+            }));
+        } else if (tag === "Contract Created") {
+          return new THREE.Mesh(
+            new THREE.BoxGeometry(7, 7, 7),
+            new THREE.MeshLambertMaterial({
+              color: "#888888",
+              transparent: true,
+              opacity: 0.75
+            }));
+        } else if (tag === "Contract") {
+          return new THREE.Mesh(
+            new THREE.OctahedronGeometry(7, 0),
+            new THREE.MeshLambertMaterial({
+              color: "#00ace6",
               transparent: true,
               opacity: 0.75
             }));
@@ -170,7 +187,7 @@ export class CreatorComponent implements OnInit {
       // .d3Force('charge', () => { return 100; })
       // .dagMode('radialout')
       // .dagLevelDistance(150)
-      .cameraPosition({ x: 0, y: 0, z: -250 })
+      .cameraPosition({ x: 0, y: 0, z: -650 })
       .onNodeClick(node => {
         // console.log(node);
         // console.log((node as any).type);
