@@ -579,11 +579,16 @@ def r_creator():
     json_balances = df_balances.to_json(orient='records')
     json_balances = json.loads(json_balances)
 
+    # Contract creator another contracts
+    df_contracts = pd.read_sql_query("SELECT wallet FROM t_tagging WHERE tag = 'Contract Created'", connection)
+
+    json_contracts = df_contracts.to_json(orient='records')
+    json_contracts = json.loads(json_contracts)
 
     toc = time.perf_counter()
     logger.info(f"Read contract creator info in {toc - tic:0.4f} seconds")
 
-    return jsonify({"creator": json_creator, "balances": json_balances})
+    return jsonify({"creator": json_creator, "balances": json_balances, "contracts": json_contracts})
 
 
 ################################################
@@ -613,13 +618,26 @@ def r_trans_creator():
     nodes = []
     nodes_list = []
     links = []
+    stat_trx = 0
+    stat_int = 0
+    stat_tra = 0
+    stat_con = 0
+    stat_coo = 0
+    # stat_wal = 0  # TODO: Qty wallets
+
+    cursor.execute("SELECT COUNT(*) FROM t_tagging WHERE tag = 'Contract Created'")
+    stat_coo = int(cursor.fetchone()[0])
+
+    # stat_coo = 
+    stat_con = len(json_tags) - stat_coo
 
     # Transations
     df_creator = pd.read_sql_query("SELECT `from` || '-t' AS 'from', `to` || '-t' AS 'to', sum(value / 1e18) as sum_value, count(value) as qty FROM t_transactions_wallet GROUP BY 1, 2", connection)
-    print("= TRANSACTIONS =============================================================")
-    print(df_creator.head(20))
+    # print("= TRANSACTIONS =============================================================")
+    # print(df_creator.head(20))
     for i in df_creator.index: 
         # Get Nodes 
+        stat_trx = stat_trx + df_creator["qty"][i]
         if (df_creator["from"][i] not in nodes_list):
             tag = ""
             nodes_list.append(df_creator["from"][i])
@@ -682,9 +700,10 @@ def r_trans_creator():
 
     # Internals
     df_creator = pd.read_sql_query("SELECT `from` || '-i' AS 'from', `to` || '-i' AS 'to', sum(value / 1e18) as sum_value, count(value) as qty FROM t_internals_wallet GROUP BY 1, 2", connection)
-    print("= INTERNALS ================================================================")
-    print(df_creator.head(20))
+    # print("= INTERNALS ================================================================")
+    # print(df_creator.head(20))
     for i in df_creator.index: 
+        stat_int = stat_int + df_creator["qty"][i]
         # Get Nodes 
         if (df_creator["from"][i] not in nodes_list):
             tag = ""
@@ -746,9 +765,10 @@ def r_trans_creator():
 
     # BEP20 - ERC20 - Tokens
     df_creator = pd.read_sql_query("SELECT `from` || tokenSymbol AS 'from', `to` || tokenSymbol AS 'to', tokenSymbol, tokenName, sum(value / 1e18) as sum_value, count(value) as qty FROM t_transfers_wallet GROUP BY 1, 2", connection)
-    print("= BEP 20 ===================================================================")
-    print(df_creator.head(20))
+    # print("= BEP 20 ===================================================================")
+    # print(df_creator.head(20))
     for i in df_creator.index: 
+        stat_tra = stat_tra + df_creator["qty"][i]
         len_tk_sym = len(df_creator["tokenSymbol"][i])
         # print(f"from_id : {df_creator['from'][i]}")
         # print(f"from : {df_creator['from'][i][:-(len_tk_sym)]}")
@@ -817,9 +837,13 @@ def r_trans_creator():
         links.append({"source": df_creator["from"][i], "target": df_creator["to"][i], "value": float(df_creator["sum_value"][i]), "qty": int(df_creator["qty"][i])})
 
     trans_creator = {"nodes": nodes, "links": links}
+
+    stat = {"stat_trx": int(stat_trx), "stat_int": int(stat_int), "stat_tra": int(stat_tra),
+            "stat_con": int(stat_con), "stat_coo": int(stat_coo)}
+
     toc = time.perf_counter()
     logger.info(f"Read contract creator info in {toc - tic:0.4f} seconds")
 
-    return jsonify({"trans_creator": trans_creator})
+    return jsonify({"trans_creator": trans_creator, "stat": stat})
 
 
