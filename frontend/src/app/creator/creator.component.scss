@@ -125,6 +125,16 @@ nb-card-body {
     color:rgba(102, 217, 255, 0.8); 
 }
 
+.stat-subtitle {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    font-size: 15px;
+    font-weight: 300; 
+    text-transform: uppercase; 
+    color:rgba(102, 217, 255, 0.8); 
+}
+
 .trx-detail {
     position: absolute;
     bottom: 20px;

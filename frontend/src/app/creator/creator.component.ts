@@ -33,6 +33,8 @@ export class CreatorComponent implements OnInit {
   creator: any = [];
   trans_creator: any = [];
   balances: any = [];
+  contracts: any = [];
+  st: any = [];
   visibility: boolean = false;
   ColumnMode = ColumnMode;
   li: boolean = true;
@@ -77,11 +79,13 @@ export class CreatorComponent implements OnInit {
   private responseCreator = (data: any): any => {
     this.creator = data['creator'];
     this.balances = data['balances'];
+    this.contracts = data['contracts'];
     // console.log(`Creator: ${this.creator}`)
   }
 
   private responseTransCreator = (data: any): any => {
     this.trans_creator = data['trans_creator'];
+    this.st = data['stat'];
     // console.log(`Trans Creator: ${this.trans_creator}`)
 
     this.card = this.cardContainer.nativeElement;
