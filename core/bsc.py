@@ -1283,15 +1283,15 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
 
     html_doc = BeautifulSoup(r_home.content, "html.parser")
     div_card_body_container = html_doc.find_all('div', class_='card-body')
-    balance_container = div_card_body_container[0].find_all('div', class_='row')
+    balance_container = div_card_body_container[0].find_all('div', class_='d-flex')
 
     # Balances
     balances = []
     # Get BNB
-    balance = balance_container[0].find_all('div')
-    balance_bnb = balance[1].text.split(' ')[0]
+    # balance = balance_container[1].find_all('div')
+    balance_bnb = balance_container[1].text.split(' ')[0]
     balances.append(f"Balance : {balance_bnb} BNB")
-    # print(f"Balance de BNB : {balance_bnb}")
+    print(f"Balance de BNB : {balance_bnb}")
 
     # Get USD del BNB
     # balance = balance_container[1].find_all('div')
@@ -1304,15 +1304,26 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
     # print(f"Balance de USD : {balance_tok.contents[0].strip()} (Esto es en base a el valor actual, por lo que tenes que actualizarlo)")
     # print(f"Balance de USD : {balance_tok.span['title']} (Esto es en base a el valor actual, por lo que tenes que actualizarlo)")
 
-    balance_list = balance_container[2].find('ul', class_='list list-unstyled mb-0')
-    token_list = balance_list.find_all('li', class_='list-custom-BEP-20')
+    # print(balance_container[2])
+    # print("+++++++++++++++++++++++++++++++++++++++++++++++++++++")
+    # balance_list = balance_container[2].find('ul', class_='list nav nav-pills nav-pills-flush nav-list')
+    # balance_list = balance_container[2].find('ul')
+    # print(balance_list)
+    # print("=====================================================")
+    # token_list = balance_list.find_all('li', class_='list-custom-ERC-20')
+    token_list = balance_container[2].find_all('li', class_='nav-item list-custom-ERC20')
+    # print(token_list)
     for i in token_list:
         balances.append(i.text)
 
     logger.info("Getting last block of contract creator")
     # print(f"===============================================")
     # print(f"= Transacciones ===============================")
-    table = div_card_body_container[2].find_all('table', class_='table table-hover')[0]
+    div_table_container = html_doc.find('div', id='transactions')
+    print(div_table_container)
+    table = div_table_container.find('table')
+    # print(f"===============================================")
+    print(table)
     tbody = table.find('tbody')
     td = tbody.tr.find_all('td')
     # print(td)
@@ -1611,85 +1622,87 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
     cursor.execute(query)
     contracts = cursor.fetchall()
     for c in contracts:
-        if not any(w.get("wallet") == c for w in internal_tagging):
-            internal_tagging.append({"wallet": c, "tag": "Contract Created"})
-    
+        if not any(w.get("wallet") == c[0] for w in internal_tagging):
+            internal_tagging.append({"wallet": c[0], "tag": "Contract Created"})
+
     # tags - Transactions creator
-    query = f"SELECT DISTINCT(`to`) from t_transactions_wallet WHERE (input != '' OR input != '0x') AND `to` != ''"
+    query = f"SELECT DISTINCT(`to`) from t_transactions_wallet WHERE (input != '' AND input != '0x') AND `to` != ''"
     cursor.execute(query)
     contracts = cursor.fetchall()
     for c in contracts:
-        if not any(w.get("wallet") == c for w in internal_tagging):
-            internal_tagging.append({"wallet": c, "tag": "Contract"})
-    
+        if not any(w.get("wallet") == c[0] for w in internal_tagging):
+            internal_tagging.append({"wallet": c[0], "tag": "Contract"})
+
     # tags - Transactions creator
     query = f"SELECT DISTINCT(contractAddress) from t_transactions_wallet"
     cursor.execute(query)
     contracts = cursor.fetchall()
     for c in contracts:
-        if not any(w.get("wallet") == c for w in internal_tagging):
-            internal_tagging.append({"wallet": c, "tag": "Contract"})
+        if not any(w.get("wallet") == c[0] for w in internal_tagging):
+            internal_tagging.append({"wallet": c[0], "tag": "Contract"})
 
     # tags - Internals creator
-    query = f"SELECT DISTINCT(`to`) from t_internals_wallet WHERE (input != '' OR input != '0x') AND `to` != ''"
+    query = f"SELECT DISTINCT(`to`) from t_internals_wallet WHERE (input != '' AND input != '0x') AND `to` != ''"
     cursor.execute(query)
     contracts = cursor.fetchall()
     for c in contracts:
-        if not any(w.get("wallet") == c for w in internal_tagging):
-            internal_tagging.append({"wallet": c, "tag": "Contract"})
-    
+        if not any(w.get("wallet") == c[0] for w in internal_tagging):
+            internal_tagging.append({"wallet": c[0], "tag": "Contract"})
+
     # tags - Internals creator
     query = f"SELECT DISTINCT(contractAddress) from t_internals_wallet"
     cursor.execute(query)
     contracts = cursor.fetchall()
     for c in contracts:
-        if not any(w.get("wallet") == c for w in internal_tagging):
-            internal_tagging.append({"wallet": c, "tag": "Contract"})
+        if not any(w.get("wallet") == c[0] for w in internal_tagging):
+            internal_tagging.append({"wallet": c[0], "tag": "Contract"})
 
-    # tags - Transfers creator
-    query = f"SELECT DISTINCT(`to`) from t_transfers_wallet WHERE (input != '' OR input != '0x') AND `to` != ''"
-    cursor.execute(query)
-    contracts = cursor.fetchall()
-    for c in contracts:
-        if not any(w.get("wallet") == c for w in internal_tagging):
-            internal_tagging.append({"wallet": c, "tag": "Contract"})
-    
+    # TODO: Confirm which this isn't necessary
+    # # tags - Transfers creator
+    # query = f"SELECT DISTINCT(`to`) from t_transfers_wallet WHERE (input != '' AND input != '0x') AND `to` != ''"
+    # cursor.execute(query)
+    # contracts = cursor.fetchall()
+    # for c in contracts:
+    #     if not any(w.get("wallet") == c[0] for w in internal_tagging):
+    #         internal_tagging.append({"wallet": c[0], "tag": "Contract"})
+
     # tags - Transfers creator
     query = f"SELECT DISTINCT(contractAddress) from t_transfers_wallet"
     cursor.execute(query)
     contracts = cursor.fetchall()
     for c in contracts:
-        if not any(w.get("wallet") == c for w in internal_tagging):
-            internal_tagging.append({"wallet": c, "tag": "Contract"})
+        if not any(w.get("wallet") == c[0] for w in internal_tagging):
+            internal_tagging.append({"wallet": c[0], "tag": "Contract"})
 
     # tags - Transactions
     query = f"SELECT DISTINCT(contractAddress) from t_transactions"
     cursor.execute(query)
     contracts = cursor.fetchall()
     for c in contracts:
-        if not any(w.get("wallet") == c for w in internal_tagging):
-            internal_tagging.append({"wallet": c, "tag": "Contract"})
+        if not any(w.get("wallet") == c[0] for w in internal_tagging):
+            internal_tagging.append({"wallet": c[0], "tag": "Contract"})
 
     # tags - Internals
     query = f"SELECT DISTINCT(contractAddress) from t_internals"
     cursor.execute(query)
     contracts = cursor.fetchall()
     for c in contracts:
-        if not any(w.get("wallet") == c for w in internal_tagging):
-            internal_tagging.append({"wallet": c, "tag": "Contract"})
+        if not any(w.get("wallet") == c[0] for w in internal_tagging):
+            internal_tagging.append({"wallet": c[0], "tag": "Contract"})
 
     # tags - Transfers
     query = f"SELECT DISTINCT(contractAddress) from t_transfers"
     cursor.execute(query)
     contracts = cursor.fetchall()
     for c in contracts:
-        if not any(w.get("wallet") == c for w in internal_tagging):
-            internal_tagging.append({"wallet": c, "tag": "Contract"})
+        if not any(w.get("wallet") == c[0] for w in internal_tagging):
+            internal_tagging.append({"wallet": c[0], "tag": "Contract"})
 
-    logger.info("Storing tags")
+    logger.info(f"Storing tags")
     for t in internal_tagging:
-        cursor.execute("""INSERT INTO t_tagging VALUES (?, ?)""", 
-            (t['wallet'], t['tag']))
+        if (t['wallet'] != ''):
+            cursor.execute("""INSERT INTO t_tagging VALUES (?, ?)""", 
+                (str(t['wallet']), str(t['tag'])))
 
     connection.commit()
     connection.close()
