@@ -1698,6 +1698,28 @@ def bsc_db_collect_async(contract_address, block_from, block_to, key, filedb, ch
         if not any(w.get("wallet") == c[0] for w in internal_tagging):
             internal_tagging.append({"wallet": c[0], "tag": "Contract"})
 
+    # Get another contracts created by creator
+    contracts = ""
+    contracts_list = []
+    idx = 1
+    for t in internal_tagging:
+        if (idx % 5 == 0):
+            contracts_list.append(contracts)
+            contracts = ""
+        if (t['tag'] == 'Contract'):
+            idx = idx + 1
+            contracts = contracts + t['wallet'] + ','
+    contracts_list.append(contracts)
+
+    for l in contracts_list:
+        url = 'https://api.bscscan.com/api?module=contract&action=getcontractcreation&contractaddresses=' + l[:-1] + \
+           '&apikey=' + key
+        response = requests.get(url)
+
+        for r in response.json()['result']:
+            if (r['contractCreator'] == contract_creator):
+                internal_tagging = [{**t, **{'tag': 'Contract Created'}} if t['wallet'] == r['contractAddress'] else t for t in internal_tagging]
+
     logger.info(f"Storing tags")
     for t in internal_tagging:
         if (t['wallet'] != ''):
