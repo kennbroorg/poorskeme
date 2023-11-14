@@ -1,7 +1,7 @@
 # application.py
 # -*- encoding: utf-8 -*-
 
-from flask import Flask
+from flask import Flask, current_app
 from flask_cors import CORS
 from flask import Blueprint, jsonify
 
@@ -9,6 +9,8 @@ import time
 import json
 import pandas as pd
 import ast
+import sqlite3
+import pyround      # TODO: Test and use
 
 import coloredlogs, logging
 
@@ -41,6 +43,8 @@ def create_application():
 ################################################
 @home.route("/testing", methods=["GET"])
 def r_testing():
+    file = current_app.config['file']
+    logger.info(f"Read contract file in {file}")
     return jsonify({"testing": "OK"})
 
 
@@ -307,7 +311,7 @@ def r_result(address):
 
     detail_total = pd.concat([detail_from, detail_to], axis=0)
     detail_total = detail_total.sort_values(["timeStamp"])
-    print(detail_total.info())
+    # print(detail_total.info())
 
     first_date = detail_total['timeStamp'].iloc[0]
     last_date = detail_total['timeStamp'].iloc[-1]
@@ -550,3 +554,310 @@ def r_trx(trx_hash):
                   "code": func_code}  # TODO : Return leyend
 
     return jsonify(result)
+
+
+################################################
+# Contract Creator
+################################################
+@home.route("/creator", methods=["GET"])
+def r_creator():
+    
+    tic = time.perf_counter()
+    filedb = current_app.config['file']
+    connection = sqlite3.connect(filedb)
+    cursor = connection.cursor()
+
+    # Contract creator blocks
+    df_creator = pd.read_sql_query("SELECT * FROM t_contract_creator", connection)
+
+    json_format = df_creator.to_json(orient='records')
+    json_creator = json.loads(json_format)[0]
+
+    # Contract creator balances
+    df_balances = pd.read_sql_query("SELECT * FROM t_balance", connection)
+
+    json_balances = df_balances.to_json(orient='records')
+    json_balances = json.loads(json_balances)
+
+    # Contract creator another contracts
+    df_contracts = pd.read_sql_query("SELECT wallet FROM t_tagging WHERE tag = 'Contract Created'", connection)
+
+    json_contracts = df_contracts.to_json(orient='records')
+    json_contracts = json.loads(json_contracts)
+
+    toc = time.perf_counter()
+    logger.info(f"Read contract creator info in {toc - tic:0.4f} seconds")
+
+    return jsonify({"creator": json_creator, "balances": json_balances, "contracts": json_contracts})
+
+
+################################################
+# Transactions Creator
+################################################
+@home.route("/trans_creator", methods=["GET"])
+def r_trans_creator():
+    
+    tic = time.perf_counter()
+    filedb = current_app.config['file']
+    connection = sqlite3.connect(filedb)
+    cursor = connection.cursor()
+
+    # Get Contract and Creator
+    query = f"SELECT contract, creator, blockchain FROM t_contract"
+    cursor.execute(query)
+    contract, creator, blockchain = cursor.fetchone()
+    # print(f"contract: {contract}")
+    # print(f"creator: {creator}")
+
+    # Get tags
+    df_tags = pd.read_sql_query("SELECT * FROM t_tagging", connection)
+
+    json_format = df_tags.to_json(orient='records')
+    json_tags = json.loads(json_format)
+
+    # print(json_tags) # KKK
+
+    nodes = []
+    nodes_list = []
+    links = []
+    stat_trx = 0
+    stat_int = 0
+    stat_tra = 0
+    stat_con = 0
+    stat_coo = 0
+    # stat_wal = 0  # TODO: Qty wallets
+
+    cursor.execute("SELECT COUNT(*) FROM t_tagging WHERE tag = 'Contract Created'")
+    stat_coo = int(cursor.fetchone()[0])
+
+    # stat_coo = 
+    stat_con = len(json_tags) - stat_coo
+
+    # Transations
+    df_creator = pd.read_sql_query("SELECT `from` || '-t' AS 'from', `to` || '-t' AS 'to', sum(value / 1e18) as sum_value, count(value) as qty FROM t_transactions_wallet GROUP BY 1, 2", connection)
+    # print("= TRANSACTIONS =============================================================")
+    # print(df_creator.head(20))
+    for i in df_creator.index: 
+        # Get Nodes 
+        stat_trx = stat_trx + df_creator["qty"][i]
+        if (df_creator["from"][i] not in nodes_list):
+            tag = ""
+            nodes_list.append(df_creator["from"][i])
+            if (df_creator["from"][i][:-2] == contract.lower()):
+                type = "contract"
+            elif (df_creator["from"][i][:-2] == creator.lower()):
+                type = "creator"
+            else:
+                type = "wallet"
+                # tag = [t["tag"] for t in json_tags if t["wallet"] == df_creator["from"][i][:-2]][0]
+                tag = next((t["tag"] for t in json_tags if t.get("wallet") == df_creator["from"][i][:-2]), "")
+
+                # print(f"wallet: {df_creator['from'][i][:-2]} - tag: {tag}")
+
+            nodes.append({"id": df_creator["from"][i], 
+                          "address": df_creator["from"][i][:-2],
+                          "type": type, 
+                          "tag": tag, 
+                          "trx": "Transactions",
+                          # "token": "Native",  # TODO:  Evalute after add blockchain
+                          "token": "ETH" if blockchain == "eth" else "BNB",
+                          "trx_in": 0,
+                          "qty_in": 0,
+                          "trx_out": float(df_creator["sum_value"][i]),
+                          "qty_out": int(df_creator["qty"][i])})
+        else:
+            for node in nodes:
+                if (node['id'] == df_creator["from"][i]):
+                    node['trx_out'] += float(df_creator["sum_value"][i])
+                    node['qty_out'] += int(df_creator["qty"][i])
+        if (df_creator["to"][i] not in nodes_list):
+            tag = ""
+            nodes_list.append(df_creator["to"][i])
+            if (df_creator["to"][i][:-2] == contract.lower()):
+                type = "contract"
+            elif (df_creator["to"][i][:-2] == creator.lower()):
+                type = "creator"
+            else:
+                type = "wallet"
+                # tag = [t["tag"] for t in json_tags if t["wallet"] == df_creator["to"][i][:-2]][0]
+                tag = next((t["tag"] for t in json_tags if t.get("wallet") == df_creator["to"][i][:-2]), "")
+
+                # print(f"wallet: {df_creator['to'][i][:-2]} - tag: {tag}")
+
+            # nodes.append({"id": df_creator["to"][i], "type": type, "trx": "BEP-20 Token Transfers"})
+            nodes.append({"id": df_creator["to"][i], 
+                          "address": df_creator["to"][i][:-2],
+                          "type": type, 
+                          "tag": tag, 
+                          "trx": "Transactions",
+                          # "token": "Native",  # TODO:  Evalute after add blockchain
+                          "token": "ETH" if blockchain == "eth" else "BNB",
+                          "trx_out": 0,
+                          "qty_out": 0,
+                          "trx_in": float(df_creator["sum_value"][i]),
+                          "qty_in": int(df_creator["qty"][i])})
+        else:
+            for node in nodes:
+                if (node['id'] == df_creator["to"][i]):
+                    node['trx_in'] += float(df_creator["sum_value"][i])
+                    node['qty_in'] += int(df_creator["qty"][i])
+        # Get links
+        links.append({"source": df_creator["from"][i], "target": df_creator["to"][i], "value": float(df_creator["sum_value"][i]), "qty": int(df_creator["qty"][i])})
+
+    # Internals
+    df_creator = pd.read_sql_query("SELECT `from` || '-i' AS 'from', `to` || '-i' AS 'to', sum(value / 1e18) as sum_value, count(value) as qty FROM t_internals_wallet GROUP BY 1, 2", connection)
+    # print("= INTERNALS ================================================================")
+    # print(df_creator.head(20))
+    for i in df_creator.index: 
+        stat_int = stat_int + df_creator["qty"][i]
+        # Get Nodes 
+        if (df_creator["from"][i] not in nodes_list):
+            tag = ""
+            nodes_list.append(df_creator["from"][i])
+            if (df_creator["from"][i][:-2] == contract.lower()):
+                type = "contract"
+            elif (df_creator["from"][i][:-2] == creator.lower()):
+                type = "creator"
+            else:
+                type = "wallet"
+                tag = next((t["tag"] for t in json_tags if t.get("wallet") == df_creator["from"][i][:-2]), "")
+
+                # print(f"wallet: {df_creator['from'][i][:-2]} - tag: {tag}")
+
+            nodes.append({"id": df_creator["from"][i], 
+                          "address": df_creator["from"][i][:-2],
+                          "type": type, 
+                          "tag": tag, 
+                          "trx": "Internals", 
+                          # "token": "Native",  # TODO:  Evaluate after add blockchain
+                          "token": "ETH" if blockchain == "eth" else "BNB",
+                          "trx_in": 0,
+                          "qty_in": 0,
+                          "trx_out": float(df_creator["sum_value"][i]),
+                          "qty_out": int(df_creator["qty"][i])})
+        else:
+            for node in nodes:
+                if (node['id'] == df_creator["from"][i]):
+                    node['trx_out'] += float(df_creator["sum_value"][i])
+                    node['qty_out'] += int(df_creator["qty"][i])
+        if (df_creator["to"][i] not in nodes_list):
+            tag = ""
+            nodes_list.append(df_creator["to"][i])
+            if (df_creator["to"][i][:-2] == contract.lower()):
+                type = "contract"
+            elif (df_creator["to"][i][:-2] == creator.lower()):
+                type = "creator"
+            else:
+                type = "wallet"
+                tag = next((t["tag"] for t in json_tags if t.get("wallet") == df_creator["to"][i][:-2]), "")
+
+                # print(f"wallet: {df_creator['to'][i][:-2]} - tag: {tag}")
+
+            # nodes.append({"id": df_creator["to"][i], "type": type, "trx": "BEP-20 Token Transfers"})
+            nodes.append({"id": df_creator["to"][i], 
+                          "address": df_creator["to"][i][:-2],
+                          "type": type, 
+                          "tag": tag, 
+                          "trx": "Internals", 
+                          # "token": "Native",  # TODO:  Evaluate after add blockchain
+                          "token": "ETH" if blockchain == "eth" else "BNB",
+                          "trx_out": 0,
+                          "qty_out": 0,
+                          "trx_in": float(df_creator["sum_value"][i]),
+                          "qty_in": int(df_creator["qty"][i])})
+        else:
+            for node in nodes:
+                if (node['id'] == df_creator["to"][i]):
+                    node['trx_in'] += float(df_creator["sum_value"][i])
+                    node['qty_in'] += int(df_creator["qty"][i])
+        # Get links
+        links.append({"source": df_creator["from"][i], "target": df_creator["to"][i], "value": float(df_creator["sum_value"][i]), "qty": int(df_creator["qty"][i])})
+
+    # BEP20 - ERC20 - Tokens
+    df_creator = pd.read_sql_query("SELECT `from` || tokenSymbol AS 'from', `to` || tokenSymbol AS 'to', tokenSymbol, tokenName, sum(value / 1e18) as sum_value, count(value) as qty FROM t_transfers_wallet GROUP BY 1, 2", connection)
+    # print("= BEP 20 ===================================================================")
+    # print(df_creator.head(20))
+    for i in df_creator.index: 
+        stat_tra = stat_tra + df_creator["qty"][i]
+        len_tk_sym = len(df_creator["tokenSymbol"][i])
+        # print(f"from_id : {df_creator['from'][i]}")
+        # print(f"from : {df_creator['from'][i][:-(len_tk_sym)]}")
+        # print(f"to_id : {df_creator['to'][i]}")
+        # print(f"to : {df_creator['to'][i][:-(len_tk_sym)]}")
+        # print(f"Symbol : {df_creator['tokenSymbol'][i]}")
+        # print(f"Contract : {contract.lower()}")
+        # print(f"Creator : {creator.lower()}")
+        # Get Nodes 
+        if (df_creator["from"][i] not in nodes_list):
+            tag = ""
+            nodes_list.append(df_creator["from"][i])
+            if (df_creator["from"][i][:-(len_tk_sym)] == contract.lower()):
+                type = "contract"
+            elif (df_creator["from"][i][:-(len_tk_sym)] == creator.lower()):
+                type = "creator"
+            else:
+                type = "wallet"
+                tag = next((t["tag"] for t in json_tags if t.get("wallet") == df_creator["from"][i][:-(len_tk_sym)]), "")
+
+                # print(f"wallet: {df_creator['from'][i][:-(len_tk_sym)]} - tag: {tag}")
+
+            nodes.append({"id": df_creator["from"][i], 
+                          "address": df_creator["from"][i][:-(len_tk_sym)],
+                          "type": type, 
+                          "tag": tag, 
+                          # "trx": "BEP-20 Token Transfer",  # TODO:  Evaluate after add blockchain 
+                          "trx": "ERC-20 Token" if blockchain == "eth" else "BEP-20 Token",
+                          "token": str(df_creator["tokenSymbol"][i]),
+                          "trx_in": 0,
+                          "qty_in": 0,
+                          "trx_out": float(df_creator["sum_value"][i]),
+                          "qty_out": int(df_creator["qty"][i])})
+        else:
+            for node in nodes:
+                if (node['id'] == df_creator["from"][i]):
+                    node['trx_out'] += float(df_creator["sum_value"][i])
+                    node['qty_out'] += int(df_creator["qty"][i])
+        if (df_creator["to"][i] not in nodes_list):
+            tag = ""
+            nodes_list.append(df_creator["to"][i])
+            if (df_creator["to"][i][:-(len_tk_sym)] == contract.lower()):
+                type = "contract"
+            elif (df_creator["to"][i][:-(len_tk_sym)] == creator.lower()):
+                type = "creator"
+            else:
+                type = "wallet"
+                tag = next((t["tag"] for t in json_tags if t.get("wallet") == df_creator["to"][i][:-(len_tk_sym)]), "")
+
+                # print(f"wallet: {df_creator['to'][i][:-(len_tk_sym)]} - tag: {tag}")
+
+            # nodes.append({"id": df_creator["to"][i], "type": type, "trx": "BEP-20 Token Transfers"})
+            nodes.append({"id": df_creator["to"][i], 
+                          "address": df_creator["to"][i][:-(len_tk_sym)],
+                          "type": type, 
+                          "tag": tag, 
+                          # "trx": "BEP-20 Token Transfers",  # TODO:  Evaluate after add blockchain
+                          "trx": "ERC-20 Token" if blockchain == "eth" else "BEP-20 Token",
+                          "token": str(df_creator["tokenSymbol"][i]),
+                          "trx_out": 0,
+                          "qty_out": 0,
+                          "trx_in": float(df_creator["sum_value"][i]),
+                          "qty_in": int(df_creator["qty"][i])})
+        else:
+            for node in nodes:
+                if (node['id'] == df_creator["to"][i]):
+                    node['trx_in'] += float(df_creator["sum_value"][i])
+                    node['qty_in'] += int(df_creator["qty"][i])
+        # Get links
+        links.append({"source": df_creator["from"][i], "target": df_creator["to"][i], "value": float(df_creator["sum_value"][i]), "qty": int(df_creator["qty"][i])})
+
+    trans_creator = {"nodes": nodes, "links": links}
+
+    stat = {"stat_trx": int(stat_trx), "stat_int": int(stat_int), "stat_tra": int(stat_tra),
+            "stat_con": int(stat_con), "stat_coo": int(stat_coo)}
+
+    toc = time.perf_counter()
+    logger.info(f"Read contract creator info in {toc - tic:0.4f} seconds")
+
+    return jsonify({"trans_creator": trans_creator, "stat": stat})
+
+

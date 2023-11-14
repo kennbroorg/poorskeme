@@ -76,7 +76,7 @@ Start WebServer visualization data:
             python3 poorSKeme.py -bc bsc -ct 0xe878BccA052579C9061566Cec154B783Fc5b9fF1 -bt 15552901       # To collect
 
             # Data Visualization of processed contract information (Binance Smart Chain)
-            python3 poorSKeme.py -bc bsc -f F/contract-0xe878BccA052579C9061566Cec154B783Fc5b9fF1.json -w  # To visualice data
+            python3 poorSKeme.py -bc bsc -f contract-0xe878BccA052579C9061566Cec154B783Fc5b9fF1.db -w  # To visualice data
 
 ```
 If you use the web param, the port is 4200. The complete url is http://127.0.0.1:4200.
@@ -107,7 +107,7 @@ This will result in a file named contract-bsc-[CONTRACT].json, for our example i
 ## Process data and visualization
 After obtaining the data file you can process the information and visualize it by executing
 ```
-python3 poorSKeme.py -f ./contract-bsc-0xe878BccA052579C9061566Cec154B783Fc5b9fF1.json -w
+python3 poorSKeme.py -f ./contract-bsc-0xe878BccA052579C9061566Cec154B783Fc5b9fF1.db -w
 ```
 The above command will turn on two services, an internal API on port 5000 and the webi visualization on port 4200. Just open the browser and enter the address http://127.0.0.1:4200
 
@@ -142,11 +142,11 @@ Over time, and with feedback, the project will grow and bugs will be fixed, but 
 - [X] Data collect
 - [X] Visualization
 - [X] Early detection of scams
-- [ ] Automatic anomaly detection
+- [X] Automatic anomaly detection
 
 ...
 
-- [ ] Traceability
+- [?] Traceability
 - [ ] Wallet identification
 
 These last two points of the roadmap are subject to a lot of research, but nothing is impossible.
