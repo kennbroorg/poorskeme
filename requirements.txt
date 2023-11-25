@@ -3,8 +3,8 @@ PyYAML==6.0
 bscscan-python==2.0.0
 termcolor==1.1.0
 coloredlogs==15.0.1
-flask==2.1.2
-flask_cors==3.0.10
+flask==3.0.0
+flask_cors==4.0.0
 pycryptodome==3.15.0
 web3_input_decoder==0.1.8
 pyround==0.1.0
