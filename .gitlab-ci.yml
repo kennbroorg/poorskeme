@@ -52,6 +52,7 @@ build:
       - cp requirements.txt /tmp/poorSKeme
       - cp API.yaml /tmp/poorSKeme
       - cp -r frontend/dist /tmp/poorSKeme/frontend
+      - cp -r backedn /tmp/poorSKeme
       # - mv /tmp/iKy-pack/backend/.README.md /tmp/iKy-pack/README.md
       - cd /tmp
       - zip -r poorSKeme.zip ./poorSKeme
