@@ -2,7 +2,6 @@
 # -*- encoding: utf-8 -*-
 
 import sys
-import asyncio
 import argparse
 import yaml
 import textwrap
@@ -16,6 +15,7 @@ import coloredlogs, logging
 from api_poorSKeme import create_application
 from core import bsc
 from core import eth
+from core import bchain
 
 
 # create a logger object.
@@ -128,8 +128,10 @@ $$ |      \$$$$$$  |\$$$$$$  |$$ |            \$$$$$$  |$$ | \$$\\\$$$$$$$\ $$ |
 
         if (args.blockchain == "bsc"):
             # WARNING: Remove
-            # asyncio.run(bsc.bsc_json_collect(args.contract, args.block_from, args.block_to, key['bscscan'], chunk=args.chunk))
-            bsc.bsc_db_collect_async(args.contract, args.block_from, args.block_to, key['bscscan'], filedb, chunk=args.chunk)
+            # # asyncio.run(bsc.bsc_json_collect(args.contract, args.block_from, args.block_to, key['bscscan'], chunk=args.chunk))
+            # bsc.bsc_db_collect_async(args.contract, args.block_from, args.block_to, key['bscscan'], filedb, chunk=args.chunk)
+
+            bchain.data_db_collect(56, args.contract, key['ethscan'], filedb)
 
         if (args.blockchain == "eth"):
             # WARNING: Remove
