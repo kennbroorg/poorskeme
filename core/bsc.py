@@ -1885,8 +1885,7 @@ def bsc_db_process(filename):
         token = df_t.groupby('tokenSymbol').agg({'value': ['sum','count']})
         token = token.sort_values(by=[('value','count')], ascending=False)  
         token_name = token.index[0]
-        # volume = round(token.iloc[0,0] / 1e+18, 2)
-        volume = round(float(token.iloc[0,0] / 1e+18) / 2, 2)
+        # volume = round(float(token.iloc[0,0] / 1e+18) / 2, 2)
 
     # Liquidity and dates
     address_contract = contract["contract"].lower()
