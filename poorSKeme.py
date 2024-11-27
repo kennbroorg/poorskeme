@@ -136,7 +136,9 @@ $$ |      \$$$$$$  |\$$$$$$  |$$ |            \$$$$$$  |$$ | \$$\\\$$$$$$$\ $$ |
         if (args.blockchain == "eth"):
             # WARNING: Remove
             # asyncio.run(eth.eth_json_collect(args.contract, args.block_from, args.block_to, key['ethscan'], chunk=args.chunk))
-            eth.eth_db_collect_async(args.contract, args.block_from, args.block_to, key['ethscan'], filedb, chunk=args.chunk)
+            # eth.eth_db_collect_async(args.contract, args.block_from, args.block_to, key['ethscan'], filedb, chunk=args.chunk)
+
+            bchain.data_db_collect(1, args.contract, key['ethscan'], filedb)
 
     elif (args.file):
         if (args.blockchain == "bsc"):
