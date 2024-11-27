@@ -109,184 +109,6 @@ def fetch_all_transactions(chain_id, address, key, start_block=0, end_block=9999
     return transactions
 
 
-# def fetch_all_transactions(chain_id, address, api_key, start_block=0, end_block=99999999):
-
-#     base_url = "https://api.etherscan.io/v2/api"
-#     transactions = []
-#     page = 1
-#     offset = 10000  # Maximum limit per request
-
-#     while True:
-#         params = {
-#             "chainid": chain_id,
-#             "module": "account",
-#             "action": "txlist",
-#             "address": address,
-#             "startblock": start_block,
-#             "endblock": end_block,
-#             "page": page,
-#             "offset": offset,
-#             "sort": "asc",
-#             "apikey": api_key,
-#         }
-
-#         response = requests.get(base_url, params=params)
-#         data = response.json()
-
-#         if data["status"] != "1":
-#             # If no more transactions or an error occurred
-#             if data["message"] == "No transactions found":
-#                 break
-#             else:
-#                 raise Exception(f"Error fetching data: {data['message']} - {data['result']}")
-
-#         transactions_batch = data["result"]
-#         transactions.extend(transactions_batch)
-
-#         logger.info(f" Get {len(transactions_batch)} records")
-
-#         # If less than the maximum limit is returned, we have reached the last page
-#         if len(transactions_batch) < offset:
-#             break
-
-#         # Increment page to fetch the next set of transactions
-#         page += 1
-
-#         # Optional: to avoid hitting rate limits
-#         # time.sleep(0.2)
-
-#     return transactions
-
-
-# async def aio_db_transactions(client_session, url, conn, table):    
-#     startblock = url.split("startblock=")[1].split("&endblock=")[0]
-#     endblock = url.split("endblock=")[1].split("&sort=")[0]
-#     logger.info(f"Processing - TRANSACTIONS from {startblock} to {endblock}")
-
-#     async with client_session.get(url) as resp:
-#         data = await resp.json()
-
-#         for json_object in data['result']:
-#             conn.execute(f"""INSERT INTO {table} VALUES 
-#                            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-#                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-#                            """,
-#                 (json_object['blockNumber'],
-#                  json_object['timeStamp'],
-#                  json_object['hash'],
-#                  json_object['nonce'],
-#                  json_object['blockHash'],
-#                  json_object['transactionIndex'],
-#                  json_object['from'],
-#                  json_object['to'],
-#                  json_object['value'],
-#                  json_object['gas'],
-#                  json_object['gasPrice'],
-#                  json_object['isError'],
-#                  json_object['txreceipt_status'],
-#                  json_object['input'],
-#                  json_object['contractAddress'],
-#                  json_object['cumulativeGasUsed'],
-#                  json_object['gasUsed'],
-#                  json_object['confirmations'],
-#                  json_object['methodId'],
-#                  json_object['functionName']))
-
-#         conn.commit()
-
-
-# async def aio_db_transfers(client_session, url, conn, table):    
-#     startblock = url.split("startblock=")[1].split("&endblock=")[0]
-#     endblock = url.split("endblock=")[1].split("&sort=")[0]
-#     logger.info(f"Processing - TRANSFERS from {startblock} to {endblock}")
-
-#     async with client_session.get(url) as resp:
-#         data = await resp.json()
-
-#         rows = []
-#         for json_object in data['result']:
-
-#             rows.append((json_object['blockNumber'],
-#                  json_object['timeStamp'],
-#                  json_object['hash'],
-#                  json_object['nonce'],
-#                  json_object['blockHash'],
-#                  json_object['from'],
-#                  json_object['contractAddress'],
-#                  json_object['to'],
-#                  json_object['value'],
-#                  json_object['tokenName'],
-#                  json_object['tokenSymbol'],
-#                  json_object['tokenDecimal'],
-#                  json_object['transactionIndex'],
-#                  json_object['gas'],
-#                  json_object['gasPrice'],
-#                  json_object['gasUsed'],
-#                  json_object['cumulativeGasUsed'],
-#                  json_object['input'],
-#                  json_object['confirmations']))
-
-#         if (rows != []):
-#             conn.executemany(f"""INSERT INTO {table} VALUES 
-#                              (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-#                              ?, ?, ?, ?, ?, ?, ?, ?, ?)
-#                              """,rows)
-#             conn.commit()
-
-
-# async def aio_db_internals(client_session, url, conn, table):    
-#     startblock = url.split("startblock=")[1].split("&endblock=")[0]
-#     endblock = url.split("endblock=")[1].split("&sort=")[0]
-#     logger.info(f"Processing - INTERNALS from {startblock} to {endblock}")
-
-#     async with client_session.get(url) as resp:
-#         data = await resp.json()
-
-#         for json_object in data['result']:
-#             try: 
-#                 conn.execute(f"""INSERT INTO {table} VALUES 
-#                                (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-#                                ?, ?, ?)
-#                                """,
-#                     (json_object['blockNumber'],
-#                      json_object['timeStamp'],
-#                      json_object['hash'],
-#                      json_object['from'],
-#                      json_object['to'],
-#                      json_object['value'],
-#                      json_object['contractAddress'],
-#                      json_object['input'],
-#                      json_object['type'],
-#                      json_object['gas'],
-#                      json_object['gasUsed'],
-#                      json_object['isError'],
-#                      json_object['errCode']))
-#             except Exception as e:
-#                 print(e)
-
-#         conn.commit()
-
-
-# async def async_fetch_and_store(urls, conn, type, table):
-#     Client = aiohttp.ClientSession()
-#     Tasks = []
-#     for url in urls:
-#         if (type == "Transactions"):
-#             Tasks.append(aio_db_transactions(client_session=Client, url=url, conn=conn, table=table))
-#         if (type == "Transfers"):
-#             Tasks.append(aio_db_transfers(client_session=Client, url=url, conn=conn, table=table))
-#         if (type == "Internals"):
-#             Tasks.append(aio_db_internals(client_session=Client, url=url, conn=conn, table=table))
-#         
-#     try:
-#         await asyncio.gather(*Tasks)
-#         await asyncio.sleep(0.2)
-#     except:
-#         pass
-#     finally:
-#         await Client.close()
-
-
 def data_db_collect(chain_id, contract_address, key, filedb, block_from=0, block_to=99999999):
 
     base_url = "https://api.etherscan.io/v2/api"
@@ -420,218 +242,218 @@ def data_db_collect(chain_id, contract_address, key, filedb, block_from=0, block
     logger.info("=====================================================")
     logger.info("Creating Table t_transactions")
 
-    # sql_create_transactions_table = """CREATE TABLE IF NOT EXISTS t_transactions (
-    #                                    blockNumber integer NOT NULL,
-    #                                    timeStamp datetime NOT NULL,
-    #                                    hash text NOT NULL,
-    #                                    nonce integer NOT NULL,
-    #                                    blockHash text NOT NULL,
-    #                                    transactionIndex integer NOT NULL,
-    #                                    `from` text NOT NULL,
-    #                                    `to` text NOT NULL,
-    #                                    value integer NOT NULL,
-    #                                    gas integer NOT NULL,
-    #                                    gasPrice integer NOT NULL,
-    #                                    isError integer NOT NULL,
-    #                                    txreceipt_status integer NOT NULL,
-    #                                    input text NOT NULL,
-    #                                    contractAddress text NOT NULL,
-    #                                    cumulativeGasUsed integer NOT NULL,
-    #                                    gasUsed integer NOT NULL,
-    #                                    confirmations integer NOT NULL,
-    #                                    methodId text NOT NULL,
-    #                                    functionName text NOT NULL
-    #                              );"""
-    # connection.execute(sql_create_transactions_table)
+    sql_create_transactions_table = """CREATE TABLE IF NOT EXISTS t_transactions (
+                                       blockNumber integer NOT NULL,
+                                       timeStamp datetime NOT NULL,
+                                       hash text NOT NULL,
+                                       nonce integer NOT NULL,
+                                       blockHash text NOT NULL,
+                                       transactionIndex integer NOT NULL,
+                                       `from` text NOT NULL,
+                                       `to` text NOT NULL,
+                                       value integer NOT NULL,
+                                       gas integer NOT NULL,
+                                       gasPrice integer NOT NULL,
+                                       isError integer NOT NULL,
+                                       txreceipt_status integer NOT NULL,
+                                       input text NOT NULL,
+                                       contractAddress text NOT NULL,
+                                       cumulativeGasUsed integer NOT NULL,
+                                       gasUsed integer NOT NULL,
+                                       confirmations integer NOT NULL,
+                                       methodId text NOT NULL,
+                                       functionName text NOT NULL
+                                 );"""
+    connection.execute(sql_create_transactions_table)
 
-    # # INFO: Get Transactions
-    # logger.info("Getting transactions")
-    # tic = time.perf_counter()
+    # INFO: Get Transactions
+    logger.info("Getting transactions")
+    tic = time.perf_counter()
 
-    # json_transactions = []
-    # current_block = block_from
-    # end_block = block_to
+    json_transactions = []
+    current_block = block_from
+    end_block = block_to
 
-    # while current_block < end_block:
-    #     params = {
-    #         "chainid": chain_id, "module": "account", "action": "txlist", "address": contract_address, "startblock": current_block,
-    #         "endblock": end_block, "page": 1, "offset": offset, "sort": "asc", "apikey": key,
-    #     }
-    #     response = requests.get(base_url, params=params)
-    #     data = response.json()
+    while current_block < end_block:
+        params = {
+            "chainid": chain_id, "module": "account", "action": "txlist", "address": contract_address, "startblock": current_block,
+            "endblock": end_block, "page": 1, "offset": offset, "sort": "asc", "apikey": key,
+        }
+        response = requests.get(base_url, params=params)
+        data = response.json()
 
-    #     if data["status"] != "1":
-    #         if data["message"] == "No transactions found":
-    #             break
-    #         else:
-    #             raise Exception(f"Error fetching data: {data['message']} - {data['result']}")
+        if data["status"] != "1":
+            if data["message"] == "No transactions found":
+                break
+            else:
+                raise Exception(f"Error fetching data: {data['message']} - {data['result']}")
 
-    #     data_batch = data["result"]
-    #     json_transactions.extend(data_batch)
+        data_batch = data["result"]
+        json_transactions.extend(data_batch)
 
-    #     logger.info(f" Get {len(data_batch)} records")
+        logger.info(f" Get {len(data_batch)} records")
 
-    #     # If less than the maximum limit is returned, we have reached the last page
-    #     if len(data_batch) < offset:
-    #         break
+        # If less than the maximum limit is returned, we have reached the last page
+        if len(data_batch) < offset:
+            break
 
-    #     # Update the current_block to the last block number from the fetched transactions
-    #     current_block = int(data_batch[-1]["blockNumber"]) + 1
+        # Update the current_block to the last block number from the fetched transactions
+        current_block = int(data_batch[-1]["blockNumber"]) + 1
 
-    # # INFO: Store Transactions
-    # logger.info("Store transactions")
-    # if json_transactions != []:
-    #     df_trx_store = pd.DataFrame(json_transactions)
-    #     # df_trx_store["blockChain"] = chain_id  # TODO: Change chain_id by blockchain name
-    #     # df_trx_store.to_sql("t_transactions", connection, if_exists="append", index=False, method=insert_with_ignore)
-    #     df_trx_store.to_sql("t_transactions", connection, if_exists="append", index=False)
-    # toc = time.perf_counter()
+    # INFO: Store Transactions
+    logger.info("Store transactions")
+    if json_transactions != []:
+        df_trx_store = pd.DataFrame(json_transactions)
+        # df_trx_store["blockChain"] = chain_id  # TODO: Change chain_id by blockchain name
+        # df_trx_store.to_sql("t_transactions", connection, if_exists="append", index=False, method=insert_with_ignore)
+        df_trx_store.to_sql("t_transactions", connection, if_exists="append", index=False)
+    toc = time.perf_counter()
 
-    # message = f"<strong>STORE</strong> - {len(json_transactions)} Transactions...<strong>{toc - tic:0.4f}</strong> seconds"
-    # logger.info(message.replace("<strong>", "").replace("</strong>", ""))
-    # # data = json.dumps({"msg": message, "end": False, "error": False, "content": {}})
-    # # yield f"data:{data}\n\n"
+    message = f"<strong>STORE</strong> - {len(json_transactions)} Transactions...<strong>{toc - tic:0.4f}</strong> seconds"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    # data = json.dumps({"msg": message, "end": False, "error": False, "content": {}})
+    # yield f"data:{data}\n\n"
 
-    # logger.info(" ")
-    # logger.info("=====================================================")
-    # logger.info(f"Collecting Contract transfers...")
-    # logger.info("=====================================================")
-    # logger.info("Creating Table t_transfers")
+    logger.info(" ")
+    logger.info("=====================================================")
+    logger.info(f"Collecting Contract transfers...")
+    logger.info("=====================================================")
+    logger.info("Creating Table t_transfers")
 
-    # sql_create_transfers_table = """CREATE TABLE IF NOT EXISTS t_transfers (
-    #                                    blockNumber integer NOT NULL,
-    #                                    timeStamp datetime NOT NULL,
-    #                                    hash text NOT NULL,
-    #                                    nonce integer NOT NULL,
-    #                                    blockHash text NOT NULL,
-    #                                    `from` text NOT NULL,
-    #                                    contractAddress text NOT NULL,
-    #                                    `to` text NOT NULL,
-    #                                    value integer NOT NULL,
-    #                                    tokenName text NOT NULL,
-    #                                    tokenSymbol text NOT NULL,
-    #                                    tokenDecimal integer NOT NULL,
-    #                                    transactionIndex integer NOT NULL,
-    #                                    gas integer NOT NULL,
-    #                                    gasPrice integer NOT NULL,
-    #                                    gasUsed integer NOT NULL,
-    #                                    cumulativeGasUsed integer NOT NULL,
-    #                                    input text NOT NULL,
-    #                                    confirmations integer NOT NULL
-    #                              );"""
-    # connection.execute(sql_create_transfers_table)
+    sql_create_transfers_table = """CREATE TABLE IF NOT EXISTS t_transfers (
+                                       blockNumber integer NOT NULL,
+                                       timeStamp datetime NOT NULL,
+                                       hash text NOT NULL,
+                                       nonce integer NOT NULL,
+                                       blockHash text NOT NULL,
+                                       `from` text NOT NULL,
+                                       contractAddress text NOT NULL,
+                                       `to` text NOT NULL,
+                                       value integer NOT NULL,
+                                       tokenName text NOT NULL,
+                                       tokenSymbol text NOT NULL,
+                                       tokenDecimal integer NOT NULL,
+                                       transactionIndex integer NOT NULL,
+                                       gas integer NOT NULL,
+                                       gasPrice integer NOT NULL,
+                                       gasUsed integer NOT NULL,
+                                       cumulativeGasUsed integer NOT NULL,
+                                       input text NOT NULL,
+                                       confirmations integer NOT NULL
+                                 );"""
+    connection.execute(sql_create_transfers_table)
 
-    # logger.info("Getting transactions")
-    # tic = time.perf_counter()
+    logger.info("Getting transactions")
+    tic = time.perf_counter()
 
-    # json_transfers = []
-    # current_block = block_from
-    # end_block = block_to
+    json_transfers = []
+    current_block = block_from
+    end_block = block_to
 
-    # while current_block < end_block:
-    #     params = {
-    #         "chainid": chain_id, "module": "account", "action": "tokentx", "address": contract_address, "startblock": current_block,
-    #         "endblock": end_block, "page": 1, "offset": offset, "sort": "asc", "apikey": key,
-    #     }
-    #     response = requests.get(base_url, params=params)
-    #     data = response.json()
+    while current_block < end_block:
+        params = {
+            "chainid": chain_id, "module": "account", "action": "tokentx", "address": contract_address, "startblock": current_block,
+            "endblock": end_block, "page": 1, "offset": offset, "sort": "asc", "apikey": key,
+        }
+        response = requests.get(base_url, params=params)
+        data = response.json()
 
-    #     if data["status"] != "1":
-    #         if data["message"] == "No transactions found":
-    #             break
-    #         else:
-    #             raise Exception(f"Error fetching data: {data['message']} - {data['result']}")
+        if data["status"] != "1":
+            if data["message"] == "No transactions found":
+                break
+            else:
+                raise Exception(f"Error fetching data: {data['message']} - {data['result']}")
 
-    #     data_batch = data["result"]
-    #     json_transfers.extend(data_batch)
+        data_batch = data["result"]
+        json_transfers.extend(data_batch)
 
-    #     logger.info(f" Get {len(data_batch)} records")
+        logger.info(f" Get {len(data_batch)} records")
 
-    #     if len(data_batch) < offset:
-    #         break
+        if len(data_batch) < offset:
+            break
 
-    #     current_block = int(data_batch[-1]["blockNumber"]) + 1
+        current_block = int(data_batch[-1]["blockNumber"]) + 1
 
-    # # INFO: Store Transfers
-    # logger.info("Store transfers")
-    # if json_transfers != []:
-    #     df_tra_store = pd.DataFrame(json_transfers)
-    #     df_tra_store.to_sql("t_transfers", connection, if_exists="append", index=False)
-    # toc = time.perf_counter()
+    # INFO: Store Transfers
+    logger.info("Store transfers")
+    if json_transfers != []:
+        df_tra_store = pd.DataFrame(json_transfers)
+        df_tra_store.to_sql("t_transfers", connection, if_exists="append", index=False)
+    toc = time.perf_counter()
 
-    # message = f"<strong>STORE</strong> - {len(json_transfers)} token transfers...<strong>{toc - tic:0.4f}</strong> seconds"
-    # logger.info(message.replace("<strong>", "").replace("</strong>", ""))
-    # # data = json.dumps({"msg": message, "end": False, "error": False, "content": {}})
-    # # yield f"data:{data}\n\n"
+    message = f"<strong>STORE</strong> - {len(json_transfers)} token transfers...<strong>{toc - tic:0.4f}</strong> seconds"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    # data = json.dumps({"msg": message, "end": False, "error": False, "content": {}})
+    # yield f"data:{data}\n\n"
 
-    # logger.info(" ")
-    # logger.info("=====================================================")
-    # logger.info(f"Collecting Internals transfers...")
-    # logger.info("=====================================================")
-    # logger.info("Creating Table t_internals")
+    logger.info(" ")
+    logger.info("=====================================================")
+    logger.info(f"Collecting Internals transfers...")
+    logger.info("=====================================================")
+    logger.info("Creating Table t_internals")
 
-    # sql_create_internals_table = """CREATE TABLE IF NOT EXISTS t_internals (
-    #                                    blockNumber integer NOT NULL,
-    #                                    timeStamp datetime NOT NULL,
-    #                                    hash text NOT NULL,
-    #                                    `from` text NOT NULL,
-    #                                    `to` text NOT NULL,
-    #                                    value integer NOT NULL,
-    #                                    contractAddress text NOT NULL,
-    #                                    input text NOT NULL,
-    #                                    type text NOT NULL,
-    #                                    gas integer NOT NULL,
-    #                                    gasUsed integer NOT NULL,
-    #                                    traceId integer NOT NULL,
-    #                                    isError integer NOT NULL,
-    #                                    errCode text NOT NULL
-    #                              );"""
-    # connection.execute(sql_create_internals_table)
+    sql_create_internals_table = """CREATE TABLE IF NOT EXISTS t_internals (
+                                       blockNumber integer NOT NULL,
+                                       timeStamp datetime NOT NULL,
+                                       hash text NOT NULL,
+                                       `from` text NOT NULL,
+                                       `to` text NOT NULL,
+                                       value integer NOT NULL,
+                                       contractAddress text NOT NULL,
+                                       input text NOT NULL,
+                                       type text NOT NULL,
+                                       gas integer NOT NULL,
+                                       gasUsed integer NOT NULL,
+                                       traceId integer NOT NULL,
+                                       isError integer NOT NULL,
+                                       errCode text NOT NULL
+                                 );"""
+    connection.execute(sql_create_internals_table)
 
-    # logger.info("Getting internals")
-    # tic = time.perf_counter()
+    logger.info("Getting internals")
+    tic = time.perf_counter()
 
-    # json_internals = []
-    # current_block = block_from
-    # end_block = block_to
+    json_internals = []
+    current_block = block_from
+    end_block = block_to
 
-    # while current_block < end_block:
-    #     params = {
-    #         "chainid": chain_id, "module": "account", "action": "txlistinternal", "address": contract_address, "startblock": current_block,
-    #         "endblock": end_block, "page": 1, "offset": offset, "sort": "asc", "apikey": key,
-    #     }
-    #     response = requests.get(base_url, params=params)
-    #     data = response.json()
+    while current_block < end_block:
+        params = {
+            "chainid": chain_id, "module": "account", "action": "txlistinternal", "address": contract_address, "startblock": current_block,
+            "endblock": end_block, "page": 1, "offset": offset, "sort": "asc", "apikey": key,
+        }
+        response = requests.get(base_url, params=params)
+        data = response.json()
 
-    #     if data["status"] != "1":
-    #         if data["message"] == "No transactions found":
-    #             break
-    #         else:
-    #             raise Exception(f"Error fetching data: {data['message']} - {data['result']}")
+        if data["status"] != "1":
+            if data["message"] == "No transactions found":
+                break
+            else:
+                raise Exception(f"Error fetching data: {data['message']} - {data['result']}")
 
-    #     data_batch = data["result"]
-    #     json_internals.extend(data_batch)
+        data_batch = data["result"]
+        json_internals.extend(data_batch)
 
-    #     logger.info(f" Get {len(data_batch)} records")
+        logger.info(f" Get {len(data_batch)} records")
 
-    #     if len(data_batch) < offset:
-    #         break
+        if len(data_batch) < offset:
+            break
 
-    #     current_block = int(data_batch[-1]["blockNumber"]) + 1
+        current_block = int(data_batch[-1]["blockNumber"]) + 1
 
-    # # INFO: Store Internals
-    # logger.info("Store internals")
-    # if json_internals != []:
-    #     df_tra_store = pd.DataFrame(json_internals)
-    #     df_tra_store.to_sql("t_internals", connection, if_exists="append", index=False)
-    # toc = time.perf_counter()
+    # INFO: Store Internals
+    logger.info("Store internals")
+    if json_internals != []:
+        df_tra_store = pd.DataFrame(json_internals)
+        df_tra_store.to_sql("t_internals", connection, if_exists="append", index=False)
+    toc = time.perf_counter()
 
-    # message = f"<strong>STORE</strong> - {len(json_internals)} internals...<strong>{toc - tic:0.4f}</strong> seconds"
-    # logger.info(message.replace("<strong>", "").replace("</strong>", ""))
-    # # data = json.dumps({"msg": message, "end": False, "error": False, "content": {}})
-    # # yield f"data:{data}\n\n"
+    message = f"<strong>STORE</strong> - {len(json_internals)} internals...<strong>{toc - tic:0.4f}</strong> seconds"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    # data = json.dumps({"msg": message, "end": False, "error": False, "content": {}})
+    # yield f"data:{data}\n\n"
 
-    # connection.commit()
+    connection.commit()
 
     # NOTE: Get info from wallet creator
     # - First movement of wallet creator (Block and time)
@@ -704,33 +526,55 @@ def data_db_collect(chain_id, contract_address, key, filedb, block_from=0, block
     token_list = div_card_body_container[0].find_all('li', class_='nav-item list-custom-ERC20')
     for i in token_list:
         balances.append(i.text)
+    
+    # FIX: Remove last block code until _last_block_
+    # logger.info("Getting last block of contract creator")
+    # div_table_container = html_doc.find('div', id='transactions')
+    # table = div_table_container.find('table')
+    # tbody = table.find('tbody')
+    # td = tbody.tr.find_all('td')
+    # last_block_number = td[3].text
+    # last_time_trx = td[4].span.text
+    # last_from_trx = td[6].span.text
+    # try:
+    #     last_to_trx = td[8].span.a['href'].split("/")[-1]
+    # except Exception:
+    #     try: 
+    #         last_to_trx = td[8].a['href'].split("/")[-1]
+    #     except Exception:
+    #         last_to_trx = "N/A"
+    # last_value_trx = td[9].text
 
-    logger.info("Getting last block of contract creator")
-    div_table_container = html_doc.find('div', id='transactions')
-    table = div_table_container.find('table')
-    tbody = table.find('tbody')
-    td = tbody.tr.find_all('td')
-    last_block_number = td[3].text
-    last_time_trx = td[4].span.text
-    last_from_trx = td[6].span.text
-    try:
-        last_to_trx = td[8].span.a['href'].split("/")[-1]
-    except Exception:
-        try: 
-            last_to_trx = td[8].a['href'].split("/")[-1]
-        except Exception:
-            last_to_trx = "N/A"
-    last_value_trx = td[9].text
+    # url = f'{base_url}?chainid={chain_id}&module=account&action=txlist&address={contract_creator}' + \
+    #     f'&startblock={last_block_number}&endblock={last_block_number}' + \
+    #     f'&page=1&offset=1&sort=asc&apikey={key}'
+    # response = requests.get(url)
 
-    url = f'{base_url}?chainid={chain_id}&module=account&action=txlist&address={contract_creator}' + \
-        f'&startblock={last_block_number}&endblock={last_block_number}' + \
-        f'&page=1&offset=1&sort=asc&apikey={key}'
-    response = requests.get(url)
-
-    last_block_creator = response.json()['result'][-1]
-    last_time = datetime.datetime.fromtimestamp(int(last_block_creator['timeStamp']))
+    # last_block_creator = response.json()['result'][-1]
+    # last_time = datetime.datetime.fromtimestamp(int(last_block_creator['timeStamp']))
+    # FIX: _last_block_
 
     logger.info("Storing first and last block info of contract creator")
+    # cursor.execute("""INSERT INTO t_contract_creator VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
+    #     (contract_creator,
+    #      block_from,
+    #      block_to,
+    #      first_block_creator['blockNumber'],
+    #      first_time,
+    #      first_block_creator['hash'],
+    #      first_block_creator['to'],
+    #      first_block_creator['from'],
+    #      pyround.pyround(int(first_block_creator['value']) / 1e+18, 8),
+    #      first_block_creator['input'],
+    #      first_block_creator['functionName'],
+    #      last_block_creator['blockNumber'],
+    #      last_time,
+    #      last_block_creator['hash'],
+    #      last_block_creator['to'],
+    #      last_block_creator['from'],
+    #      pyround.pyround(int(last_block_creator['value']) / 1e+18, 8),
+    #      last_block_creator['input'],
+    #      last_block_creator['functionName']))
     cursor.execute("""INSERT INTO t_contract_creator VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
         (contract_creator,
          block_from,
@@ -743,14 +587,14 @@ def data_db_collect(chain_id, contract_address, key, filedb, block_from=0, block
          pyround.pyround(int(first_block_creator['value']) / 1e+18, 8),
          first_block_creator['input'],
          first_block_creator['functionName'],
-         last_block_creator['blockNumber'],
-         last_time,
-         last_block_creator['hash'],
-         last_block_creator['to'],
-         last_block_creator['from'],
-         pyround.pyround(int(last_block_creator['value']) / 1e+18, 8),
-         last_block_creator['input'],
-         last_block_creator['functionName']))
+         "",
+         "",
+         "",
+         "",
+         "",
+         0,
+         "",
+         ""))
 
     connection.commit()
     
@@ -926,7 +770,7 @@ def data_db_collect(chain_id, contract_address, key, filedb, block_from=0, block
     logger.info("=====================================================")
     logger.info(f"Collecting Internals contract creator transfers...")
     logger.info("=====================================================")
-    logger.info("Creating Table t_internals_wsllet")
+    logger.info("Creating Table t_internals_wallet")
 
     sql_create_int_creator_table = """CREATE TABLE IF NOT EXISTS t_internals_wallet (
                                       blockNumber integer NOT NULL,
@@ -981,7 +825,7 @@ def data_db_collect(chain_id, contract_address, key, filedb, block_from=0, block
     logger.info("Store internals creator")
     if json_int_creator != []:
         df_tra_store = pd.DataFrame(json_int_creator)
-        df_tra_store.to_sql("t_internals_wsllet", connection, if_exists="append", index=False)
+        df_tra_store.to_sql("t_internals_wallet", connection, if_exists="append", index=False)
     toc = time.perf_counter()
 
     message = f"<strong>STORE</strong> - {len(json_int_creator)} internals creator...<strong>{toc - tic:0.4f}</strong> seconds"
