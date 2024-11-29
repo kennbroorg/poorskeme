@@ -5,6 +5,7 @@
   },
   "version": 1,
   "newProjectRoot": "projects",
+  "defaultProject": "poorSKeme",
   "projects": {
     "poorSkeme": {
       "projectType": "application",
