@@ -1,0 +1,79 @@
+<div class="row" *ngIf="contract">
+  <!-- Title -->
+  <div class="col-md-4 offset-md-4">
+
+    <nb-card style="height: 140px; margin-top: 60px;">
+      <nb-card-body class="shiny" style="overflow: hidden;">
+        <!-- <div style="font-weight: 300; font-size: 70px; color: rgba(255, 255, 255, 0.8); text-align: center;"> -->
+        <div class="extra-title">
+          Data Source
+        </div>
+          <div class="fixed-subtitle" style="color: rgba(255, 255, 255, 0.8); bottom: 20px;">
+            Collect or File
+        </div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+  <!-- <div class="col-md-4">
+    <nb-card style="margin-top: 50px;">
+      <nb-card-body class="shiny" style="font-weight: 500; font-size: 20px;">
+        <div style="margin: 0 auto;">
+          <div style="font-weight: 300; font-size: 70px;margin-top: 35px;padding-bottom: 10px;color: rgba(255, 255, 255, 0.8);text-align: center;">
+            {{contract['ContractName']}}
+          </div>
+          <div class="subtitle" style="color: rgba(255, 255, 255, 0.8);">
+            Contract Name
+          </div>
+        </div>
+      </nb-card-body>
+    </nb-card>
+  </div> -->
+
+  <div class="col-md-4"></div>
+</div>
+
+<div class="row" *ngIf="contract">
+  <!-- Contract Address - Dates - Creator Address -->
+  <div class="col-md-6">
+    <nb-card style="height: 50vh;">
+      <nb-card-body style="font-weight: 500; font-size: 20px;">
+        <!-- <div class="title">{{contract['contract']}}</div> -->
+        <div class="fixed-subtitle">Log</div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+  <div class="col-md-6 bor">
+    <nb-card>
+    <!-- <nb-card style="height: 50vh;"> -->
+      <nb-card-body style="font-weight: 500; font-size: 20px;">
+        <nb-accordion>
+          <nb-accordion-item>
+            <nb-accordion-item-header class="title" style="font-size: 15px;">
+              DATA FROM INTERNET
+            </nb-accordion-item-header>
+            <nb-accordion-item-body>
+              A nebula is an interstellar cloud of dust, hydrogen, helium and other ionized gases.
+              Originally, nebula was a name for any diffuse astronomical object,
+              including galaxies beyond the Milky Way.
+            </nb-accordion-item-body>
+          </nb-accordion-item>
+
+          <nb-accordion-item>
+            <nb-accordion-item-header class="title" style="font-size: 15px;">
+              DATA FROM FILE
+            </nb-accordion-item-header>
+            <nb-accordion-item-body>
+              <input type="file" (change)="onFileSelected($event)">
+              <div *ngIf="fileName">
+                File selected: {{ fileName }}
+              </div>
+            </nb-accordion-item-body>
+          </nb-accordion-item>
+        </nb-accordion>
+      </nb-card-body>
+    </nb-card>
+
+  </div>
+
+</div>

@@ -84,30 +84,36 @@
 
 
           <!-- TAB2 -->
+          <nb-tab tabTitle="Collect">
+            <app-contract-collect [data]="contract" *ngIf="contract"></app-contract-collect>
+          </nb-tab>
+
+
+          <!-- TAB3 -->
           <nb-tab tabTitle="Resume">
             <app-contract-resume [data]="contract" *ngIf="contract"></app-contract-resume>
           </nb-tab>
 
 
-          <!-- TAB3 -->
+          <!-- TAB4 -->
           <nb-tab tabTitle="Detail">
             <app-contract-detail [data]="contract" *ngIf="contract"></app-contract-detail>
           </nb-tab>
 
 
-          <!-- TAB4 -->
+          <!-- TAB5 -->
           <nb-tab tabTitle="Code">
             <app-contract-code [data]="contract" *ngIf="contract"></app-contract-code>
           </nb-tab>
 
           
-          <!-- TAB5 -->
+          <!-- TAB6 -->
           <nb-tab tabTitle="Diagram">
               <app-diagram [data]="contract" *ngIf="contract"></app-diagram>
           </nb-tab>
 
           
-          <!-- TAB6 -->
+          <!-- TAB7 -->
           <nb-tab tabTitle="Distribution">
             <div class="row">
                 <div class="col-md-6">
@@ -123,7 +129,7 @@
           </nb-tab>
 
 
-          <!-- TAB7 -->
+          <!-- TAB8 -->
           <!-- <nb-tab tabTitle="Transaction" active="{{setActiveTrx}}" id="addTab" name="addTab" #addTab> -->
           <nb-tab tabTitle="Transaction" id="trxTab" name="trxTab" #trxTab>
             <div class="row">
@@ -134,7 +140,7 @@
           </nb-tab>
 
 
-          <!-- TAB8 -->
+          <!-- TAB9 -->
           <nb-tab tabTitle="Anomalies">
             <div class="row">
                 <div class="col-md-6">
@@ -150,7 +156,7 @@
           </nb-tab>
 
 
-          <!-- TAB8 -->
+          <!-- TAB10 -->
           <nb-tab tabTitle="Creator">
             <div class="row">
                 <div class="col-md-12">

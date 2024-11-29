@@ -3,7 +3,7 @@ import { BrowserModule } from '@angular/platform-browser';
 
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { NbThemeModule, NbLayoutModule, NbCardModule, NbTabsetModule } from '@nebular/theme';
+import { NbThemeModule, NbLayoutModule, NbCardModule, NbTabsetModule, NbAccordionModule } from '@nebular/theme';
 import { NbButtonModule } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { NbDialogModule } from '@nebular/theme';
@@ -22,6 +22,7 @@ import { HighlightModule, HIGHLIGHT_OPTIONS, HighlightOptions } from 'ngx-highli
 // import { GojsAngularModule } from 'gojs-angular';
 import { NgxOrgChartModule } from 'ngx-org-chart';
 
+import { ContractCollectComponent } from './contract-collect/contract-collect.component';
 import { ContractResumeComponent } from './contract-resume/contract-resume.component';
 import { ContractDetailComponent } from './contract-detail/contract-detail.component';
 import { ContractCodeComponent } from './contract-code/contract-code.component';
@@ -51,6 +52,7 @@ import { WindowService } from './service/windows.service';
     TreeContractComponent,
     TransfersDetailsComponent,
     ContractResumeComponent,
+    ContractCollectComponent,
     ContractDetailComponent,
     ContractCodeComponent,
     DiagramComponent,
@@ -63,6 +65,7 @@ import { WindowService } from './service/windows.service';
     BrowserAnimationsModule,
     NbThemeModule.forRoot({ name: 'dark' }),
     NbLayoutModule,
+    NbAccordionModule,
     NbEvaIconsModule,
     NbCardModule,
     NbTabsetModule,
