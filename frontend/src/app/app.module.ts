@@ -7,19 +7,22 @@ import { NbThemeModule, NbLayoutModule, NbCardModule, NbTabsetModule, NbAccordio
 import { NbButtonModule } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { NbDialogModule } from '@nebular/theme';
+import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
+import { FileUploadModule } from '@iplab/ngx-file-upload';
 
 import { AppRoutingModule } from './app-routing.module';
 import { HttpClientModule } from '@angular/common/http';
 // import { NgxChartsModule } from '@swimlane/ngx-charts/ngx-charts.module';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
-import { LineChartModule } from 'ngx-graph';
-import { TreeNgxModule } from 'tree-ngx';
+// import { LineChartModule } from 'ngx-graph';
+// import { TreeNgxModule } from 'tree-ngx';
 
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 
 import { HighlightModule, HIGHLIGHT_OPTIONS, HighlightOptions } from 'ngx-highlightjs';
 
-// import { GojsAngularModule } from 'gojs-angular';
+// // import { GojsAngularModule } from 'gojs-angular';
 import { NgxOrgChartModule } from 'ngx-org-chart';
 
 import { ContractCollectComponent } from './contract-collect/contract-collect.component';
@@ -31,10 +34,10 @@ import { TrxDetailsComponent } from './trx-details/trx-details.component';
 
 import { TransactionsBriefComponent } from './transactions-brief/transactions-brief.component';
 import { TransfersBriefComponent } from './transfers-brief/transfers-brief.component';
-import { ContractBriefComponent } from './contract-brief/contract-brief.component';
+// import { ContractBriefComponent } from './contract-brief/contract-brief.component';
 import { TransfersComponent } from './transfers/transfers.component';
-import { LiqTransComponent } from './liq-trans/liq-trans.component';
-import { TreeContractComponent } from './contract-brief/tree-contract/tree-contract.component';
+// import { LiqTransComponent } from './liq-trans/liq-trans.component';
+// import { TreeContractComponent } from './contract-brief/tree-contract/tree-contract.component';
 import { AnomaliesComponent } from './anomalies/anomalies.component';
 import { TransfersDetailsComponent } from './transfers-details/transfers-details.component';
 import { CreatorComponent } from './creator/creator.component';
@@ -44,15 +47,15 @@ import { WindowService } from './service/windows.service';
 @NgModule({
   declarations: [
     AppComponent,
+    ContractCollectComponent,
     TransactionsBriefComponent,
     TransfersBriefComponent,
-    ContractBriefComponent,
+    // ContractBriefComponent,
     TransfersComponent,
-    LiqTransComponent,
-    TreeContractComponent,
+    // LiqTransComponent,
+    // TreeContractComponent,
     TransfersDetailsComponent,
     ContractResumeComponent,
-    ContractCollectComponent,
     ContractDetailComponent,
     ContractCodeComponent,
     DiagramComponent,
@@ -65,20 +68,23 @@ import { WindowService } from './service/windows.service';
     BrowserAnimationsModule,
     NbThemeModule.forRoot({ name: 'dark' }),
     NbLayoutModule,
-    NbAccordionModule,
     NbEvaIconsModule,
     NbCardModule,
     NbTabsetModule,
     NbButtonModule,
     HttpClientModule,
     NgxChartsModule,
-    LineChartModule,
-    TreeNgxModule,
+    NbAccordionModule,
+    // LineChartModule,
+    // TreeNgxModule,
     NgxDatatableModule,
     HighlightModule,
     AppRoutingModule,
-    // GojsAngularModule,
+    // // GojsAngularModule,
     NgxOrgChartModule,
+    ReactiveFormsModule,
+    FormsModule,
+    FileUploadModule,
     NbDialogModule.forChild()
   ],
   providers: [

@@ -4,7 +4,7 @@ import { HttpClient } from '@angular/common/http';
 
 import { NbTabsetComponent, NbTabComponent } from '@nebular/theme/components/tabset/tabset.component';
 
-import * as d3 from 'd3';
+// import * as d3 from 'd3';
 
 @Component({
   selector: 'app-root',
@@ -73,7 +73,7 @@ export class AppComponent {
     // this.volume = [{"name": "Volume", "value": this.contract["volume"]}]
     // this.wallets = [{"name": "Wallets", "value": this.contract["wallets"]}]
     // this.max_liq = [{"name": "Max Liquidity - " + this.contract['max_liq_date'], "value": this.contract["max_liq"]}]
-    // this.cardNumber = [{"name": "Wallets", "value": this.contract["wallets"]}, 
+    // this.cardNumber = [{"name": "Wallets", "value": this.contract["wallets"]},
     //                    {"name": "Max Liquidity", "value": this.contract["max_liq"]}]
     // this.code = this.contract['SourceCode']
   }

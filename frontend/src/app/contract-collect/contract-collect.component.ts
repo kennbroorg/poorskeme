@@ -1,4 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
+import { FileUploadValidators } from '@iplab/ngx-file-upload';
+import { FormControl, FormGroup } from '@angular/forms';
 
 @Component({
   selector: 'app-contract-collect',
@@ -11,24 +13,44 @@ export class ContractCollectComponent implements OnInit {
 
   contract: any;
   max_liq_num: number = 0;
-  fileName: string = '';
 
-  constructor() { 
+  public animation: boolean = false;
+  public multiple: boolean = false;
+
+  private filesControl = new FormControl<File[]>([], FileUploadValidators.filesLimit(2));
+
+  public demoForm = new FormGroup({
+      files: this.filesControl
+  });
+
+  constructor() {
   }
 
   ngOnInit(): void {
     this.contract = this.data;
     console.log(`Contract : {this.contract}`, this.data);
-    this.max_liq_num = Number((this.contract['max_liq']).toFixed(2));
   }
 
-  onFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
+  public toggleStatus(): void {
+      this.filesControl.disabled ? this.filesControl.enable() : this.filesControl.disable();
+  }
 
-    if (input.files && input.files.length > 0) {
-      this.fileName = input.files[0].name;
+  public toggleMultiple() {
+      this.multiple = !this.multiple;
+  }
+
+  public clear(): void {
+      this.filesControl.setValue([]);
+  }
+
+  process(caddress: any, bfrom: any, bto: any) {
+    console.log("Apreto", caddress, bfrom, bto, this.filesControl, this.demoForm);
+    const files = this.filesControl.value;
+    if (files && files.length > 0) {
+      console.log("Archivos cargados:", files);
+      // Aquí puedes pasar los archivos al app.component o enviarlos directamente al backend
     } else {
-      this.fileName = '';
+      console.log("No se ha cargado ningún archivo.");
     }
   }
 }
