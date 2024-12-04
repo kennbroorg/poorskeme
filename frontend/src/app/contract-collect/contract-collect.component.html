@@ -48,14 +48,32 @@
     <!-- <nb-card style="height: 50vh;"> -->
       <nb-card-body style="font-weight: 500; font-size: 20px;">
         <nb-accordion>
-          <nb-accordion-item>
+          <nb-accordion-item expanded>
             <nb-accordion-item-header class="title" style="font-size: 15px;">
               DATA FROM INTERNET
             </nb-accordion-item-header>
             <nb-accordion-item-body>
-              A nebula is an interstellar cloud of dust, hydrogen, helium and other ionized gases.
-              Originally, nebula was a name for any diffuse astronomical object,
-              including galaxies beyond the Milky Way.
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="form__group field">
+                    <input type="input" class="form__field" placeholder="Contract Address" #caddress name="caddress" id='caddress' required />
+                    <label for="name" class="form__label">Contract Address</label>
+                  </div>
+                </div>
+                <div class="col-md-4 offset-md-1" style="margin-top: 20px;">
+                  <div class="form__group field" style="width: 100%">
+                    <input type="input" class="form__field" placeholder="Block From" #bfrom name="bfrom" id='bfrom' value='0' required />
+                    <label for="name" class="form__label">Block From</label>
+                  </div>
+                </div>
+                <div class="col-md-4 offset-md-2" style="margin-top: 20px;">
+                  <div class="form__group field" style="width: 100%">
+                    <input type="input" class="form__field" placeholder="Block To" #bto name="bto" id='bto' value='99999999' required />
+                    <label for="name" class="form__label">Block To</label>
+                  </div>
+                </div>
+
+              </div>
             </nb-accordion-item-body>
           </nb-accordion-item>
 
@@ -64,13 +82,13 @@
               DATA FROM FILE
             </nb-accordion-item-header>
             <nb-accordion-item-body>
-              <input type="file" (change)="onFileSelected($event)">
-              <div *ngIf="fileName">
-                File selected: {{ fileName }}
-              </div>
+              <form [formGroup]="demoForm">
+                <file-upload formControlName="files" [multiple]="multiple" [animation]="animation"></file-upload>
+              </form>`
             </nb-accordion-item-body>
           </nb-accordion-item>
         </nb-accordion>
+        <button nbButton outline status="primary" class="proc" (click)="process(caddress.value, bfrom.value, bto.value)">PROCESS</button>
       </nb-card-body>
     </nb-card>
 
