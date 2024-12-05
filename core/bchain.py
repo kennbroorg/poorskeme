@@ -18,10 +18,13 @@ import pyround
 import datetime
 
 # from termcolor import colored
-# import coloredlogs, logging
 import logging
+import coloredlogs
 
 from web3_input_decoder import InputDecoder # , decode_constructor
+
+from core import eth
+from core import bsc
 
 
 # create a logger object.
@@ -35,7 +38,6 @@ __version__ = "1.0.1"
 __maintainer__ = "KennBro"
 __email__ = "kennbro <at> protonmail <dot> com"
 __status__ = "Development"
-
 
 
 def get_bchain_data(chain_id, address, module, action, key, start_block=0, end_block=99999999):
@@ -1403,3 +1405,27 @@ def eth_db_process(filename):
     logger.info(f"Preprocess Statistic file in {toc - tic:0.4f} seconds")
 
     return 0
+
+def event_stream_data_file(file):
+    # NOTE: Config Log Level
+    log_format = "%(asctime)s %(name)s %(lineno)d %(levelname)s %(message)s"
+    # coloredlogs.install(level=params["config"]["level"], fmt=log_format, logger=logger)
+    coloredlogs.install(level="DEBUG", fmt=log_format, logger=logger)
+    logger.propagate = False  # NOTE: To prevent duplicates with flask
+
+    filename = os.path.basename(file)
+    message = f"<strong>PROCESS</strong> - Processing file...{filename}"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    # data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {"wallet_detail": wallet_detail}})
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    # FIX: Determine Blockchain 
+    bsc.bsc_db_process(file)
+
+    message = "<strong>END PROCESS</strong>"
+    logger.error(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": True, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+
