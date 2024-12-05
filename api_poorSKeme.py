@@ -1,10 +1,12 @@
 # application.py
 # -*- encoding: utf-8 -*-
 
-from flask import Flask, current_app
+from flask import Flask, current_app, request, Response
 from flask_cors import CORS
 from flask import Blueprint, jsonify
 
+import os
+import uuid
 import time
 import json
 import pandas as pd
@@ -13,6 +15,8 @@ import sqlite3
 import pyround      # TODO: Test and use
 
 import coloredlogs, logging
+
+from core import bchain
 
 # create a logger object.
 logger = logging.getLogger(__name__)
@@ -860,4 +864,38 @@ def r_trans_creator():
 
     return jsonify({"trans_creator": trans_creator, "stat": stat})
 
+
+################################################
+# Process file
+################################################
+@home.route('/upload_file', methods=['POST'])
+def upload_file():
+    file = request.files['file']
+
+    # TODO: Name validation
+    if file.filename == '':
+        return jsonify({"status": "error", "message": "The filename is empty"})
+
+    elif file.filename[-2:] != 'db':
+        return jsonify({"status": "error", "message": "The file must be SQlite extension"})
+
+    else:
+        temp_dir = os.path.join(current_app.root_path, 'temp_files')
+        os.makedirs(temp_dir, exist_ok=True)
+        file_path = os.path.join(temp_dir, file.filename)
+        current_app.config['file'] = file_path
+        file.save(file_path)
+        return jsonify({'status': 'ok', 'message': 'File uploaded successfully', 'file_id': file.filename})
+
+
+@home.route('/file_process', methods=['GET'])
+def r_process_file():
+    file_id = request.args.get('file_id')
+    if not file_id:
+        return jsonify({"status": "error", "message": "File ID is required"})
+    
+    temp_dir = os.path.join(current_app.root_path, 'temp_files')
+    file_path = os.path.join(temp_dir, file_id)
+
+    return Response(bchain.event_stream_data_file(file_path), mimetype='text/event-stream')
 
