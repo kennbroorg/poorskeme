@@ -422,3 +422,9 @@ li {
     color: rgba(102, 217, 255, 0.5) !important;
   }
 }
+
+::ng-deep .select-button {
+  border: none !important;
+  border-top: 1px solid rgba(102, 217, 255, 0.5) !important;
+  border-bottom: 1px solid rgba(102, 217, 255, 0.5) !important;
+}

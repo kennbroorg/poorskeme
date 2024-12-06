@@ -1,4 +1,4 @@
-import { Component, OnInit, Output, ViewChild, HostBinding, EventEmitter } from '@angular/core';
+import { Component, OnInit, Output, ViewChild, ElementRef, HostBinding, EventEmitter, AfterViewInit, OnChanges, SimpleChanges } from '@angular/core';
 import { NbAccordionItemComponent } from '@nebular/theme';
 import { NbGlobalLogicalPosition, NbGlobalPhysicalPosition, NbGlobalPosition, NbToastrService, NbIconConfig } from '@nebular/theme';
 import { FileUploadValidators } from '@iplab/ngx-file-upload';
@@ -14,17 +14,15 @@ import { SSE } from '../sse/see.service';
   providers: [SSE],
   styleUrls: ['./contract-collect.component.scss']
 })
-export class ContractCollectComponent implements OnInit {
+export class ContractCollectComponent implements OnInit, AfterViewInit, OnChanges {
 
   @HostBinding('class')
   classes = 'example-items-rows';
 
+  @ViewChild('scrollableCard') private scrollContainer!: ElementRef;
   @Output() onProcess: EventEmitter<string> = new EventEmitter<string>();
 
-  // TODO: Remove unnecesary
-  // sseSubscription: any;
   sseSubscriptionGet: any;
-  // sseSubsChecking: any;
   log: boolean = true;
   logs: string[] = [];
   url: string = "http://127.0.0.1:5000/"
@@ -51,6 +49,28 @@ export class ContractCollectComponent implements OnInit {
     console.log(`Collect Process`);
   }
 
+  ngAfterViewInit() {
+    this.scrollToBottom();
+  }
+
+  scrollToBottom(): void {
+    console.log("Container", this.scrollContainer);
+    try {
+      this.scrollContainer.nativeElement.scrollTop = this.scrollContainer.nativeElement.scrollHeight;
+    } catch(err) {
+      console.error(err);
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    console.log("CHANGES", changes);
+    if (changes['logs']) {
+      // setTimeout(() => this.scrollToBottom(), 100);
+      // console.log("DATA CAMBIO");
+      this.scrollToBottom();
+    }
+  }
+
   public toggleStatus(): void {
       this.filesControl.disabled ? this.filesControl.enable() : this.filesControl.disable();
   }
@@ -71,26 +91,29 @@ export class ContractCollectComponent implements OnInit {
       { limit: 2, position: NbGlobalLogicalPosition.BOTTOM_END, icon: iconConfig, toastClass: 'toast-class', duration: 3000 });
   }
 
-  process(caddress: string, bfrom: string, bto: string) {
+  process(caddress: string, bfrom: string, bto: string, network: string) {
 
     if (this.internetItem.expanded) {
       if (caddress && caddress.trim() !== '') {
         const data = {
           caddress: caddress,
           bfrom: bfrom,
-          bto: bto
+          bto: bto,
+          network: network
         };
 
-        this.http.post('http://127.0.0.1:5000/get_data_process', data).subscribe(
-          (response) => {
-            console.log('Datos procesados exitosamente', response);
-            // Aquí puedes manejar la respuesta del backend
-          },
-          (error) => {
-            console.error('Error al procesar los datos', error);
-            // Aquí puedes manejar el error
-          }
-        );
+        this.getFileInfo("get_data_process", data);
+        this.onProcess.emit('true');
+
+        // this.http.post('http://127.0.0.1:5000/get_data_process', data).subscribe(
+        //   (response) => {
+        //     console.log('Datos procesados exitosamente', response);
+        //   },
+        //   (error) => {
+        //     this.showToast('Error', error, 'alert-circle-outline')
+        //   }
+        // );
+        //
       } else {
         this.showToast('Error', 'Contract Address field must have a value', 'alert-circle-outline')
       }
@@ -139,49 +162,6 @@ export class ContractCollectComponent implements OnInit {
           // if (d.hasOwnProperty('content')) {
           //   if (d['content'].hasOwnProperty('wallet_detail')) {
           //     this.processWalletDetail(d['content']['wallet_detail']);
-          //   }
-          //   if (d['content'].hasOwnProperty('graph')) {
-          //     this.processGraph(d['content']['graph']);
-          //     console.warn("GRAPH", d['content']['graph']);
-          //   }
-          //   if (d['content'].hasOwnProperty('list')) {
-          //     this.processList(d['content']['list']);
-          //   }
-          //   if (d['content'].hasOwnProperty('stat')) {
-          //     this.stats = d['content']['stat'];
-          //   }
-          //   if (d['content'].hasOwnProperty('balance')) {
-          //     this.processBalance(d['content']['balance']);
-          //   }
-          //   if (d['content'].hasOwnProperty('gas')) {
-          //     this.gas = d['content']['gas'];
-          //   }
-          //   if (d['content'].hasOwnProperty('tokens')) {
-          //     this.tokens = d['content']['tokens'];
-          //   }
-          //   if (d['content'].hasOwnProperty('tags')) {
-          //     this.tags = d['content']['tags'];
-          //   }
-          //   if (d['content'].hasOwnProperty('labels')) {
-          //     this.labels = d['content']['labels'];
-          //   }
-          //   if (d['content'].hasOwnProperty('funders')) {
-          //     this.processFunders(d['content']['funders']);
-          //   }
-          //   if (d['content'].hasOwnProperty('address')) {
-          //     this.address['address'] = d['content']['address'];
-          //   }
-          //   if (d['content'].hasOwnProperty('addresses')) {
-          //     this.address['addresses'] = d['content']['addresses'];
-          //   }
-          //   if (d['content'].hasOwnProperty('network')) {
-          //     this.address['network'] = d['content']['network'];
-          //   }
-          //   if (d['content'].hasOwnProperty('type')) {
-          //     this.address['type'] = d['content']['type'];
-          //   }
-          //   if (d['content'].hasOwnProperty('filters')) {
-          //     this.filters = d['content']['filters'];
           //   }
           // }
         }
