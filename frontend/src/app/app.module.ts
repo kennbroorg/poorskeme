@@ -3,7 +3,8 @@ import { BrowserModule } from '@angular/platform-browser';
 
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { NbThemeModule, NbLayoutModule, NbCardModule, NbTabsetModule, NbAccordionModule, NbToastrModule } from '@nebular/theme';
+import { NbThemeModule, NbLayoutModule, NbCardModule, NbTabsetModule, NbAccordionModule, NbSelectModule, NbToastrModule } from '@nebular/theme';
+
 import { NbButtonModule } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { NbDialogModule } from '@nebular/theme';
@@ -76,6 +77,7 @@ import { WindowService } from './service/windows.service';
     NgxChartsModule,
     NbAccordionModule,
     NbToastrModule.forRoot(),
+    NbSelectModule,
     // LineChartModule,
     // TreeNgxModule,
     NgxDatatableModule,

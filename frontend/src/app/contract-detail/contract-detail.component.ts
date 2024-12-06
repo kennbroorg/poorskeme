@@ -15,7 +15,7 @@ import {
   ColorHelper,
   ViewDimensions,
   calculateViewDimensions,
-  id, 
+  id,
   SingleSeries
 } from '@swimlane/ngx-charts';
 // import { NbDialogService } from '@nebular/theme';
@@ -114,12 +114,12 @@ export class ContractDetailComponent implements OnInit {
   // legendPosition = LegendPosition.Right;
   public legendPosition: LegendPosition = LegendPosition.Right;
 
-  // constructor(private httpClient: HttpClient, 
+  // constructor(private httpClient: HttpClient,
   //             private dialogService: NbDialogService,
-  //             private hljsLoader: HighlightLoader) { 
+  //             private hljsLoader: HighlightLoader) {
   // }
 
-  constructor(private httpClient: HttpClient) { 
+  constructor(private httpClient: HttpClient) {
   }
 
   ngOnInit(): void {
@@ -130,7 +130,7 @@ export class ContractDetailComponent implements OnInit {
     // this.volume = [{"name": "Volume", "value": this.contract["volume"]}]
     // this.wallets = [{"name": "Wallets", "value": this.contract["wallets"]}]
     // this.max_liq_num = [{"name": "Max Liquidity - " + this.contract['max_liq_date'], "value": this.contract["max_liq"]}]
-    // this.cardNumber = [{"name": "Wallets", "value": this.contract["wallets"]}, 
+    // this.cardNumber = [{"name": "Wallets", "value": this.contract["wallets"]},
     //                    {"name": "Max Liquidity", "value": this.contract["max_liq"]}]
     // this.code = this.contract['SourceCode']
 
@@ -203,7 +203,7 @@ export class ContractDetailComponent implements OnInit {
     // if (this.large) {
     //     this.dims['height'] = this.height * 1.6;
     //     this.dims['width'] = this.width * 1.6;
-    // } else { 
+    // } else {
     //     this.dims['height'] = this.height - 130;
     //     this.dims['width'] = this.width - 100;
     // }
