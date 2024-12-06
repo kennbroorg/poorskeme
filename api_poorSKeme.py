@@ -19,8 +19,11 @@ import coloredlogs, logging
 from core import bchain
 
 # create a logger object.
+log_format = '%(asctime)s %(name)-10s %(lineno)-6d %(levelname)-7s %(message)s'
+logging.basicConfig(level=logging.DEBUG, format=log_format)
 logger = logging.getLogger(__name__)
-# coloredlogs.install(level='DEBUG')
+logger.setLevel(logging.DEBUG)
+coloredlogs.install(level='DEBUG', fmt=log_format, logger=logger)
 
 __author__ = "KennBro"
 __copyright__ = "Copyright 2023, Personal Research"
@@ -898,4 +901,30 @@ def r_process_file():
     file_path = os.path.join(temp_dir, file_id)
 
     return Response(bchain.event_stream_data_file(file_path), mimetype='text/event-stream')
+
+
+################################################
+# Collect data
+################################################
+@home.route('/get_data_process', methods=['GET'])
+def r_get_data_process():
+    caddress = request.args.get('caddress')
+    bfrom = request.args.get('bfrom')
+    bto = request.args.get('bto')
+    network = request.args.get('network')
+
+    # TODO: Do validations
+    if not caddress:
+        return jsonify({"status": "error", "message": "You must specify Contract Address"})
+    
+    filename = f"contract-{network}-{caddress}.db"
+    temp_dir = os.path.join(current_app.root_path, 'temp_files')
+    file_path = os.path.join(temp_dir, filename)
+    current_app.config['file'] = file_path
+
+    print(f"Collect - {filename} - {network} - {caddress}")
+    print(current_app.config)
+    key = current_app.config['key']
+
+    return Response(bchain.data_db_collect_event(network, caddress, key, file_path, bfrom, bto), mimetype='text/event-stream')
 
