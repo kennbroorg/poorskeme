@@ -72,7 +72,7 @@ def fetch_all_transactions(chain_id, address, key, start_block=0, end_block=9999
     offset = 10000  # Maximum limit per request
     current_block = start_block
 
-    while current_block < end_block:
+    while int(current_block) < int(end_block):
         params = {
             "chainid": chain_id,
             "module": "account",
@@ -276,7 +276,7 @@ def data_db_collect(chain_id, contract_address, key, filedb, block_from=0, block
     current_block = block_from
     end_block = block_to
 
-    while current_block < end_block:
+    while int(current_block) < int(end_block):
         params = {
             "chainid": chain_id, "module": "account", "action": "txlist", "address": contract_address, "startblock": current_block,
             "endblock": end_block, "page": 1, "offset": offset, "sort": "asc", "apikey": key,
@@ -352,7 +352,7 @@ def data_db_collect(chain_id, contract_address, key, filedb, block_from=0, block
     current_block = block_from
     end_block = block_to
 
-    while current_block < end_block:
+    while int(current_block) < int(end_block):
         params = {
             "chainid": chain_id, "module": "account", "action": "tokentx", "address": contract_address, "startblock": current_block,
             "endblock": end_block, "page": 1, "offset": offset, "sort": "asc", "apikey": key,
@@ -419,7 +419,7 @@ def data_db_collect(chain_id, contract_address, key, filedb, block_from=0, block
     current_block = block_from
     end_block = block_to
 
-    while current_block < end_block:
+    while int(current_block) < int(end_block):
         params = {
             "chainid": chain_id, "module": "account", "action": "txlistinternal", "address": contract_address, "startblock": current_block,
             "endblock": end_block, "page": 1, "offset": offset, "sort": "asc", "apikey": key,
@@ -660,7 +660,7 @@ def data_db_collect(chain_id, contract_address, key, filedb, block_from=0, block
     current_block = block_from
     end_block = block_to
 
-    while current_block < end_block:
+    while int(current_block) < int(end_block):
         params = {
             "chainid": chain_id, "module": "account", "action": "txlist", "address": contract_creator, "startblock": current_block,
             "endblock": end_block, "page": 1, "offset": offset, "sort": "asc", "apikey": key,
@@ -732,7 +732,7 @@ def data_db_collect(chain_id, contract_address, key, filedb, block_from=0, block
     current_block = block_from
     end_block = block_to
 
-    while current_block < end_block:
+    while int(current_block) < int(end_block):
         params = {
             "chainid": chain_id, "module": "account", "action": "tokentx", "address": contract_creator, "startblock": current_block,
             "endblock": end_block, "page": 1, "offset": offset, "sort": "asc", "apikey": key,
@@ -799,7 +799,7 @@ def data_db_collect(chain_id, contract_address, key, filedb, block_from=0, block
     current_block = block_from
     end_block = block_to
 
-    while current_block < end_block:
+    while int(current_block) < int(end_block):
         params = {
             "chainid": chain_id, "module": "account", "action": "txlistinternal", "address": contract_creator, "startblock": current_block,
             "endblock": end_block, "page": 1, "offset": offset, "sort": "asc", "apikey": key,
@@ -1406,10 +1406,1042 @@ def eth_db_process(filename):
 
     return 0
 
+
+# NOTE: This function is the definitive
+def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0, block_to=99999999):
+
+    base_url = "https://api.etherscan.io/v2/api"
+    offset = 10000
+
+    try:
+        os.remove(filedb)
+    except:
+        pass
+    message = f"<strong>DB</strong> - Creating db {filedb}"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    connection = sqlite3.connect(filedb)
+    cursor = connection.cursor()
+
+    # Internal tagging
+    internal_tagging = []
+    sql_create_tagging_table = """CREATE TABLE IF NOT EXISTS t_tagging (
+                                   wallet text NOT NULL,
+                                   tag text NOT NULL
+                                 );"""
+    cursor.execute(sql_create_tagging_table)
+
+    logger.info("=====================================================")
+
+    message = f"<strong>COLLECT</strong> - Collecting Contract data..."
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    logger.info("=====================================================")
+    message = f"<strong>CREATE</strong> - Creating Table t_contract"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    sql_create_contract_table = """CREATE TABLE IF NOT EXISTS t_contract (
+                                   contract text NOT NULL,
+                                   blockchain text NOT NULL,
+                                   block_from text NOT NULL,
+                                   block_to text NOT NULL,
+                                   first_block text NOT NULL,
+                                   transaction_creation text NOT NULL,
+                                   date_creation datetime NOT NULL,
+                                   creator text NOT NULL
+                                 );"""
+    cursor.execute(sql_create_contract_table)
+
+    message = f"<strong>GET</strong> - Getting first block"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    url = f'{base_url}?chainid={chain_id}&module=account&action=txlist&address={contract_address}&startblock=0&endblock=99999999' + \
+        f'&page=1&offset=1&sort=asc&apikey={key}'
+    response = requests.get(url)
+
+    # Validate API Key 
+    if (response.json()['message'] == "NOTOK"):
+        logger.error("Invalid API Key")
+        os.remove(filedb)
+        raise RuntimeError('Invalid API Key')
+        
+    first_block = response.json()['result'][0]
+
+    if (block_from == 0):
+        block_from = int(first_block['blockNumber'])
+    contract_creator = first_block['from']
+
+    message = f"<strong>STORE</strong> - Storing first block"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    cursor.execute("""INSERT INTO t_contract VALUES (?, ?, ?, ?, ?, ?, ?, ?)""", 
+        (contract_address, 'eth', block_from, block_to, first_block['blockNumber'], 
+        first_block['hash'], first_block['timeStamp'], first_block['from']))
+
+    connection.commit()
+    # tag
+    internal_tagging.append({"wallet": contract_address, "tag": "Contract Analysed"})
+    internal_tagging.append({"wallet": first_block['from'], "tag": "Contract Creator"})
+
+    # Source code
+    message = f"<strong>CREATE</strong> - Creating Table t_source_abi"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    sql_create_source_abi_table = """CREATE TABLE IF NOT EXISTS t_source_abi (
+                                     SourceCode text NOT NULL,
+                                     ABI text NOT NULL,
+                                     ContractName text NOT NULL,
+                                     CompilerVersion text NOT NULL,
+                                     OptimizationUsed text NOT NULL,
+                                     Runs text NOT NULL,
+                                     ConstructorArguments text NOT NULL,
+                                     EVMVersion text NOT NULL,
+                                     Library text NOT NULL,
+                                     LicenseType text NOT NULL,
+                                     Proxy text NOT NULL,
+                                     Implementation text NOT NULL,
+                                     SwarmSource text NOT NULL
+                                   );"""
+    cursor.execute(sql_create_source_abi_table)
+
+    message = f"<strong>COLLECT</strong> - Getting source code and ABI"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    url = f'{base_url}?chainid={chain_id}&module=contract&action=getsourcecode&address={contract_address}&apikey={key}'
+    response = requests.get(url)
+    json_obj_source_code = response.json()['result'][0]
+
+    message = f"<strong>STORE</strong> - Storing source code and ABI"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    cursor.execute("""INSERT INTO t_source_abi VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
+        (json_obj_source_code['SourceCode'],
+         json_obj_source_code['ABI'],
+         json_obj_source_code['ContractName'],
+         json_obj_source_code['CompilerVersion'],
+         json_obj_source_code['OptimizationUsed'],
+         json_obj_source_code['Runs'],
+         json_obj_source_code['ConstructorArguments'],
+         json_obj_source_code['EVMVersion'],
+         json_obj_source_code['Library'],
+         json_obj_source_code['LicenseType'],
+         json_obj_source_code['Proxy'],
+         json_obj_source_code['Implementation'],
+         json_obj_source_code['SwarmSource']))
+
+    connection.commit()
+    # connection.close()
+
+    # TODO: Implement in future
+    # get_circulating_supply_by_contract_address - Get circulating supply of token by its contract address
+    # async with BscScan(key) as client:
+    #     json_result = await client.get_circulating_supply_by_contract_address(
+    #             contract_address=contract_address,
+    #         )
+    # json_str_circ_supply = json.dumps(json_result)
+    # json_obj_circ_supply = json.loads(json_str_circ_supply)
+
+    # TODO: Implement in future
+    # get_total_supply_by_contract_address - Get circulating supply of token by its contract address
+    # async with BscScan(key) as client:
+    #     json_result = await client.get_total_supply_by_contract_address(
+    #             contract_address=contract_address,
+    #         )
+    # json_str_total_supply = json.dumps(json_result)
+    # json_obj_total_supply = json.loads(json_str_total_supply)
+
+    logger.info(" ")
+    logger.info("=====================================================")
+
+    message = f"<strong>COLLECT</strong> - Collecting Contract transactions..."
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    logger.info("=====================================================")
+    message = f"<strong>CREATE</strong> - Creating Table t_transactions"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    sql_create_transactions_table = """CREATE TABLE IF NOT EXISTS t_transactions (
+                                       blockNumber integer NOT NULL,
+                                       timeStamp datetime NOT NULL,
+                                       hash text NOT NULL,
+                                       nonce integer NOT NULL,
+                                       blockHash text NOT NULL,
+                                       transactionIndex integer NOT NULL,
+                                       `from` text NOT NULL,
+                                       `to` text NOT NULL,
+                                       value integer NOT NULL,
+                                       gas integer NOT NULL,
+                                       gasPrice integer NOT NULL,
+                                       isError integer NOT NULL,
+                                       txreceipt_status integer NOT NULL,
+                                       input text NOT NULL,
+                                       contractAddress text NOT NULL,
+                                       cumulativeGasUsed integer NOT NULL,
+                                       gasUsed integer NOT NULL,
+                                       confirmations integer NOT NULL,
+                                       methodId text NOT NULL,
+                                       functionName text NOT NULL
+                                 );"""
+    connection.execute(sql_create_transactions_table)
+
+    # INFO: Get Transactions
+    message = f"<strong>GET</strong> - Getting Contract transactions"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    tic = time.perf_counter()
+
+    json_transactions = []
+    current_block = block_from
+    end_block = block_to
+
+    while int(current_block) < int(end_block):
+        params = {
+            "chainid": chain_id, "module": "account", "action": "txlist", "address": contract_address, "startblock": current_block,
+            "endblock": end_block, "page": 1, "offset": offset, "sort": "asc", "apikey": key,
+        }
+        response = requests.get(base_url, params=params)
+        data = response.json()
+
+        if data["status"] != "1":
+            if data["message"] == "No transactions found":
+                break
+            else:
+                raise Exception(f"Error fetching data: {data['message']} - {data['result']}")
+
+        data_batch = data["result"]
+        json_transactions.extend(data_batch)
+
+        message = f"<strong>GET</strong> -   Get {len(data_batch)} records"
+        logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+        data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+        yield f"data:{data}\n\n"
+
+        if len(data_batch) < offset:
+            break
+
+        current_block = int(data_batch[-1]["blockNumber"]) + 1
+
+    # INFO: Store Transactions
+    message = f"<strong>STORE</strong> - Storing Contract transactions"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    if json_transactions != []:
+        df_trx_store = pd.DataFrame(json_transactions)
+        # df_trx_store["blockChain"] = chain_id  # TODO: Change chain_id by blockchain name
+        # df_trx_store.to_sql("t_transactions", connection, if_exists="append", index=False, method=insert_with_ignore)
+        df_trx_store.to_sql("t_transactions", connection, if_exists="append", index=False)
+    toc = time.perf_counter()
+
+    message = f"<strong>STORE</strong> - {len(json_transactions)} Transactions...<strong>{toc - tic:0.4f}</strong> seconds"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": message, "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    logger.info(" ")
+    logger.info("=====================================================")
+
+    message = f"<strong>COLLECT</strong> - Collecting Contract transfers..."
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    logger.info("=====================================================")
+    message = f"<strong>CREATE</strong> - Creating Table t_transfers"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    sql_create_transfers_table = """CREATE TABLE IF NOT EXISTS t_transfers (
+                                       blockNumber integer NOT NULL,
+                                       timeStamp datetime NOT NULL,
+                                       hash text NOT NULL,
+                                       nonce integer NOT NULL,
+                                       blockHash text NOT NULL,
+                                       `from` text NOT NULL,
+                                       contractAddress text NOT NULL,
+                                       `to` text NOT NULL,
+                                       value integer NOT NULL,
+                                       tokenName text NOT NULL,
+                                       tokenSymbol text NOT NULL,
+                                       tokenDecimal integer NOT NULL,
+                                       transactionIndex integer NOT NULL,
+                                       gas integer NOT NULL,
+                                       gasPrice integer NOT NULL,
+                                       gasUsed integer NOT NULL,
+                                       cumulativeGasUsed integer NOT NULL,
+                                       input text NOT NULL,
+                                       confirmations integer NOT NULL
+                                 );"""
+    connection.execute(sql_create_transfers_table)
+
+    message = f"<strong>GET</strong> - Getting Contract transfers"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    tic = time.perf_counter()
+
+    json_transfers = []
+    current_block = block_from
+    end_block = block_to
+
+    while int(current_block) < int(end_block):
+        params = {
+            "chainid": chain_id, "module": "account", "action": "tokentx", "address": contract_address, "startblock": current_block,
+            "endblock": end_block, "page": 1, "offset": offset, "sort": "asc", "apikey": key,
+        }
+        response = requests.get(base_url, params=params)
+        data = response.json()
+
+        if data["status"] != "1":
+            if data["message"] == "No transactions found":
+                break
+            else:
+                raise Exception(f"Error fetching data: {data['message']} - {data['result']}")
+
+        data_batch = data["result"]
+        json_transfers.extend(data_batch)
+
+        message = f"<strong>GET</strong> -   Get {len(data_batch)} records"
+        logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+        data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+        yield f"data:{data}\n\n"
+
+        if len(data_batch) < offset:
+            break
+
+        current_block = int(data_batch[-1]["blockNumber"]) + 1
+
+    # INFO: Store Transfers
+    message = f"<strong>STORE</strong> - Storing Contract transfers"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    if json_transfers != []:
+        df_tra_store = pd.DataFrame(json_transfers)
+        df_tra_store.to_sql("t_transfers", connection, if_exists="append", index=False)
+    toc = time.perf_counter()
+
+    message = f"<strong>STORE</strong> - {len(json_transfers)} token transfers...<strong>{toc - tic:0.4f}</strong> seconds"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": message, "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    logger.info(" ")
+    logger.info("=====================================================")
+
+    message = f"<strong>COLLECT</strong> - Collecting Contract internal transfers..."
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    logger.info("=====================================================")
+    message = f"<strong>CREATE</strong> - Creating Table t_internals"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    sql_create_internals_table = """CREATE TABLE IF NOT EXISTS t_internals (
+                                       blockNumber integer NOT NULL,
+                                       timeStamp datetime NOT NULL,
+                                       hash text NOT NULL,
+                                       `from` text NOT NULL,
+                                       `to` text NOT NULL,
+                                       value integer NOT NULL,
+                                       contractAddress text NOT NULL,
+                                       input text NOT NULL,
+                                       type text NOT NULL,
+                                       gas integer NOT NULL,
+                                       gasUsed integer NOT NULL,
+                                       traceId integer NOT NULL,
+                                       isError integer NOT NULL,
+                                       errCode text NOT NULL
+                                 );"""
+    connection.execute(sql_create_internals_table)
+
+    message = f"<strong>GET</strong> - Getting Contract internals"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    tic = time.perf_counter()
+
+    json_internals = []
+    current_block = block_from
+    end_block = block_to
+
+    while int(current_block) < int(end_block):
+        params = {
+            "chainid": chain_id, "module": "account", "action": "txlistinternal", "address": contract_address, "startblock": current_block,
+            "endblock": end_block, "page": 1, "offset": offset, "sort": "asc", "apikey": key,
+        }
+        response = requests.get(base_url, params=params)
+        data = response.json()
+
+        if data["status"] != "1":
+            if data["message"] == "No transactions found":
+                break
+            else:
+                raise Exception(f"Error fetching data: {data['message']} - {data['result']}")
+
+        data_batch = data["result"]
+        json_internals.extend(data_batch)
+
+        message = f"<strong>GET</strong> -   Get {len(data_batch)} records"
+        logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+        data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+        yield f"data:{data}\n\n"
+
+
+        if len(data_batch) < offset:
+            break
+
+        current_block = int(data_batch[-1]["blockNumber"]) + 1
+
+    # INFO: Store Internals
+    message = f"<strong>STORE</strong> - Storing Contract internals"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    if json_internals != []:
+        df_tra_store = pd.DataFrame(json_internals)
+        df_tra_store.to_sql("t_internals", connection, if_exists="append", index=False)
+    toc = time.perf_counter()
+
+    message = f"<strong>STORE</strong> - {len(json_internals)} internals...<strong>{toc - tic:0.4f}</strong> seconds"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": message, "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    connection.commit()
+
+    # NOTE: Get info from wallet creator
+    # - First movement of wallet creator (Block and time)
+    # - Last movement of wallet creator (Block and time) 
+    # - Balance of all assets
+    # - Get Blocks info from contract creator (Refresh button)
+    #   - Contracts deployed
+    #   - TRXs
+    logger.info("=====================================================")
+
+    message = f"<strong>COLLECT</strong> - Collecting Creator data..."
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    logger.info("=====================================================")
+    message = f"<strong>CREATE</strong> - Creating Table t_contract_creator"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    sql_create_contract_table = """CREATE TABLE IF NOT EXISTS t_contract_creator (
+                                   wallet text NOT NULL,
+                                   block_from integer NOT NULL,
+                                   block_to text NOT NULL,
+                                   first_block integer NOT NULL,
+                                   first_date datetime NOT NULL,
+                                   first_hash text NOT NULL,
+                                   first_to text NOT NULL,
+                                   first_from text NOT NULL,
+                                   first_value integer NOT NULL,
+                                   first_input text NOT NULL,
+                                   first_func text NOT NULL,
+                                   last_block text NOT NULL,
+                                   last_date datetime NOT NULL,
+                                   last_hash text NOT NULL,
+                                   last_to text NOT NULL,
+                                   last_from text NOT NULL,
+                                   last_value integer NOT NULL,
+                                   last_input text NOT NULL,
+                                   last_func text NOT NULL
+                                 );"""
+    cursor.execute(sql_create_contract_table)
+
+    message = f"<strong>GET</strong> - Getting first block of contract creator"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    # TODO: The Funders trxs could be severals 
+    url = f'{base_url}?chainid={chain_id}&module=account&action=txlist&address={contract_creator}&startblock=0&endblock=99999999' + \
+        f'&page=1&offset=1&sort=asc&apikey={key}' 
+    response = requests.get(url)
+
+    first_block_creator = response.json()['result'][0]
+    # first_block_number = int(first_block_creator['blockNumber'])
+
+    # first_time = datetime.datetime.timestamp(first_block_creator['timeStamp'])
+    first_time = datetime.datetime.fromtimestamp(int(first_block_creator['timeStamp']))
+
+    # TODO: Do we need internals and ERC20? Answer is NOT because we need to find funder of contract deploy
+
+    # TODO: Handle error if page change and handle several blockchain explorers
+    url_home = "https://etherscan.io/address/" + contract_creator 
+    url_tokens = "https://etherscan.io/address-tokenpage?m=normal&a=" + contract_creator
+
+    # Home
+    scraper = cloudscraper.create_scraper()
+    r_home = scraper.get(url_home)
+
+    html_doc = BeautifulSoup(r_home.content, "html.parser")
+    div_card_body_container = html_doc.find_all('div', class_='card-body d-flex flex-column gap-5')
+    balance_container = div_card_body_container[0].find_all('div')
+
+    # Balances
+    balances = []
+    # balance = balance_container[1].find_all('div')
+    balance_eth = balance_container[1].text.split()[2]
+    balances.append(f"Balance : {balance_eth} ETH")
+
+    token_list = div_card_body_container[0].find_all('li', class_='nav-item list-custom-ERC20')
+    for i in token_list:
+        balances.append(i.text)
+    
+    # FIX: Remove last block code until _last_block_
+    # logger.info("Getting last block of contract creator")
+    # div_table_container = html_doc.find('div', id='transactions')
+    # table = div_table_container.find('table')
+    # tbody = table.find('tbody')
+    # td = tbody.tr.find_all('td')
+    # last_block_number = td[3].text
+    # last_time_trx = td[4].span.text
+    # last_from_trx = td[6].span.text
+    # try:
+    #     last_to_trx = td[8].span.a['href'].split("/")[-1]
+    # except Exception:
+    #     try: 
+    #         last_to_trx = td[8].a['href'].split("/")[-1]
+    #     except Exception:
+    #         last_to_trx = "N/A"
+    # last_value_trx = td[9].text
+
+    # url = f'{base_url}?chainid={chain_id}&module=account&action=txlist&address={contract_creator}' + \
+    #     f'&startblock={last_block_number}&endblock={last_block_number}' + \
+    #     f'&page=1&offset=1&sort=asc&apikey={key}'
+    # response = requests.get(url)
+
+    # last_block_creator = response.json()['result'][-1]
+    # last_time = datetime.datetime.fromtimestamp(int(last_block_creator['timeStamp']))
+    # FIX: _last_block_
+
+    message = f"<strong>STORE</strong> - Storing first block info of contract creator"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    cursor.execute("""INSERT INTO t_contract_creator VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", 
+        (contract_creator,
+         block_from,
+         block_to,
+         first_block_creator['blockNumber'],
+         first_time,
+         first_block_creator['hash'],
+         first_block_creator['to'],
+         first_block_creator['from'],
+         pyround.pyround(int(first_block_creator['value']) / 1e+18, 8),
+         first_block_creator['input'],
+         first_block_creator['functionName'],
+         "",
+         "",
+         "",
+         "",
+         "",
+         0,
+         "",
+         ""))
+
+    connection.commit()
+    
+    logger.info("=====================================================")
+
+    message = f"<strong>COLLECT</strong> - Collecting balance Creator data..."
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    logger.info("=====================================================")
+    message = f"<strong>CREATE</strong> - Creating Table t_balance"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    sql_create_balance_table = """CREATE TABLE IF NOT EXISTS t_balance (
+                                   id number NOT NULL,
+                                   balance text NOT NULL
+                                 );"""
+    cursor.execute(sql_create_balance_table)
+
+    message = f"<strong>STORE</strong> - Storing balances of contract creator"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    id = 0
+    for balance in balances:
+        # print(f"{balance} - {type(balance)}")
+        id += 1
+        cursor.execute("""INSERT INTO t_balance VALUES (?, ?)""", 
+            (id, balance))
+
+    connection.commit()
+
+    # TODO: Get the tags!!! TRX : 0xe5a4b28559a45c2d003831d4ac905842cea45df394b2eb85ad235bd96e5e443f
+
+    logger.info(" ")
+    logger.info("=====================================================")
+
+    message = f"<strong>COLLECT</strong> - Collecting Creator transactions..."
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    logger.info("=====================================================")
+    message = f"<strong>CREATE</strong> - Creating Table t_transactions_wallet"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    sql_create_tran_creator_table = """CREATE TABLE IF NOT EXISTS t_transactions_wallet (
+                                       blockNumber integer NOT NULL,
+                                       timeStamp datetime NOT NULL,
+                                       hash text NOT NULL,
+                                       nonce integer NOT NULL,
+                                       blockHash text NOT NULL,
+                                       transactionIndex integer NOT NULL,
+                                       `from` text NOT NULL,
+                                       `to` text NOT NULL,
+                                       value integer NOT NULL,
+                                       gas integer NOT NULL,
+                                       gasPrice integer NOT NULL,
+                                       isError integer NOT NULL,
+                                       txreceipt_status integer NOT NULL,
+                                       input text NOT NULL,
+                                       contractAddress text NOT NULL,
+                                       cumulativeGasUsed integer NOT NULL,
+                                       gasUsed integer NOT NULL,
+                                       confirmations integer NOT NULL,
+                                       methodId text NOT NULL,
+                                       functionName text NOT NULL
+                                 );"""
+    connection.execute(sql_create_tran_creator_table)
+
+    message = f"<strong>GET</strong> - Getting transactions of contract creator"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    tic = time.perf_counter()
+
+    json_trx_creator = []
+    current_block = block_from
+    end_block = block_to
+
+    while int(current_block) < int(end_block):
+        params = {
+            "chainid": chain_id, "module": "account", "action": "txlist", "address": contract_creator, "startblock": current_block,
+            "endblock": end_block, "page": 1, "offset": offset, "sort": "asc", "apikey": key,
+        }
+        response = requests.get(base_url, params=params)
+        data = response.json()
+
+        if data["status"] != "1":
+            if data["message"] == "No transactions found":
+                break
+            else:
+                raise Exception(f"Error fetching data: {data['message']} - {data['result']}")
+
+        data_batch = data["result"]
+        json_trx_creator.extend(data_batch)
+
+        message = f"<strong>GET</strong> -   Get {len(data_batch)} records"
+        logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+        data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+        yield f"data:{data}\n\n"
+
+        if len(data_batch) < offset:
+            break
+
+        current_block = int(data_batch[-1]["blockNumber"]) + 1
+
+    # INFO: Store Transactions creator
+    message = f"<strong>STORE</strong> - Storing transactions of creator"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    if json_trx_creator != []:
+        df_tra_store = pd.DataFrame(json_trx_creator)
+        df_tra_store.to_sql("t_transactions_wallet", connection, if_exists="append", index=False)
+    toc = time.perf_counter()
+
+    message = f"<strong>STORE</strong> - {len(json_trx_creator)} transactions creator...<strong>{toc - tic:0.4f}</strong> seconds"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": message, "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    logger.info(" ")
+    logger.info("=====================================================")
+
+    message = f"<strong>COLLECT</strong> - Collecting Creator transfers..."
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    logger.info("=====================================================")
+    message = f"<strong>CREATE</strong> - Creating Table t_transfers_wallet"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    sql_create_tra_creator_table = """CREATE TABLE IF NOT EXISTS t_transfers_wallet (
+                                      blockNumber integer NOT NULL,
+                                      timeStamp datetime NOT NULL,
+                                      hash text NOT NULL,
+                                      nonce integer NOT NULL,
+                                      blockHash text NOT NULL,
+                                      `from` text NOT NULL,
+                                      contractAddress text NOT NULL,
+                                      `to` text NOT NULL,
+                                      value integer NOT NULL,
+                                      tokenName text NOT NULL,
+                                      tokenSymbol text NOT NULL,
+                                      tokenDecimal integer NOT NULL,
+                                      transactionIndex integer NOT NULL,
+                                      gas integer NOT NULL,
+                                      gasPrice integer NOT NULL,
+                                      gasUsed integer NOT NULL,
+                                      cumulativeGasUsed integer NOT NULL,
+                                      input text NOT NULL,
+                                      confirmations integer NOT NULL
+                                 );"""
+    connection.execute(sql_create_tra_creator_table)
+
+    message = f"<strong>GET</strong> - Getting transfers of contract creator"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    tic = time.perf_counter()
+
+    json_tra_creator = []
+    current_block = block_from
+    end_block = block_to
+
+    while int(current_block) < int(end_block):
+        params = {
+            "chainid": chain_id, "module": "account", "action": "tokentx", "address": contract_creator, "startblock": current_block,
+            "endblock": end_block, "page": 1, "offset": offset, "sort": "asc", "apikey": key,
+        }
+        response = requests.get(base_url, params=params)
+        data = response.json()
+
+        if data["status"] != "1":
+            if data["message"] == "No transactions found":
+                break
+            else:
+                raise Exception(f"Error fetching data: {data['message']} - {data['result']}")
+
+        data_batch = data["result"]
+        json_tra_creator.extend(data_batch)
+
+        message = f"<strong>GET</strong> -   Get {len(data_batch)} records"
+        logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+        data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+        yield f"data:{data}\n\n"
+
+        if len(data_batch) < offset:
+            break
+
+        current_block = int(data_batch[-1]["blockNumber"]) + 1
+
+    # INFO: Store Transfers creator
+    message = f"<strong>STORE</strong> - Storing transfers of creator"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    if json_tra_creator != []:
+        df_tra_store = pd.DataFrame(json_tra_creator)
+        df_tra_store.to_sql("t_transfers_wallet", connection, if_exists="append", index=False)
+    toc = time.perf_counter()
+
+    message = f"<strong>STORE</strong> - {len(json_tra_creator)} transfers creator...<strong>{toc - tic:0.4f}</strong> seconds"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": message, "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    logger.info(" ")
+    logger.info("=====================================================")
+
+    message = f"<strong>COLLECT</strong> - Collecting Creator internal transfers..."
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    logger.info("=====================================================")
+    message = f"<strong>CREATE</strong> - Creating Table t_internals_wallet"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    sql_create_int_creator_table = """CREATE TABLE IF NOT EXISTS t_internals_wallet (
+                                      blockNumber integer NOT NULL,
+                                      timeStamp datetime NOT NULL,
+                                      hash text NOT NULL,
+                                      `from` text NOT NULL,
+                                      `to` text NOT NULL,
+                                      value integer NOT NULL,
+                                      contractAddress text NOT NULL,
+                                      input text NOT NULL,
+                                      type text NOT NULL,
+                                      gas integer NOT NULL,
+                                      gasUsed integer NOT NULL,
+                                      traceId integer NOT NULL,
+                                      isError integer NOT NULL,
+                                      errCode text NOT NULL
+                                 );"""
+    connection.execute(sql_create_int_creator_table)
+
+    message = f"<strong>GET</strong> - Getting internals of contract creator"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    tic = time.perf_counter()
+
+    json_int_creator = []
+    current_block = block_from
+    end_block = block_to
+
+    while int(current_block) < int(end_block):
+        params = {
+            "chainid": chain_id, "module": "account", "action": "txlistinternal", "address": contract_creator, "startblock": current_block,
+            "endblock": end_block, "page": 1, "offset": offset, "sort": "asc", "apikey": key,
+        }
+        response = requests.get(base_url, params=params)
+        data = response.json()
+
+        if data["status"] != "1":
+            if data["message"] == "No transactions found":
+                break
+            else:
+                raise Exception(f"Error fetching data: {data['message']} - {data['result']}")
+
+        data_batch = data["result"]
+        json_int_creator.extend(data_batch)
+
+        message = f"<strong>GET</strong> -   Get {len(data_batch)} records"
+        logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+        data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+        yield f"data:{data}\n\n"
+
+        if len(data_batch) < offset:
+            break
+
+        current_block = int(data_batch[-1]["blockNumber"]) + 1
+
+    # INFO: Store Internals creator
+    message = f"<strong>STORE</strong> - Storing internals of creator"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    if json_int_creator != []:
+        df_tra_store = pd.DataFrame(json_int_creator)
+        df_tra_store.to_sql("t_internals_wallet", connection, if_exists="append", index=False)
+    toc = time.perf_counter()
+
+    message = f"<strong>STORE</strong> - {len(json_int_creator)} internals creator...<strong>{toc - tic:0.4f}</strong> seconds"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": message, "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    connection.commit()
+
+    # TODO: Need refactor to _refactor_
+
+    # tags - Transactions - other contract created
+    query = f"SELECT DISTINCT(contractAddress) from t_transactions_wallet WHERE `to` = ''"
+    cursor.execute(query)
+    contracts = cursor.fetchall()
+    for c in contracts:
+        if not any(w.get("wallet") == c[0] for w in internal_tagging):
+            internal_tagging.append({"wallet": c[0], "tag": "Contract Created"})
+
+    # tags - Transactions creator
+    query = f"SELECT DISTINCT(`to`) from t_transactions_wallet WHERE (input != '' AND input != '0x') AND `to` != ''"
+    cursor.execute(query)
+    contracts = cursor.fetchall()
+    for c in contracts:
+        if not any(w.get("wallet") == c[0] for w in internal_tagging):
+            internal_tagging.append({"wallet": c[0], "tag": "Contract"})
+
+    # tags - Transactions creator
+    query = f"SELECT DISTINCT(contractAddress) from t_transactions_wallet"
+    cursor.execute(query)
+    contracts = cursor.fetchall()
+    for c in contracts:
+        if not any(w.get("wallet") == c[0] for w in internal_tagging):
+            internal_tagging.append({"wallet": c[0], "tag": "Contract"})
+
+    # tags - Internals creator
+    query = f"SELECT DISTINCT(`to`) from t_internals_wallet WHERE (input != '' AND input != '0x') AND `to` != ''"
+    cursor.execute(query)
+    contracts = cursor.fetchall()
+    for c in contracts:
+        if not any(w.get("wallet") == c[0] for w in internal_tagging):
+            internal_tagging.append({"wallet": c[0], "tag": "Contract"})
+
+    # tags - Internals creator
+    query = f"SELECT DISTINCT(contractAddress) from t_internals_wallet"
+    cursor.execute(query)
+    contracts = cursor.fetchall()
+    for c in contracts:
+        if not any(w.get("wallet") == c[0] for w in internal_tagging):
+            internal_tagging.append({"wallet": c[0], "tag": "Contract"})
+
+    # TODO: Confirm which this isn't necessary
+    # # tags - Transfers creator
+    # query = f"SELECT DISTINCT(`to`) from t_transfers_wallet WHERE (input != '' AND input != '0x') AND `to` != ''"
+    # cursor.execute(query)
+    # contracts = cursor.fetchall()
+    # for c in contracts:
+    #     if not any(w.get("wallet") == c[0] for w in internal_tagging):
+    #         internal_tagging.append({"wallet": c[0], "tag": "Contract"})
+
+    # tags - Transfers creator
+    query = f"SELECT DISTINCT(contractAddress) from t_transfers_wallet"
+    cursor.execute(query)
+    contracts = cursor.fetchall()
+    for c in contracts:
+        if not any(w.get("wallet") == c[0] for w in internal_tagging):
+            internal_tagging.append({"wallet": c[0], "tag": "Contract"})
+
+    # tags - Transactions
+    query = f"SELECT DISTINCT(contractAddress) from t_transactions"
+    cursor.execute(query)
+    contracts = cursor.fetchall()
+    for c in contracts:
+        if not any(w.get("wallet") == c[0] for w in internal_tagging):
+            internal_tagging.append({"wallet": c[0], "tag": "Contract"})
+
+    # tags - Internals
+    query = f"SELECT DISTINCT(contractAddress) from t_internals"
+    cursor.execute(query)
+    contracts = cursor.fetchall()
+    for c in contracts:
+        if not any(w.get("wallet") == c[0] for w in internal_tagging):
+            internal_tagging.append({"wallet": c[0], "tag": "Contract"})
+
+    # tags - Transfers
+    query = f"SELECT DISTINCT(contractAddress) from t_transfers"
+    cursor.execute(query)
+    contracts = cursor.fetchall()
+    for c in contracts:
+        if not any(w.get("wallet") == c[0] for w in internal_tagging):
+            internal_tagging.append({"wallet": c[0], "tag": "Contract"})
+
+    # TODO: _refactor_
+
+    # Get another contracts created by creator
+    contracts = ""
+    contracts_list = []
+    idx = 1
+    for t in internal_tagging:
+        if (idx % 5 == 0):
+            contracts_list.append(contracts)
+            contracts = ""
+        if (t['tag'] == 'Contract'):
+            idx = idx + 1
+            contracts = contracts + t['wallet'] + ','
+    contracts_list.append(contracts)
+
+    for l in contracts_list:
+        url = f'{base_url}?chainid={chain_id}&module=contract&action=getcontractcreation&contractaddresses=' + l[:-1] + \
+           '&apikey=' + key
+        response = requests.get(url)
+
+        for r in response.json()['result']:
+            if (r['contractCreator'] == contract_creator):
+                internal_tagging = [{**t, **{'tag': 'Contract Created'}} if t['wallet'] == r['contractAddress'] else t for t in internal_tagging]
+
+    message = f"<strong>STORE</strong> - Storing tags"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    for t in internal_tagging:
+        if (t['wallet'] != ''):
+            cursor.execute("""INSERT INTO t_tagging VALUES (?, ?)""", 
+                (str(t['wallet']), str(t['tag'])))
+
+    connection.commit()
+    connection.close()
+
+    filename = os.path.basename(filedb)
+    message = f"<strong>PROCESS</strong> - Processing file...{filename}"
+    logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+    # data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {"wallet_detail": wallet_detail}})
+    data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+    # FIX: Determine Blockchain 
+    if (int(chain_id) == 1): 
+        message = f"<strong>PROCESS</strong> - Blockchain ETHEREUM..."
+        logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+        # data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {"wallet_detail": wallet_detail}})
+        data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+        yield f"data:{data}\n\n"
+        eth.eth_db_process(filedb)
+    elif (int(chain_id) == 56):
+        message = f"<strong>PROCESS</strong> - Blockchain BINANCE SMART CHAIN..."
+        logger.info(message.replace("<strong>", "").replace("</strong>", ""))
+        # data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {"wallet_detail": wallet_detail}})
+        data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
+        yield f"data:{data}\n\n"
+        bsc.bsc_db_process(filedb)
+    else:
+        message = f"<strong style='color: red'>ERRAR</strong> - Chain ID {chain_id} not supported"
+        logger.info(message.replace("<strong style='color: red'>", "").replace("</strong>", ""))
+        data = json.dumps({"msg": f"{message}", "end": True, "error": True, "content": {}})
+        yield f"data:{data}\n\n"
+
+    message = "<strong>END PROCESS</strong>"
+    logger.error(message.replace("<strong>", "").replace("</strong>", ""))
+    data = json.dumps({"msg": f"{message}", "end": True, "error": False, "content": {}})
+    yield f"data:{data}\n\n"
+
+
 def event_stream_data_file(file):
     # NOTE: Config Log Level
     log_format = "%(asctime)s %(name)s %(lineno)d %(levelname)s %(message)s"
-    # coloredlogs.install(level=params["config"]["level"], fmt=log_format, logger=logger)
     coloredlogs.install(level="DEBUG", fmt=log_format, logger=logger)
     logger.propagate = False  # NOTE: To prevent duplicates with flask
 
