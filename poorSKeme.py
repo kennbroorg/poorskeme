@@ -32,9 +32,10 @@ __email__ = "kennbro <at> protonmail <dot> com"
 __status__ = "Development"
 
 
-def flaskServer(ip='127.0.0.1', port=5000, file=None):
+def flaskServer(ip='127.0.0.1', port=5000, file=None, key=None):
     app = create_application()
     app.config['file'] = file
+    app.config['key'] = key
     logger.info("Flask serving...")
     app.run(port=port, debug=True, host=ip, use_reloader=False)
 
@@ -108,16 +109,17 @@ $$ |      \$$$$$$  |\$$$$$$  |$$ |            \$$$$$$  |$$ | \$$\\\$$$$$$$\ $$ |
 
     # args = parser.parse_args()
 
-    # # Read config and keys
-    # with open(r'./API.yaml') as file:
-    #     key = yaml.load(file, Loader=yaml.FullLoader)
+    # Read config and keys
+    with open(r'./API.yaml') as file:
+        key = yaml.load(file, Loader=yaml.FullLoader)
 
-    # coloredlogs.install(level='INFO')
-    # try:
-    #     coloredlogs.install(level=key['level'])
-    # except Exception:
-    #     logger.error("The level parameter is worng, set to INFO by default")
-    #     coloredlogs.install(level='INFO')
+    # INFO: Define loglevel
+    log_format = '%(asctime)s %(name)s %(lineno)d %(levelname)s %(message)s'
+    try:
+        coloredlogs.install(level=key['level'], fmt=log_format, logger=logger)
+    except Exception:
+        logger.error("The level parameter is worng, set to INFO by default")
+        coloredlogs.install(level='INFO', fmt=log_format, logger=logger)
 
     # # Validations
     # if (args.contract):
@@ -189,7 +191,7 @@ $$ |      \$$$$$$  |\$$$$$$  |$$ |            \$$$$$$  |$$ | \$$\\\$$$$$$$\ $$ |
     # else:
     #     filename = filedb
     
-    kwargs_flask = {"ip": "127.0.0.1", "port": 5000}
+    kwargs_flask = {"ip": "127.0.0.1", "port": 5000, "key": key['ethscan']}
     # kwargs_flask = {"ip": "127.0.0.1", "port": 5000, "file": filename}
     flask_proc = multiprocessing.Process(name='flask',
                                             target=flaskServer,
