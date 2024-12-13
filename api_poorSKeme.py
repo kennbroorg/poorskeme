@@ -3,7 +3,7 @@
 
 from flask import Flask, current_app, request, Response
 from flask_cors import CORS
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, send_file
 
 import os
 import uuid
@@ -641,7 +641,7 @@ def r_trans_creator():
     stat_con = len(json_tags) - stat_coo
 
     # Transations
-    df_creator = pd.read_sql_query("SELECT `from` || '-t' AS 'from', `to` || '-t' AS 'to', sum(value / 1e18) as sum_value, count(value) as qty FROM t_transactions_wallet GROUP BY 1, 2", connection)
+    df_creator = pd.read_sql_query("SELECT `from` || '-t' AS 'from', `to` || '-t' AS 'to', sum(value / 1e18) as sum_value, count(value) as qty FROM t_transactions_creator GROUP BY 1, 2", connection)
     # print("= TRANSACTIONS =============================================================")
     # print(df_creator.head(20))
     for i in df_creator.index: 
@@ -712,7 +712,7 @@ def r_trans_creator():
         links.append({"source": df_creator["from"][i], "target": df_creator["to"][i], "value": float(df_creator["sum_value"][i]), "qty": int(df_creator["qty"][i])})
 
     # Internals
-    df_creator = pd.read_sql_query("SELECT `from` || '-i' AS 'from', `to` || '-i' AS 'to', sum(value / 1e18) as sum_value, count(value) as qty FROM t_internals_wallet GROUP BY 1, 2", connection)
+    df_creator = pd.read_sql_query("SELECT `from` || '-i' AS 'from', `to` || '-i' AS 'to', sum(value / 1e18) as sum_value, count(value) as qty FROM t_internals_creator GROUP BY 1, 2", connection)
     # print("= INTERNALS ================================================================")
     # print(df_creator.head(20))
     for i in df_creator.index: 
@@ -781,7 +781,7 @@ def r_trans_creator():
         links.append({"source": df_creator["from"][i], "target": df_creator["to"][i], "value": float(df_creator["sum_value"][i]), "qty": int(df_creator["qty"][i])})
 
     # BEP20 - ERC20 - Tokens
-    df_creator = pd.read_sql_query("SELECT `from` || tokenSymbol AS 'from', `to` || tokenSymbol AS 'to', tokenSymbol, tokenName, sum(value / 1e18) as sum_value, count(value) as qty FROM t_transfers_wallet GROUP BY 1, 2", connection)
+    df_creator = pd.read_sql_query("SELECT `from` || tokenSymbol AS 'from', `to` || tokenSymbol AS 'to', tokenSymbol, tokenName, sum(value / 1e18) as sum_value, count(value) as qty FROM t_transfers_creator GROUP BY 1, 2", connection)
     # print("= BEP 20 ===================================================================")
     # print(df_creator.head(20))
     for i in df_creator.index: 
@@ -922,9 +922,15 @@ def r_get_data_process():
     file_path = os.path.join(temp_dir, filename)
     current_app.config['file'] = file_path
 
-    print(f"Collect - {filename} - {network} - {caddress}")
-    print(current_app.config)
     key = current_app.config['key']
 
     return Response(bchain.data_db_collect_event(network, caddress, key, file_path, bfrom, bto), mimetype='text/event-stream')
 
+
+################################################
+# Collect data
+################################################
+@home.route('/download_db')
+def download_investigation():
+    file_path = current_app.config['file']
+    return send_file(file_path, as_attachment=True)
