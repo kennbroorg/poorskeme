@@ -42,8 +42,10 @@ import { TransfersComponent } from './transfers/transfers.component';
 import { AnomaliesComponent } from './anomalies/anomalies.component';
 import { TransfersDetailsComponent } from './transfers-details/transfers-details.component';
 import { CreatorComponent } from './creator/creator.component';
+import { LogsComponent } from './contract-log/logs.component';
 
 import { WindowService } from './service/windows.service';
+import { UpdateService } from './service/update.service';
 
 @NgModule({
   declarations: [
@@ -63,6 +65,7 @@ import { WindowService } from './service/windows.service';
     TrxDetailsComponent,
     AnomaliesComponent,
     CreatorComponent,
+    LogsComponent,
   ],
   imports: [
     BrowserModule,
@@ -92,6 +95,7 @@ import { WindowService } from './service/windows.service';
   ],
   providers: [
     WindowService,
+    UpdateService,
     {
       provide: HIGHLIGHT_OPTIONS,
       useValue: <HighlightOptions>{

@@ -87,86 +87,85 @@
           <nb-tab tabTitle="Collect">
             <!-- <app-contract-collect [data]="contract" *ngIf="contract"></app-contract-collect> -->
             <!-- <app-contract-collect (onProcess)="handleProc($event)" [subject]="subject"></app-contract-collect> -->
-            <app-contract-collect (onProcess)="handleProc($event)"></app-contract-collect>
+            <!-- <app-contract-collect (onProcess)="handleProc($event)"></app-contract-collect> -->
+            <app-contract-collect></app-contract-collect>
           </nb-tab>
 
 
           <!-- TAB3 -->
-          <nb-tab tabTitle="Resume" *ngIf="contract">
-            <!-- <app-contract-resume [data]="contract" *ngIf="contract"></app-contract-resume> -->
-            <app-contract-resume [data]="contract"></app-contract-resume>
-          </nb-tab>
+          <!-- <nb-tab tabTitle="Resume" *ngIf="contract"> -->
+          <!--   <app-contract-resume [data]="contract"></app-contract-resume> -->
+          <!-- </nb-tab> -->
 
 
           <!-- TAB4 -->
-          <nb-tab tabTitle="Detail" *ngIf="contract">
-            <app-contract-detail [data]="contract"></app-contract-detail>
-          </nb-tab>
+          <!-- <nb-tab tabTitle="Detail" *ngIf="contract"> -->
+          <!--   <app-contract-detail [data]="contract"></app-contract-detail> -->
+          <!-- </nb-tab> -->
 
 
           <!-- TAB5 -->
-          <nb-tab tabTitle="Code" *ngIf="contract">
-            <app-contract-code [data]="contract"></app-contract-code>
-          </nb-tab>
+          <!-- <nb-tab tabTitle="Code" *ngIf="contract"> -->
+          <!--   <app-contract-code [data]="contract"></app-contract-code> -->
+          <!-- </nb-tab> -->
 
 
           <!-- TAB6 -->
-          <nb-tab tabTitle="Diagram" *ngIf="contract">
-              <app-diagram [data]="contract"></app-diagram>
-          </nb-tab>
+          <!-- <nb-tab tabTitle="Diagram" *ngIf="contract"> -->
+          <!--     <app-diagram [data]="contract"></app-diagram> -->
+          <!-- </nb-tab> -->
 
 
           <!-- TAB7 -->
-          <nb-tab tabTitle="Distribution" *ngIf="contract">
-            <div class="row">
-                <div class="col-md-6">
-                    <app-transfers (onInfo)="handleInfo($event)" [w]="width" [h]="height"></app-transfers>
-                </div>
+          <!-- <nb-tab tabTitle="Distribution" *ngIf="contract"> -->
+          <!--   <div class="row"> -->
+          <!--       <div class="col-md-6"> -->
+          <!--           <app-transfers (onInfo)="handleInfo($event)" [w]="width" [h]="height"></app-transfers> -->
+          <!--       </div> -->
 
-                <div class="col-md-6">
-                    <!-- <app-transfers-details [subject]="subject" [h]="height"></app-transfers-details> -->
-                    <app-transfers-details (onTrx)="handleTrx($event)" [subject]="subject" [h]="height" mod="distribution">
-                    </app-transfers-details>
-                </div>
-            </div>
-          </nb-tab>
+          <!--       <div class="col-md-6"> -->
+          <!--           <app-transfers-details (onTrx)="handleTrx($event)" [subject]="subject" [h]="height" mod="distribution"> -->
+          <!--           </app-transfers-details> -->
+          <!--       </div> -->
+          <!--   </div> -->
+          <!-- </nb-tab> -->
 
 
           <!-- TAB8 -->
           <!-- <nb-tab tabTitle="Transaction" active="{{setActiveTrx}}" id="addTab" name="addTab" #addTab> -->
-          <nb-tab tabTitle="Transaction" id="trxTab" name="trxTab" #trxTab *ngIf="contract">
-            <div class="row">
-                <div class="col-md-12">
-                    <app-trx-details [trx]="trx" ></app-trx-details>
-                </div>
-            </div>
-          </nb-tab>
+
+          <!-- <nb-tab tabTitle="Transaction" id="trxTab" name="trxTab" #trxTab *ngIf="contract"> -->
+          <!--   <div class="row"> -->
+          <!--       <div class="col-md-12"> -->
+          <!--           <app-trx-details [trx]="trx" ></app-trx-details> -->
+          <!--       </div> -->
+          <!--   </div> -->
+          <!-- </nb-tab> -->
 
 
           <!-- TAB9 -->
-          <nb-tab tabTitle="Anomalies" *ngIf="contract">
-            <div class="row">
-                <div class="col-md-6">
-                    <app-transfers-details (onTrx)="handleTrx($event)" [subject]="subject" [h]="height" mod="anomalies">
-                    </app-transfers-details>
-                </div>
+          <!-- <nb-tab tabTitle="Anomalies" *ngIf="contract"> -->
+          <!--   <div class="row"> -->
+          <!--       <div class="col-md-6"> -->
+          <!--           <app-transfers-details (onTrx)="handleTrx($event)" [subject]="subject" [h]="height" mod="anomalies"> -->
+          <!--           </app-transfers-details> -->
+          <!--       </div> -->
 
-                <div class="col-md-6">
-                    <app-anomalies (onInfo)="handleInfo($event)"></app-anomalies>
-                    <!-- <app-anomalies></app-anomalies> -->
-                </div>
-            </div>
-          </nb-tab>
+          <!--       <div class="col-md-6"> -->
+          <!--           <app-anomalies (onInfo)="handleInfo($event)"></app-anomalies> -->
+          <!--       </div> -->
+          <!--   </div> -->
+          <!-- </nb-tab> -->
 
 
           <!-- TAB10 -->
-          <nb-tab tabTitle="Creator" *ngIf="contract">
-            <div class="row">
-                <div class="col-md-12">
-                    <app-creator></app-creator>
-                </div>
-            </div>
-          </nb-tab>
+          <!-- <nb-tab tabTitle="Creator" *ngIf="contract"> -->
+          <!--   <div class="row"> -->
+          <!--       <div class="col-md-12"> -->
+          <!--           <app-creator></app-creator> -->
+          <!--       </div> -->
+          <!--   </div> -->
+          <!-- </nb-tab> -->
 
 
         </nb-tabset>

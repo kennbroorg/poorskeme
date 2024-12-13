@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 
 import { NbTabsetComponent, NbTabComponent } from '@nebular/theme/components/tabset/tabset.component';
 
+import { UpdateService } from './service/update.service';
 // import * as d3 from 'd3';
 
 @Component({
@@ -28,7 +29,7 @@ export class AppComponent {
 
   process: boolean = false;
 
-  constructor(private httpClient: HttpClient) {}
+  constructor(private httpClient: HttpClient, private updateService: UpdateService) {}
 
   ngOnInit(): void {
     this.subject.subscribe((text: string) => {
@@ -40,6 +41,24 @@ export class AppComponent {
     });
     this.proc.subscribe((text: string) => {
       console.log(`Received from child component: ${text}`);
+    });
+
+    // NOTE: New Update service
+    // this.updateService.update$.subscribe(() => {
+    this.updateService.update$.subscribe(valor => {
+      console.log('APP receive from collect :', valor);
+      if (valor == 'update') {
+        const url = "http://127.0.0.1:5000/contract"
+        this.httpClient
+          .get(url)
+          .subscribe(this.responseContract,
+                     err => console.error('Ops: ', err.message),
+                     () => console.log('Completed Contract Info'),
+          );
+      } else {
+        this.contract = null;
+
+      }
     });
 
     var h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
