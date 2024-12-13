@@ -4,6 +4,7 @@ import { NbGlobalLogicalPosition, NbGlobalPhysicalPosition, NbGlobalPosition, Nb
 import { FileUploadValidators } from '@iplab/ngx-file-upload';
 import { FormControl, FormGroup } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { UpdateService } from '../service/update.service';
 
 import { SSE } from '../sse/see.service';
 
@@ -26,6 +27,7 @@ export class ContractCollectComponent implements OnInit, AfterViewInit, OnChange
   log: boolean = true;
   logs: string[] = [];
   url: string = "http://127.0.0.1:5000/"
+  download: boolean = false;
 
   positions = NbGlobalLogicalPosition;
 
@@ -43,7 +45,7 @@ export class ContractCollectComponent implements OnInit, AfterViewInit, OnChange
       files: this.filesControl
   });
 
-  constructor(private http: HttpClient, private toastrService: NbToastrService, private sse: SSE) { }
+  constructor(private http: HttpClient, private toastrService: NbToastrService, private sse: SSE, private updateService: UpdateService) { }
 
   ngOnInit(): void {
     console.log(`Collect Process`);
@@ -102,8 +104,11 @@ export class ContractCollectComponent implements OnInit, AfterViewInit, OnChange
           network: network
         };
 
+        this.updateService.notifyProcess();
+        this.download = false;
         this.getFileInfo("get_data_process", data);
-        this.onProcess.emit('true');
+        // this.onProcess.emit('true');   // TODO: Remove
+
 
         // this.http.post('http://127.0.0.1:5000/get_data_process', data).subscribe(
         //   (response) => {
@@ -132,9 +137,10 @@ export class ContractCollectComponent implements OnInit, AfterViewInit, OnChange
               this.logs = [...this.logs, `<strong>UPLOAD</strong> - File uploaded successfully`];
 
               const file_id = resp['file_id'];
+              this.updateService.notifyProcess();
+              this.download = false;
               this.getFileInfo("file_process", { 'file_id': file_id });
-              this.onProcess.emit('true');
-
+              // this.onProcess.emit('true');  // TODO: Remove
             }
           },
           (error) => {
@@ -157,6 +163,8 @@ export class ContractCollectComponent implements OnInit, AfterViewInit, OnChange
         if (d['end'] == true) {
           this.logs = [...this.logs, d['msg']];
           this.sseSubscriptionGet.unsubscribe();
+          this.updateService.notifyUpdate();
+          this.download = true;
         } else {
           this.logs = [...this.logs, d['msg']];
           // if (d.hasOwnProperty('content')) {
@@ -167,4 +175,9 @@ export class ContractCollectComponent implements OnInit, AfterViewInit, OnChange
         }
       });
   }
+
+  downloadDB() {
+    window.location.href = this.url + '/download_db';
+  }
+
 }

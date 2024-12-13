@@ -23,9 +23,10 @@
     <nb-card style="height: 50vh;">
       <nb-card-body style="font-weight: 500; font-size: 20px;">
 
-        <ul #scrollableCard>
-          <li *ngFor="let line of logs"> <div [innerHTML]="line"></div></li>
-        </ul>
+        <!-- <ul #scrollableCard> -->
+        <!--   <li *ngFor="let line of logs"> <div [innerHTML]="line"></div></li> -->
+        <!-- </ul> -->
+        <contract-logs [data]="logs"></contract-logs>
 
         <div class="fixed-subtitle">Log</div>
       </nb-card-body>
@@ -51,10 +52,10 @@
                   <nb-select #network id="network" status="success" selected="1" size="small" style="padding: 0px; margin: auto; border: none;">
                     <nb-option value="1" style="background-color: rgba(0, 0, 0, 0); color: rgba(102, 201, 255, 0.8); font-weight: 400;">ethereum</nb-option>
                     <nb-option value="56" style="background-color: rgba(0, 0, 0, 0); color: rgba(102, 201, 255, 0.8); font-weight: 400;">binance</nb-option>
-                    <nb-option value="137" style="background-color: rgba(0, 0, 0, 0); color: rgba(102, 201, 255, 0.8); font-weight: 400;">polygon</nb-option>
-                    <nb-option value="1101" style="background-color: rgba(0, 0, 0, 0); color: rgba(102, 201, 255, 0.8); font-weight: 400;">zkEVM</nb-option>
                     <nb-option value="8453" style="background-color: rgba(0, 0, 0, 0); color: rgba(102, 201, 255, 0.8); font-weight: 400;">base</nb-option>
-                    <nb-option value="42161" style="background-color: rgba(0, 0, 0, 0); color: rgba(102, 201, 255, 0.8); font-weight: 400;">arbitrum</nb-option>
+                    <!-- <nb-option value="137" style="background-color: rgba(0, 0, 0, 0); color: rgba(102, 201, 255, 0.8); font-weight: 400;">polygon</nb-option> -->
+                    <!-- <nb-option value="1101" style="background-color: rgba(0, 0, 0, 0); color: rgba(102, 201, 255, 0.8); font-weight: 400;">zkEVM</nb-option> -->
+                    <!-- <nb-option value="42161" style="background-color: rgba(0, 0, 0, 0); color: rgba(102, 201, 255, 0.8); font-weight: 400;">arbitrum</nb-option> -->
                   </nb-select>
                 </div>
                 <div class="col-md-4 offset-md-1" style="margin-top: 20px;">
@@ -85,7 +86,14 @@
             </nb-accordion-item-body>
           </nb-accordion-item>
         </nb-accordion>
-        <button nbButton outline status="primary" class="proc" (click)="process(caddress.value, bfrom.value, bto.value, network.selected)">PROCESS</button>
+        <div class="row">
+          <div class="col-md-6">
+            <button nbButton outline status="primary" class="proc" (click)="process(caddress.value, bfrom.value, bto.value, network.selected)">PROCESS</button>
+          </div>
+          <div class="col-md-6">
+            <button nbButton outline status="primary" class="proc" [disabled]="!download" (click)="downloadDB()">DOWNLOAD</button>
+          </div>
+        </div>
       </nb-card-body>
     </nb-card>
 
