@@ -315,7 +315,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
     message = f"<strong class='normal'>DB</strong> - Creating db {filename}"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
-    yield f"data:{data}\n\n"
+    yield f"data:{data}\n\n" 
 
     connection = sqlite3.connect(filedb)
     cursor = connection.cursor()
@@ -330,13 +330,13 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
 
     logger.info("=====================================================")
 
-    message = f"<strong class='normal'>COLLECT</strong> - Collecting Contract data..."
+    message = "<strong class='normal'>COLLECT</strong> - Collecting Contract data..."
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
 
     logger.info("=====================================================")
-    message = f"<strong class='normal'>CREATE</strong> - Creating Table t_contract"
+    message = "<strong class='normal'>CREATE</strong> - Creating Table t_contract"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -356,7 +356,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
                                  );"""
     cursor.execute(sql_create_contract_table)
 
-    message = f"<strong class='normal'>GET</strong> - Getting first block"
+    message = "<strong class='normal'>GET</strong> - Getting first block"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -368,7 +368,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
     # NOTE: Validate API key
     if (response.json()['message'] == "NOTOK"):
         os.remove(filedb)
-        message = f"<strong class='error'>ERROR</strong> - Invalid API key"
+        message = "<strong class='error'>ERROR</strong> - Invalid API key"
         logger.error(message.replace("<strong class='error'>", "").replace("</strong>", ""))
         data = json.dumps({"msg": f"{message}", "end": True, "error": True, "content": {}})
         yield f"data:{data}\n\n"
@@ -378,7 +378,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
     implemented, blockchain, native, explorer = validate_blockchain(chain_id)
     if not implemented:
         os.remove(filedb)
-        message = f"<strong class='error'>ERROR</strong> - Blockchain not implemented"
+        message = "<strong class='error'>ERROR</strong> - Blockchain not implemented"
         logger.error(message.replace("<strong class='error'>", "").replace("</strong>", ""))
         data = json.dumps({"msg": f"{message}", "end": True, "error": True, "content": {}})
         yield f"data:{data}\n\n"
@@ -389,7 +389,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
     # NOTE: Validate if this is a contract
     if (first_block['to'] != ""):
         os.remove(filedb)
-        message = f"<strong class='error'>ERROR</strong> - The address is not a contract"
+        message = "<strong class='error'>ERROR</strong> - The address is not a contract"
         logger.error(message.replace("<strong class='error'>", "").replace("</strong>", ""))
         data = json.dumps({"msg": f"{message}", "end": True, "error": True, "content": {}})
         yield f"data:{data}\n\n"
@@ -399,7 +399,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
         block_from = int(first_block['blockNumber'])
     contract_creator = first_block['from']
 
-    message = f"<strong class='normal'>STORE</strong> - Storing first block"
+    message = "<strong class='normal'>STORE</strong> - Storing first block"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -414,7 +414,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
     internal_tagging.append({"wallet": first_block['from'], "tag": "Contract Creator"})
 
     # Source code
-    message = f"<strong class='normal'>CREATE</strong> - Creating Table t_source_abi"
+    message = "<strong class='normal'>CREATE</strong> - Creating Table t_source_abi"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -436,7 +436,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
                                    );"""
     cursor.execute(sql_create_source_abi_table)
 
-    message = f"<strong class='normal'>COLLECT</strong> - Getting source code and ABI"
+    message = "<strong class='normal'>COLLECT</strong> - Getting source code and ABI"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -459,7 +459,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
             else:
                 source_code += source_code_part
 
-    message = f"<strong class='normal'>STORE</strong> - Storing source code and ABI"
+    message = "<strong class='normal'>STORE</strong> - Storing source code and ABI"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -503,13 +503,13 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
     logger.info(" ")
     logger.info("=====================================================")
 
-    message = f"<strong class='normal'>COLLECT</strong> - Collecting Contract transactions..."
+    message = "<strong class='normal'>COLLECT</strong> - Collecting Contract transactions..."
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
 
     logger.info("=====================================================")
-    message = f"<strong class='normal'>CREATE</strong> - Creating Table t_transactions"
+    message = "<strong class='normal'>CREATE</strong> - Creating Table t_transactions"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -539,7 +539,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
     connection.execute(sql_create_transactions_table)
 
     # INFO: Get Transactions
-    message = f"<strong class='normal'>GET</strong> - Getting Contract transactions"
+    message = "<strong class='normal'>GET</strong> - Getting Contract transactions"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -562,7 +562,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
             if data["message"] == "No transactions found":
                 break
             elif "Timeout" in data['message']:
-                message = f"<strong class='normal'>TIMEOUT</strong> -   Waiting 5 seg"
+                message = "<strong class='normal'>TIMEOUT</strong> -   Waiting 5 seg"
                 logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
                 data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
                 yield f"data:{data}\n\n"
@@ -592,7 +592,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
         timeout = False
 
     # INFO: Store Transactions
-    message = f"<strong class='normal'>STORE</strong> - Storing Contract transactions"
+    message = "<strong class='normal'>STORE</strong> - Storing Contract transactions"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -612,13 +612,13 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
     logger.info(" ")
     logger.info("=====================================================")
 
-    message = f"<strong class='normal'>COLLECT</strong> - Collecting Contract transfers... (as contract)"
+    message = "<strong class='normal'>COLLECT</strong> - Collecting Contract transfers... (as contract)"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
 
     logger.info("=====================================================")
-    message = f"<strong class='normal'>CREATE</strong> - Creating Table t_transfers_as_contract"
+    message = "<strong class='normal'>CREATE</strong> - Creating Table t_transfers_as_contract"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -647,7 +647,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
     connection.execute(sql_create_transfers_table)
 
     # INFO: Get Transfers
-    message = f"<strong class='normal'>GET</strong> - Getting Contract transfers as contract"
+    message = "<strong class='normal'>GET</strong> - Getting Contract transfers as contract"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -672,7 +672,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
             if data["message"] == "No transactions found":
                 break
             elif "Timeout" in data['message']:
-                message = f"<strong class='normal'>TIMEOUT</strong> -   Waiting 5 seg"
+                message = "<strong class='normal'>TIMEOUT</strong> -   Waiting 5 seg"
                 logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
                 data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
                 yield f"data:{data}\n\n"
@@ -703,7 +703,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
         timeout = False
 
     # INFO: Store Transfers
-    message = f"<strong class='normal'>STORE</strong> - Storing Contract transfers as contract"
+    message = "<strong class='normal'>STORE</strong> - Storing Contract transfers as contract"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -721,13 +721,13 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
     logger.info(" ")
     logger.info("=====================================================")
 
-    message = f"<strong class='normal'>COLLECT</strong> - Collecting Contract transfers... (as wallet)"
+    message = "<strong class='normal'>COLLECT</strong> - Collecting Contract transfers... (as wallet)"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
 
     logger.info("=====================================================")
-    message = f"<strong class='normal'>CREATE</strong> - Creating Table t_transfers_as_wallet"
+    message = "<strong class='normal'>CREATE</strong> - Creating Table t_transfers_as_wallet"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -756,7 +756,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
     connection.execute(sql_create_transfers_table)
 
     # INFO: Get Transfers
-    message = f"<strong class='normal'>GET</strong> - Getting Contract transfers as wallet"
+    message = "<strong class='normal'>GET</strong> - Getting Contract transfers as wallet"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -781,7 +781,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
             if data["message"] == "No transactions found":
                 break
             elif "Timeout" in data['message']:
-                message = f"<strong class='normal'>TIMEOUT</strong> -   Waiting 5 seg"
+                message = "<strong class='normal'>TIMEOUT</strong> -   Waiting 5 seg"
                 logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
                 data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
                 yield f"data:{data}\n\n"
@@ -812,7 +812,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
         timeout = False
 
     # INFO: Store Transfers
-    message = f"<strong class='normal'>STORE</strong> - Storing Contract transfers as wallet"
+    message = "<strong class='normal'>STORE</strong> - Storing Contract transfers as wallet"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -830,13 +830,13 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
     logger.info(" ")
     logger.info("=====================================================")
 
-    message = f"<strong class='normal'>COLLECT</strong> - Collecting Contract nft... (as contract)"
+    message = "<strong class='normal'>COLLECT</strong> - Collecting Contract nft... (as contract)"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
 
     logger.info("=====================================================")
-    message = f"<strong class='normal'>CREATE</strong> - Creating Table t_nft_as_contract"
+    message = "<strong class='normal'>CREATE</strong> - Creating Table t_nft_as_contract"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -865,7 +865,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
     connection.execute(sql_create_transfers_table)
 
     # INFO: Get NFTs as contract
-    message = f"<strong class='normal'>GET</strong> - Getting Contract nft as contract"
+    message = "<strong class='normal'>GET</strong> - Getting Contract nft as contract"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -890,7 +890,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
             if data["message"] == "No transactions found":
                 break
             elif "Timeout" in data['message']:
-                message = f"<strong class='normal'>TIMEOUT</strong> -   Waiting 5 seg"
+                message = "<strong class='normal'>TIMEOUT</strong> -   Waiting 5 seg"
                 logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
                 data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
                 yield f"data:{data}\n\n"
@@ -921,7 +921,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
         timeout = False
 
     # INFO: Store NFTs as contract
-    message = f"<strong class='normal'>STORE</strong> - Storing Contract nft as contract"
+    message = "<strong class='normal'>STORE</strong> - Storing Contract nft as contract"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -939,13 +939,13 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
     logger.info(" ")
     logger.info("=====================================================")
 
-    message = f"<strong class='normal'>COLLECT</strong> - Collecting Contract nft... (as wallet)"
+    message = "<strong class='normal'>COLLECT</strong> - Collecting Contract nft... (as wallet)"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
 
     logger.info("=====================================================")
-    message = f"<strong class='normal'>CREATE</strong> - Creating Table t_nft_as_wallet"
+    message = "<strong class='normal'>CREATE</strong> - Creating Table t_nft_as_wallet"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -974,7 +974,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
     connection.execute(sql_create_transfers_table)
 
     # INFO: Get NFTs as wallet
-    message = f"<strong class='normal'>GET</strong> - Getting Contract nft as wallet"
+    message = "<strong class='normal'>GET</strong> - Getting Contract nft as wallet"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -999,7 +999,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
             if data["message"] == "No transactions found":
                 break
             elif "Timeout" in data['message']:
-                message = f"<strong class='normal'>TIMEOUT</strong> -   Waiting 5 seg"
+                message = "<strong class='normal'>TIMEOUT</strong> -   Waiting 5 seg"
                 logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
                 data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
                 yield f"data:{data}\n\n"
@@ -1030,7 +1030,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
         timeout = False
 
     # INFO: Store NFTs as wallet
-    message = f"<strong class='normal'>STORE</strong> - Storing Contract nft as wallet"
+    message = "<strong class='normal'>STORE</strong> - Storing Contract nft as wallet"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -1048,13 +1048,13 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
     logger.info(" ")
     logger.info("=====================================================")
 
-    message = f"<strong class='normal'>COLLECT</strong> - Collecting Contract multitoken... (as contract)"
+    message = "<strong class='normal'>COLLECT</strong> - Collecting Contract multitoken... (as contract)"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
 
     logger.info("=====================================================")
-    message = f"<strong class='normal'>CREATE</strong> - Creating Table t_multitoken_as_contract"
+    message = "<strong class='normal'>CREATE</strong> - Creating Table t_multitoken_as_contract"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -1083,7 +1083,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
     connection.execute(sql_create_transfers_table)
 
     # INFO: Get Multitoken as contract
-    message = f"<strong class='normal'>GET</strong> - Getting Contract multitoken as contract"
+    message = "<strong class='normal'>GET</strong> - Getting Contract multitoken as contract"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -1108,7 +1108,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
             if data["message"] == "No transactions found":
                 break
             elif "Timeout" in data['message']:
-                message = f"<strong class='normal'>TIMEOUT</strong> -   Waiting 5 seg"
+                message = "<strong class='normal'>TIMEOUT</strong> -   Waiting 5 seg"
                 logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
                 data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
                 yield f"data:{data}\n\n"
@@ -1139,7 +1139,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
         timeout = False
 
     # INFO: Store Multitoken as contract
-    message = f"<strong class='normal'>STORE</strong> - Storing Contract multitoken as contract"
+    message = "<strong class='normal'>STORE</strong> - Storing Contract multitoken as contract"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -1157,13 +1157,13 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
     logger.info(" ")
     logger.info("=====================================================")
 
-    message = f"<strong class='normal'>COLLECT</strong> - Collecting Contract Multitoken... (as wallet)"
+    message = "<strong class='normal'>COLLECT</strong> - Collecting Contract Multitoken... (as wallet)"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
 
     logger.info("=====================================================")
-    message = f"<strong class='normal'>CREATE</strong> - Creating Table t_multitoken_as_wallet"
+    message = "<strong class='normal'>CREATE</strong> - Creating Table t_multitoken_as_wallet"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -1192,7 +1192,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
     connection.execute(sql_create_transfers_table)
 
     # INFO: Get Multitoken as wallet
-    message = f"<strong class='normal'>GET</strong> - Getting Contract multitoken as wallet"
+    message = "<strong class='normal'>GET</strong> - Getting Contract multitoken as wallet"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -1217,7 +1217,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
             if data["message"] == "No transactions found":
                 break
             elif "Timeout" in data['message']:
-                message = f"<strong class='normal'>TIMEOUT</strong> -   Waiting 5 seg"
+                message = "<strong class='normal'>TIMEOUT</strong> -   Waiting 5 seg"
                 logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
                 data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
                 yield f"data:{data}\n\n"
@@ -1247,7 +1247,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
         timeout = False
 
     # INFO: Store Multitoken as wallet
-    message = f"<strong class='normal'>STORE</strong> - Storing Contract multitoken as wallet"
+    message = "<strong class='normal'>STORE</strong> - Storing Contract multitoken as wallet"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -1265,13 +1265,13 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
     logger.info(" ")
     logger.info("=====================================================")
 
-    message = f"<strong class='normal'>COLLECT</strong> - Collecting Contract internal transfers..."
+    message = "<strong class='normal'>COLLECT</strong> - Collecting Contract internal transfers..."
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
 
     logger.info("=====================================================")
-    message = f"<strong class='normal'>CREATE</strong> - Creating Table t_internals"
+    message = "<strong class='normal'>CREATE</strong> - Creating Table t_internals"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -1294,7 +1294,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
                                  );"""
     connection.execute(sql_create_internals_table)
 
-    message = f"<strong class='normal'>GET</strong> - Getting Contract internals"
+    message = "<strong class='normal'>GET</strong> - Getting Contract internals"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -1317,7 +1317,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
             if data["message"] == "No transactions found":
                 break
             elif "Timeout" in data['message']:
-                message = f"<strong class='normal'>TIMEOUT</strong> -   Waiting 5 seg"
+                message = "<strong class='normal'>TIMEOUT</strong> -   Waiting 5 seg"
                 logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
                 data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
                 yield f"data:{data}\n\n"
@@ -1363,7 +1363,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
         current_block = int(data_batch[-1]["blockNumber"]) + 1
 
     # INFO: Store Internals
-    message = f"<strong class='normal'>STORE</strong> - Storing Contract internals"
+    message = "<strong class='normal'>STORE</strong> - Storing Contract internals"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -1389,13 +1389,13 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
     #   - TRXs
     logger.info("=====================================================")
 
-    message = f"<strong class='normal'>COLLECT</strong> - Collecting Creator data..."
+    message = "<strong class='normal'>COLLECT</strong> - Collecting Creator data..."
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
 
     logger.info("=====================================================")
-    message = f"<strong class='normal'>CREATE</strong> - Creating Table t_contract_creator"
+    message = "<strong class='normal'>CREATE</strong> - Creating Table t_contract_creator"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -1423,7 +1423,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
                                  );"""
     cursor.execute(sql_create_contract_table)
 
-    message = f"<strong class='normal'>GET</strong> - Getting first block of contract creator"
+    message = "<strong class='normal'>GET</strong> - Getting first block of contract creator"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -1439,7 +1439,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
 
     balances = misc.get_balance(chain_id, native, explorer, contract_creator, key)    
 
-    message = f"<strong class='normal'>STORE</strong> - Storing first block info of contract creator"
+    message = "<strong class='normal'>STORE</strong> - Storing first block info of contract creator"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -1469,13 +1469,13 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
     
     logger.info("=====================================================")
 
-    message = f"<strong class='normal'>COLLECT</strong> - Collecting balance Creator data..."
+    message = "<strong class='normal'>COLLECT</strong> - Collecting balance Creator data..."
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
 
     logger.info("=====================================================")
-    message = f"<strong class='normal'>CREATE</strong> - Creating Table t_balance"
+    message = "<strong class='normal'>CREATE</strong> - Creating Table t_balance"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -1486,7 +1486,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
                                  );"""
     cursor.execute(sql_create_balance_table)
 
-    message = f"<strong class='normal'>STORE</strong> - Storing balances of contract creator"
+    message = "<strong class='normal'>STORE</strong> - Storing balances of contract creator"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -1505,13 +1505,13 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
     logger.info(" ")
     logger.info("=====================================================")
 
-    message = f"<strong class='normal'>COLLECT</strong> - Collecting Creator transactions..."
+    message = "<strong class='normal'>COLLECT</strong> - Collecting Creator transactions..."
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
 
     logger.info("=====================================================")
-    message = f"<strong class='normal'>CREATE</strong> - Creating Table t_transactions_creator"
+    message = "<strong class='normal'>CREATE</strong> - Creating Table t_transactions_creator"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -1540,7 +1540,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
                                  );"""
     connection.execute(sql_create_tran_creator_table)
 
-    message = f"<strong class='normal'>GET</strong> - Getting transactions of contract creator"
+    message = "<strong class='normal'>GET</strong> - Getting transactions of contract creator"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -1563,7 +1563,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
             if data["message"] == "No transactions found":
                 break
             elif "Timeout" in data['message']:
-                message = f"<strong class='normal'>TIMEOUT</strong> -   Waiting 5 seg"
+                message = "<strong class='normal'>TIMEOUT</strong> -   Waiting 5 seg"
                 logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
                 data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
                 yield f"data:{data}\n\n"
@@ -1594,7 +1594,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
         timeout = False
 
     # INFO: Store Transactions creator
-    message = f"<strong class='normal'>STORE</strong> - Storing transactions of creator"
+    message = "<strong class='normal'>STORE</strong> - Storing transactions of creator"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -1612,13 +1612,13 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
     logger.info(" ")
     logger.info("=====================================================")
 
-    message = f"<strong class='normal'>COLLECT</strong> - Collecting Creator transfers..."
+    message = "<strong class='normal'>COLLECT</strong> - Collecting Creator transfers..."
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
 
     logger.info("=====================================================")
-    message = f"<strong class='normal'>CREATE</strong> - Creating Table t_transfers_creator"
+    message = "<strong class='normal'>CREATE</strong> - Creating Table t_transfers_creator"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -1646,7 +1646,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
                                  );"""
     connection.execute(sql_create_tra_creator_table)
 
-    message = f"<strong class='normal'>GET</strong> - Getting transfers of contract creator"
+    message = "<strong class='normal'>GET</strong> - Getting transfers of contract creator"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -1669,7 +1669,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
             if data["message"] == "No transactions found":
                 break
             elif "Timeout" in data['message']:
-                message = f"<strong class='normal'>TIMEOUT</strong> -   Waiting 5 seg"
+                message = "<strong class='normal'>TIMEOUT</strong> -   Waiting 5 seg"
                 logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
                 data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
                 yield f"data:{data}\n\n"
@@ -1700,7 +1700,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
         timeout = False
 
     # INFO: Store Transfers creator
-    message = f"<strong class='normal'>STORE</strong> - Storing transfers of creator"
+    message = "<strong class='normal'>STORE</strong> - Storing transfers of creator"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -1718,13 +1718,13 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
     logger.info(" ")
     logger.info("=====================================================")
 
-    message = f"<strong class='normal'>COLLECT</strong> - Collecting Creator internal transfers..."
+    message = "<strong class='normal'>COLLECT</strong> - Collecting Creator internal transfers..."
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
 
     logger.info("=====================================================")
-    message = f"<strong class='normal'>CREATE</strong> - Creating Table t_internals_creator"
+    message = "<strong class='normal'>CREATE</strong> - Creating Table t_internals_creator"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -1747,7 +1747,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
                                  );"""
     connection.execute(sql_create_int_creator_table)
 
-    message = f"<strong class='normal'>GET</strong> - Getting internals of contract creator"
+    message = "<strong class='normal'>GET</strong> - Getting internals of contract creator"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -1770,7 +1770,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
             if data["message"] == "No transactions found":
                 break
             elif "Timeout" in data['message']:
-                message = f"<strong class='normal'>TIMEOUT</strong> -   Waiting 5 seg"
+                message = "<strong class='normal'>TIMEOUT</strong> -   Waiting 5 seg"
                 logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
                 data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
                 yield f"data:{data}\n\n"
@@ -1815,7 +1815,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
         current_block = int(data_batch[-1]["blockNumber"]) + 1
 
     # INFO: Store Internals creator
-    message = f"<strong class='normal'>STORE</strong> - Storing internals of creator"
+    message = "<strong class='normal'>STORE</strong> - Storing internals of creator"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -1948,7 +1948,7 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
                 if (r['contractCreator'] == contract_creator):
                     internal_tagging = [{**t, **{'tag': 'Contract Created'}} if t['wallet'] == r['contractAddress'] else t for t in internal_tagging]
 
-    message = f"<strong class='normal'>STORE</strong> - Storing tags"
+    message = "<strong class='normal'>STORE</strong> - Storing tags"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n"
@@ -2028,7 +2028,6 @@ def data_db_process(filename):
     classiffication = misc.classify_contract(contract_abi, json_str_source_code)
     print(f"Classification : {classiffication}")
 
-    exit()
     fallback = False
     fallback_function = ''
     fallback_code = ''
@@ -2074,7 +2073,6 @@ def data_db_process(filename):
     # df_i = pd.read_json('./tmp/internals.json')
     # df_l = pd.read_json('./tmp/logs.json')
     
-    __import__('pdb').set_trace()
     df_transaction = pd.read_sql_query("SELECT * FROM t_transactions ORDER BY timeStamp ASC", connection, parse_dates=['timeStamp'])
     df_tw = pd.read_sql_query("SELECT * FROM t_transfers_as_wallet ORDER BY timeStamp ASC", connection, parse_dates=['timeStamp'])
     df_tc = pd.read_sql_query("SELECT * FROM t_transfers_as_contract ORDER BY timeStamp ASC", connection, parse_dates=['timeStamp'])
@@ -2147,7 +2145,6 @@ def data_db_process(filename):
     # TODO : Determine decimal digits in base of range 
 
     # NOTE: Get token and volume
-    __import__('pdb').set_trace()
     if (native):
         token_name = contract['native']
         # volume = round(df_transaction['value'].sum() / 1e+18, 2) + round(df_i['value'].sum() / 1e+18, 2)
@@ -2156,11 +2153,12 @@ def data_db_process(filename):
         volume = round(volume / 1e+18, 2)
     else:
         # NOTE : Display another tokens
-        if contract_token:
+        if classiffication == "Token Creation Contract (ERC-20)":
             token = df_tc.groupby('tokenSymbol').agg({'value': ['sum','count']})
             token = token.sort_values(by=[('value','count')], ascending=False)  
             token_name = token.index[0]
             # volume = round(token.iloc[0,0] / 1e+18, 2)
+            # TODO: the volume in this place is Max Supply?
             volume = round(float(token.iloc[0,0] / 1e+18) / 2, 2)
         else:
             token = df_tw.groupby('tokenSymbol').agg({'value': ['sum','count']})
@@ -2244,7 +2242,6 @@ def data_db_process(filename):
         last_date = dftemp['timeStamp'].iloc[-1]  # TODO: When Liq == 0
 
     else:  # NOTE : Not native
-        __import__('pdb').set_trace()
         # TODO: Include to field
         unique_wallets = len(df_t['from'].unique())
         for i in df_t.index: 
