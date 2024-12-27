@@ -386,15 +386,6 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
 
     first_block = response.json()['result'][0]
 
-    # NOTE: Validate if this is a contract
-    if (first_block['to'] != ""):
-        os.remove(filedb)
-        message = "<strong class='error'>ERROR</strong> - The address is not a contract"
-        logger.error(message.replace("<strong class='error'>", "").replace("</strong>", ""))
-        data = json.dumps({"msg": f"{message}", "end": True, "error": True, "content": {}})
-        yield f"data:{data}\n\n"
-        raise RuntimeError(message.replace("<strong class='error'>", "").replace("</strong>", ""))
-
     if (block_from == 0):
         block_from = int(first_block['blockNumber'])
     contract_creator = first_block['from']
@@ -458,6 +449,15 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
                 source_code += source_code_part
             else:
                 source_code += source_code_part
+
+    # NOTE: Validate if this is a contract
+    if (source_code == ""):
+        os.remove(filedb)
+        message = "<strong class='error'>ERROR</strong> - The address is not a contract"
+        logger.error(message.replace("<strong class='error'>", "").replace("</strong>", ""))
+        data = json.dumps({"msg": f"{message}", "end": True, "error": True, "content": {}})
+        yield f"data:{data}\n\n"
+        raise RuntimeError(message.replace("<strong class='error'>", "").replace("</strong>", ""))
 
     message = "<strong class='normal'>STORE</strong> - Storing source code and ABI"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
@@ -2010,12 +2010,6 @@ def data_db_process(filename):
     column_names = [description[0] for description in cursor.description]
     contract = {column_names[i]: row[i] for i in range(len(column_names))}
 
-    with open('./tmp/contract.json', 'w') as outfile:
-        json.dump(contract, outfile)
-    toc = time.perf_counter()
-    logger.info(f"Get contract info in {toc - tic:0.4f} seconds")
-
-    tic = time.perf_counter()
     # NOTE: Search Fallback function
     cursor.execute("SELECT * FROM t_source_abi")
     row = cursor.fetchone()
@@ -2025,9 +2019,16 @@ def data_db_process(filename):
     contract_abi = source_code['ABI']
 
     # contract_token, erc = is_token_contract(contract_abi) 
-    classiffication = misc.classify_contract(contract_abi, json_str_source_code)
-    print(f"Classification : {classiffication}")
+    classification = misc.classify_contract(contract_abi, json_str_source_code)
+    logger.info(f"Classification : {classification}")
+    contract["classification"] = classification
 
+    with open('./tmp/contract.json', 'w') as outfile:
+        json.dump(contract, outfile)
+    toc = time.perf_counter()
+    logger.info(f"Get contract info in {toc - tic:0.4f} seconds")
+
+    tic = time.perf_counter()
     fallback = False
     fallback_function = ''
     fallback_code = ''
@@ -2094,9 +2095,9 @@ def data_db_process(filename):
     native = False
     if (df_i.size > df_tw.size + df_tc.size):
         native = True
-        logger.info(f"Detect NATIVE token")
+        logger.info("Detect NATIVE token")
     else: 
-        logger.info(f"Detect NOT NATIVE token")
+        logger.info("Detect NOT NATIVE token")
     # TODO: _refactor_
 
     # Get unified transaction-internals-transfers
@@ -2153,19 +2154,15 @@ def data_db_process(filename):
         volume = round(volume / 1e+18, 2)
     else:
         # NOTE : Display another tokens
-        if classiffication == "Token Creation Contract (ERC-20)":
+        if classification == "Token Creation Contract":
             token = df_tc.groupby('tokenSymbol').agg({'value': ['sum','count']})
             token = token.sort_values(by=[('value','count')], ascending=False)  
             token_name = token.index[0]
-            # volume = round(token.iloc[0,0] / 1e+18, 2)
-            # TODO: the volume in this place is Max Supply?
-            volume = round(float(token.iloc[0,0] / 1e+18) / 2, 2)
+            maxSupply = df_tc.iloc[0]['value']
         else:
             token = df_tw.groupby('tokenSymbol').agg({'value': ['sum','count']})
             token = token.sort_values(by=[('value','count')], ascending=False)  
             token_name = token.index[0]
-            # volume = round(token.iloc[0,0] / 1e+18, 2)
-            volume = round(float(token.iloc[0,0] / 1e+18) / 2, 2)
 
     # Liquidity and dates
     address_contract = contract["contract"].lower()
@@ -2194,6 +2191,7 @@ def data_db_process(filename):
         dftemp = dftemp.sort_values(["timeStamp"])
 
         unique_wallets = len(dftemp['from'].unique())
+        max_liq_date = dftemp["timeStamp"][0]  # NOTE: Initialization
 
         for i in dftemp.index: 
             value_raw = dftemp["value"][i]
@@ -2216,7 +2214,7 @@ def data_db_process(filename):
                     max_liq_raw = liq_raw
                     max_liq_date = dftemp["timeStamp"][i]
             else:
-                remain = remain + value
+                remain = remain + int(value_raw)
 
             if (day == ''):
                 # print(df_t.info())
@@ -2244,6 +2242,9 @@ def data_db_process(filename):
     else:  # NOTE : Not native
         # TODO: Include to field
         unique_wallets = len(df_t['from'].unique())
+
+        # TODO: In a Token creation contract, the max liquidity must be the max supply
+        max_liq_date = df_t["timeStamp"][0] # NOTE: Initialization
         for i in df_t.index: 
             if (df_t["tokenSymbol"][i] == token_name):
                 value_raw = df_t["value"][i]
@@ -2266,7 +2267,7 @@ def data_db_process(filename):
                         max_liq_raw = liq_raw
                         max_liq_date = df_t["timeStamp"][i]
                 else:
-                    remain = remain + value
+                    remain = remain + int(value_raw)
 
                 if (day == ''):
                     day = df_t['timeStamp'][i].strftime("%Y-%m-%d")
@@ -2314,7 +2315,8 @@ def data_db_process(filename):
         wallet = trx_total["wallet"][i]
 
         child = [{"name": "IN", 
-                  "size": round(trx_total["value_in"][i] / 1e+18, 2),
+                 "size": round(trx_total["value_in"][i] / 1e+18, 2),
+
                   "count": int(trx_total["count_in"][i])}]
         child.append({"name": "OUT", 
                       "size": round(trx_total["value_out"][i] / 1e+18, 2),
@@ -2372,7 +2374,7 @@ def data_db_process(filename):
             func_call = decoder.decode_function((i),)
             functions.append(func_call.name)
             arguments.append(str(func_call.arguments))
-        except:
+        except Exception:
             # HACK: Fallback
             if (source_code['fallback'] == "true"):
                 functions.append('fallback')
@@ -2394,7 +2396,13 @@ def data_db_process(filename):
     for i in funct_stats.index: 
         funct_stats_json.append({"name": str(i), "value": int(funct_stats[i])})
 
-    # FIX: max_liq_date
+    # Calculate volume
+    if (classification == "Token Creation Contract"):
+        volume = round(remain / 1e18, 2)
+        max_liq_raw = maxSupply
+    else:
+        volume = round(volume_raw / 1e18, 2)
+
     json_stats = {"contract": address_contract,
                   "fdate": first_date.strftime("%Y/%m/%d - %H:%M:%S"),
                   "ldate": last_date.strftime("%Y/%m/%d - %H:%M:%S"),
@@ -2403,7 +2411,7 @@ def data_db_process(filename):
                   "creator": contract_creator,
                   "max_liq": round(max_liq_raw / 1e18, 2),
                   "max_liq_date": max_liq_date.strftime("%Y/%m/%d - %H:%M:%S"),
-                  "volume": round(volume_raw / 1e18, 2),
+                  "volume": volume,
                   "wallets": unique_wallets,
                   "investments": investments,
                   "funct_stats": funct_stats_json,
