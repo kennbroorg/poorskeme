@@ -82,51 +82,51 @@ def implements_erc721(abi, source_code):
     if not required_functions.issubset(contract_functions):
         return False
 
-    # Comprobamos si existe la función supportsInterface
+    # The function supportsInterface is checked for existence
     supports_interface_present = any(
         (f.get("name") == "supportsInterface" and f.get("type") == "function") 
         for f in abi
     )
 
     if not supports_interface_present:
-        # Aunque no tenga supportsInterface, podría ser un ERC-721 incompleto.
-        # Si queremos ser estrictos, la ausencia de supportsInterface 
-        # indica que no cumple con ERC-165, y por ende no es un ERC-721 completo.
+        # Even if it has no supportsInterface, it could be an incomplete ERC-721.
+        # If we want to be strict, the absence of supportsInterface 
+        # indicates that it is not ERC-165 compliant, and therefore not a complete ERC-721.
         return False
     else:
-        # Si supportsInterface está presente, intentemos detectar si responde 
-        # apropiadamente a 0x80ac58cd. Como no podemos ejecutar el contrato, 
-        # buscaremos en el código fuente patrones que indiquen su soporte.
+        # If supportsInterface is present, let's try to detect if it responds 
+        # appropriately to 0x80ac58cd. Since we cannot execute the contract, 
+        # we will search the source code for patterns that indicate its support.
 
         sc_lower = source_code.lower()
-        # Patrón simple: buscar el literal '0x80ac58cd' en el código.
-        # También podríamos buscar patrones como:
+        # Simple pattern: look for the literal '0x80ac58cd' in the code.
+        # We could also look for patterns like:
         # `bytes4 private constant _INTERFACE_ID_ERC721 = 0x80ac58cd;`
-        # o chequeos condicionales que devuelvan true cuando se llama a supportsInterface(0x80ac58cd).
-        # Esto sigue siendo una heurística.
+        # or conditional checks that return true when supportsInterface(0x80ac58cd) is called.
+        # This is still a heuristic.
         if "0x80ac58cd" in sc_lower:
-            # Es un buen indicador, muchos contratos declaran esta constante.
-            # También podemos buscar líneas típicas: interfaceId == 0x80ac58cd
-            # o retornos directos. Por simplicidad, si encontramos la constante,
-            # asumimos cumplimiento.
+            # This is a good indicator, many contracts declare this constant.
+            # We can also look for typical lines: interfaceId == 0x80ac58cd
+            # or direct returns. For simplicity, if we find the constant,
+            # we assume compliance.
             return True
         else:
-            # No encontramos la constante directamente. 
-            # Muchos ERC-721 usan OpenZeppelin, que define:
+            # Constant is not found directly. 
+            # Many ERC-721s use OpenZeppelin, which defines:
             # `bytes4 private constant _INTERFACE_ID_ERC721 = 0x80ac58cd;`
-            # Si no la encontramos, es posible que el contrato la calcule de otra forma, 
-            # o sea ERC-721 sin declaración explícita (raro pero posible).
-            # Como segunda heurística, busquemos la interfaz ERC165 y una implementación genérica de supportsInterface.
-            # Esto es muy débil, pero sirve como ejemplo.
+            # If it is not found, it is possible that the contract calculates it in another way, 
+            # or ERC-721 without explicit declaration (rare but possible).
+            # As a second heuristic, the ERC165 interface and a generic implementation of supportsInterface are looked for.
+            # This is very weak, but serves as an example.
             
-            # Buscamos "supportsInterface" y "returns (bool)" en el mismo contexto:
+            # We search for “supportsInterface” and “returns (bool)” in the same context:
             if "supportsinterface(" in sc_lower and "returns (bool)" in sc_lower:
-                # Si llegamos aquí, no podemos estar seguros. 
-                # Dado que tiene todas las funciones y soporta supportsInterface,
-                # asumamos que es ERC-721.
+                # If you get here, you can't be sure. 
+                # Since it is full-featured and supportsInterface,
+                # it is assumed to be ERC-721.
                 return True
             else:
-                # No hay suficientes indicios de que soporte el interfaceId ERC-721.
+                # There is insufficient evidence that it supports the ERC-721 interfaceId.
                 return False
 
 
@@ -152,10 +152,10 @@ def heuristic_classification(source_code):
     # Auctions / Markets
     is_auction = any(k in sc_lower for k in ["auction", "bid(", "buy(", "sell(", "listing"])
     
-    # Patrones de gestión/transacción de tokens (sin ser creadores)
-    # Si vemos "transferFrom" pero no se cumplen las condiciones de ERC-20/721/1155
-    # podría ser un contrato que interactúa con tokens externos.
-    # Esta detección es débil, solo un ejemplo:
+    # Token management/transaction patterns (non-creator)
+    # If “transferFrom” is seen but ERC-20/721/1155 conditions are not met.
+    # could be a contract interacting with external tokens.
+    # This detection is weak, just an example:
     is_token_manager = "transferfrom(" in sc_lower
 
     if is_defi:
@@ -184,11 +184,11 @@ def classify_contract(abi_str, source):
         classification = heuristic_classification(source)
     # Standard classification
     elif implements_erc20(abi):
-        classification = "Token Creation Contract (ERC-20)"
+        classification = "Token Creation Contract"
     elif implements_erc721(abi, source):
-        classification = "Token Creation Contract (ERC-721)"
+        classification = "NFT Creation Contract"
     elif implements_erc1155(abi):
-        classification = "Token Creation Contract (ERC-1155)"
+        classification = "Multitoken Creation Contract"
     else:
         classification = heuristic_classification(source)
 
