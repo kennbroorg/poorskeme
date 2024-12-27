@@ -146,6 +146,9 @@ def r_contract():
                     'block_to': contract['block_to'], 
                     'first_block': contract['first_block'], 
                     'first_trx': contract['transaction_creation'], 
+                    'chainid': contract['chain_id'], 
+                    'blockchain': contract['blockchain'], 
+                    'classification': contract['classification'], 
                     'SourceCode': sc['SourceCode'], 
                     # 'abi': {"name": sc['ContractName'], "children": abi_total},
                     'abi': abi_org,
@@ -255,7 +258,7 @@ def r_transfers():
 
     transfers = ast.literal_eval(trans)
 
-    return transfers
+    return jsonify(transfers)
 
 
 ################################################
@@ -268,7 +271,7 @@ def r_anomalies():
     with open('tmp/anomalies.json', 'r') as f:
         anomalies = f.read()
     toc = time.perf_counter()
-    logger.info(f"Read bubble transfer file in {toc - tic:0.4f} seconds")
+    logger.info(f"Read anomalies transfer file in {toc - tic:0.4f} seconds")
 
     anomalies_json = ast.literal_eval(anomalies)
 
@@ -299,7 +302,9 @@ def r_result(address):
         df_t = df_t[df_t['value'] != 0]
     else:
         tic = time.perf_counter()
-        df_t = pd.read_json('tmp/transfers.json')
+        df_tc = pd.read_json('tmp/transfers_contract.json')
+        df_tw = pd.read_json('tmp/transfers_wallet.json')
+        df_t = pd.concat([df_tw, df_tc], ignore_index=True) # WARN: concat transfers
         toc = time.perf_counter()
         logger.info(f"Read transfers file in {toc - tic:0.4f} seconds")
 
@@ -308,17 +313,24 @@ def r_result(address):
     toc = time.perf_counter()
     logger.info(f"Read decoded functions file in {toc - tic:0.4f} seconds")
 
+    # print(f"ADDRESS: {address}")
     detail_from = df_t[df_t['from'] == address]
     from_sum = round(detail_from['value'].sum() / 1e+18, 2)
     from_count = len(detail_from)
+    # print(f"detail_from INFO\n{len(detail_from)}")
+    # print(f"detail_from HEAD\n{detail_from.head()}")
 
     detail_to = df_t[df_t['to'] == address]
     to_sum = round(detail_to['value'].sum() / 1e+18, 2)
     to_count = len(detail_to)
+    # print(f"detail_to INFO\n{len(detail_to)}")
+    # print(f"detail_to HEAD\n{detail_to.head()}")
 
     detail_total = pd.concat([detail_from, detail_to], axis=0)
     detail_total = detail_total.sort_values(["timeStamp"])
     # print(detail_total.info())
+    # print(f"detail_total INFO\n{len(detail_total)}")
+    # print(f"detail_total HEAD\n{detail_total.head()}")
 
     first_date = detail_total['timeStamp'].iloc[0]
     last_date = detail_total['timeStamp'].iloc[-1]
@@ -346,7 +358,8 @@ def r_result(address):
             trx_in_day = 0
             trx_out_day = 0
 
-        if (contract['contract'].lower() == detail_total['from'][i]):
+        # if (contract['contract'].lower() == detail_total['from'][i]):
+        if (address.lower() != detail_total['from'][i]):
             trx_in_day = trx_in_day + value
             trx_hash = detail_total['hash'][i]
             funct = (df_decoded[df_decoded['hash'] == trx_hash])
@@ -406,18 +419,6 @@ def r_trx(trx_hash):
     abi = ast.literal_eval(abi)
 
     logger.info(f"Read Source Code file in {toc - tic:0.4f} seconds")
-    # tic = time.perf_counter()
-    # df_transaction = pd.read_json('./tmp/transactions.json')
-    # toc = time.perf_counter()
-    # logger.info(f"Read transfers file in {toc - tic:0.4f} seconds")
-    # tic = time.perf_counter()
-    # df_i = pd.read_json('./tmp/internals.json')
-    # toc = time.perf_counter()
-    # logger.info(f"Read transfers file in {toc - tic:0.4f} seconds")
-    # tic = time.perf_counter()
-    # df_t = pd.read_json('tmp/transfers.json')
-    # toc = time.perf_counter()
-    # logger.info(f"Read transfers file in {toc - tic:0.4f} seconds")
     tic = time.perf_counter()
     df_uni = pd.read_json('tmp/uni.json')
     toc = time.perf_counter()
