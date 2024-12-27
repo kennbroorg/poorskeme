@@ -75,6 +75,32 @@
     </nb-card>
   </div>
 
+  <!-- Chain-id - Blockchain - Classification -->
+  <div class="col-md-2">
+    <nb-card>
+      <nb-card-body style="font-weight: 500; font-size: 20px;">
+        <div class="title">{{contract['chainid']}}</div>
+        <div class="fixed-subtitle">Chain ID</div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+  <div class="col-md-4">
+    <nb-card>
+      <nb-card-body style="font-weight: 500; font-size: 20px;">
+        <div class="title">{{contract['blockchain']}}</div>
+        <div class="fixed-subtitle">Blockchain Name</div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+  <div class="col-md-6">
+    <nb-card>
+      <nb-card-body style="font-weight: 500; font-size: 20px;">
+        <div class="title">{{contract['classification']}}</div>
+        <div class="fixed-subtitle">Contract Classification</div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
   <!-- Volume - Lioquidity -->
   <div class="col-md-6">
     <nb-card style="height: 230px; overflow: hidden;">
@@ -88,7 +114,8 @@
     <nb-card style="height: 230px; overflow: hidden;">
       <nb-card-body style="font-weight: 500; font-size: 20px; overflow: hidden; padding: 0px;">
         <div class="number">{{max_liq_num}}</div>
-        <div class="fixed-subtitle">Max Liquidity - Date {{contract['max_liq_date']}}</div>
+        <div class="fixed-subtitle" *ngIf="contract['classification'] != 'Token Creation Contract'">Max Liquidity - Date {{contract['max_liq_date']}}</div>
+        <div class="fixed-subtitle" *ngIf="contract['classification'] == 'Token Creation Contract'">Max Supply - Date {{contract['max_liq_date']}}</div>
       </nb-card-body>
     </nb-card>
   </div>
