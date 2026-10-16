@@ -884,7 +884,7 @@ def upload_file():
         return jsonify({"status": "error", "message": "The file must be SQlite extension"})
 
     else:
-        temp_dir = os.path.join(current_app.root_path, 'temp_files')
+        temp_dir = os.path.join(current_app.root_path, 'temp_db')
         os.makedirs(temp_dir, exist_ok=True)
         file_path = os.path.join(temp_dir, file.filename)
         current_app.config['file'] = file_path
@@ -898,7 +898,8 @@ def r_process_file():
     if not file_id:
         return jsonify({"status": "error", "message": "File ID is required"})
     
-    temp_dir = os.path.join(current_app.root_path, 'temp_files')
+    temp_dir = os.path.join(current_app.root_path, 'temp_db')
+    os.makedirs(temp_dir, exist_ok=True)
     file_path = os.path.join(temp_dir, file_id)
 
     return Response(bchain.event_stream_data_file(file_path), mimetype='text/event-stream')
@@ -919,7 +920,8 @@ def r_get_data_process():
         return jsonify({"status": "error", "message": "You must specify Contract Address"})
     
     filename = f"contract-{network}-{caddress}.db"
-    temp_dir = os.path.join(current_app.root_path, 'temp_files')
+    temp_dir = os.path.join(current_app.root_path, 'temp_db')
+    os.makedirs(temp_dir, exist_ok=True)
     file_path = os.path.join(temp_dir, filename)
     current_app.config['file'] = file_path
 

@@ -309,10 +309,11 @@ def data_db_collect_event(chain_id, contract_address, key, filedb, block_from=0,
 
     try:
         os.remove(filedb)
-    except:
+    except Exception:
         pass
     filename = os.path.basename(filedb)
-    message = f"<strong class='normal'>DB</strong> - Creating db {filename}"
+    message = f"<strong class='normal'>DB</strong> - Creating db {filedb}"
+    # message = f"<strong class='normal'>DB</strong> - Creating db {filename}"
     logger.info(message.replace("<strong class='normal'>", "").replace("</strong>", ""))
     data = json.dumps({"msg": f"{message}", "end": False, "error": False, "content": {}})
     yield f"data:{data}\n\n" 
