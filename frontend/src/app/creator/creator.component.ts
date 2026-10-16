@@ -27,8 +27,8 @@ export class CreatorComponent implements OnInit {
   height: any = 500;
   widthc: any;
   heightc: any;
-  innerWidth: number;
-  innerHeight: number;
+  innerWidth: any;
+  innerHeight: any;
 
   creator: any = [];
   trans_creator: any = [];
@@ -49,7 +49,7 @@ export class CreatorComponent implements OnInit {
   dTRX: string = "";
   dToken: string = "";
 
-  constructor(private httpClient: HttpClient, 
+  constructor(private httpClient: HttpClient,
               private windowService: WindowService) { }
 
   ngOnInit(): void {
@@ -176,7 +176,7 @@ export class CreatorComponent implements OnInit {
         const qty = (link as any).qty;
         return `
           <div class="node-label">
-            Value: ${value}<br> 
+            Value: ${value}<br>
             Qty: ${qty}
           </div>
         `

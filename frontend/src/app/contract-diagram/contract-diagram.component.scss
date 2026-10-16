@@ -1,4 +1,5 @@
-@import '~ngx-org-chart/_theming.scss';
+/* @import '~ngx-org-chart/_theming.scss'; */
+@import 'ngx-org-chart/theming';
 
 nb-card {
     background: rgba(102, 201, 255, 0);
@@ -74,13 +75,13 @@ nb-card-body {
     top: 20px;
     right: 20px;
     font-size: 15px;
-    font-weight: 300; 
-    text-transform: uppercase; 
-    color:rgba(102, 217, 255, 0.8); 
+    font-weight: 300;
+    text-transform: uppercase;
+    color:rgba(102, 217, 255, 0.8);
 }
 
 // .ngx-org {
-::ng-deep { 
+::ng-deep {
 
   .ngx-org-image {
       background-repeat: no-repeat;
@@ -139,7 +140,7 @@ nb-card-body {
   .ngx-org-connector-vertical {
     height: 1em;
   }
-  
+
   .ngx-org-constructor-node, .ngx-org-event-node, .ngx-org-funct-node {
     background: rgba(204, 242, 255, 0.3);
     width: 150px;

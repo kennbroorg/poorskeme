@@ -1,4 +1,4 @@
-pandas==2.0.2
+pandas
 PyYAML==6.0
 bscscan-python==2.0.0
 termcolor==1.1.0
@@ -8,3 +8,5 @@ flask_cors==4.0.0
 pycryptodome==3.15.0
 web3_input_decoder==0.1.8
 pyround==0.1.0
+cloudscraper
+beautifulsoup4

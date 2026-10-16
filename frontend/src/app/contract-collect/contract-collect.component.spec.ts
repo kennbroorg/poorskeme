@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { LiqTransComponent } from './liq-trans.component';
+import { ContractCollectComponent } from './contract-collect.component';
 
-describe('LiqTransComponent', () => {
-  let component: LiqTransComponent;
-  let fixture: ComponentFixture<LiqTransComponent>;
+describe('ContractBriefComponent', () => {
+  let component: ContractCollectComponent;
+  let fixture: ComponentFixture<ContractCollectComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ LiqTransComponent ]
+      declarations: [ ContractCollectComponent ]
     })
     .compileComponents();
   });
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(LiqTransComponent);
+    fixture = TestBed.createComponent(ContractCollectComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

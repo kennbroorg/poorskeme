@@ -1,10 +1,12 @@
 # application.py
 # -*- encoding: utf-8 -*-
 
-from flask import Flask, current_app
+from flask import Flask, current_app, request, Response
 from flask_cors import CORS
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, send_file
 
+import os
+import uuid
 import time
 import json
 import pandas as pd
@@ -14,9 +16,14 @@ import pyround      # TODO: Test and use
 
 import coloredlogs, logging
 
+from core import bchain
+
 # create a logger object.
+log_format = '%(asctime)s %(name)-10s %(lineno)-6d %(levelname)-7s %(message)s'
+logging.basicConfig(level=logging.DEBUG, format=log_format)
 logger = logging.getLogger(__name__)
-# coloredlogs.install(level='DEBUG')
+logger.setLevel(logging.DEBUG)
+coloredlogs.install(level='DEBUG', fmt=log_format, logger=logger)
 
 __author__ = "KennBro"
 __copyright__ = "Copyright 2023, Personal Research"
@@ -139,6 +146,9 @@ def r_contract():
                     'block_to': contract['block_to'], 
                     'first_block': contract['first_block'], 
                     'first_trx': contract['transaction_creation'], 
+                    'chainid': contract['chain_id'], 
+                    'blockchain': contract['blockchain'], 
+                    'classification': contract['classification'], 
                     'SourceCode': sc['SourceCode'], 
                     # 'abi': {"name": sc['ContractName'], "children": abi_total},
                     'abi': abi_org,
@@ -248,7 +258,7 @@ def r_transfers():
 
     transfers = ast.literal_eval(trans)
 
-    return transfers
+    return jsonify(transfers)
 
 
 ################################################
@@ -261,7 +271,7 @@ def r_anomalies():
     with open('tmp/anomalies.json', 'r') as f:
         anomalies = f.read()
     toc = time.perf_counter()
-    logger.info(f"Read bubble transfer file in {toc - tic:0.4f} seconds")
+    logger.info(f"Read anomalies transfer file in {toc - tic:0.4f} seconds")
 
     anomalies_json = ast.literal_eval(anomalies)
 
@@ -292,7 +302,9 @@ def r_result(address):
         df_t = df_t[df_t['value'] != 0]
     else:
         tic = time.perf_counter()
-        df_t = pd.read_json('tmp/transfers.json')
+        df_tc = pd.read_json('tmp/transfers_contract.json')
+        df_tw = pd.read_json('tmp/transfers_wallet.json')
+        df_t = pd.concat([df_tw, df_tc], ignore_index=True) # WARN: concat transfers
         toc = time.perf_counter()
         logger.info(f"Read transfers file in {toc - tic:0.4f} seconds")
 
@@ -301,17 +313,24 @@ def r_result(address):
     toc = time.perf_counter()
     logger.info(f"Read decoded functions file in {toc - tic:0.4f} seconds")
 
+    # print(f"ADDRESS: {address}")
     detail_from = df_t[df_t['from'] == address]
     from_sum = round(detail_from['value'].sum() / 1e+18, 2)
     from_count = len(detail_from)
+    # print(f"detail_from INFO\n{len(detail_from)}")
+    # print(f"detail_from HEAD\n{detail_from.head()}")
 
     detail_to = df_t[df_t['to'] == address]
     to_sum = round(detail_to['value'].sum() / 1e+18, 2)
     to_count = len(detail_to)
+    # print(f"detail_to INFO\n{len(detail_to)}")
+    # print(f"detail_to HEAD\n{detail_to.head()}")
 
     detail_total = pd.concat([detail_from, detail_to], axis=0)
     detail_total = detail_total.sort_values(["timeStamp"])
     # print(detail_total.info())
+    # print(f"detail_total INFO\n{len(detail_total)}")
+    # print(f"detail_total HEAD\n{detail_total.head()}")
 
     first_date = detail_total['timeStamp'].iloc[0]
     last_date = detail_total['timeStamp'].iloc[-1]
@@ -339,7 +358,8 @@ def r_result(address):
             trx_in_day = 0
             trx_out_day = 0
 
-        if (contract['contract'].lower() == detail_total['from'][i]):
+        # if (contract['contract'].lower() == detail_total['from'][i]):
+        if (address.lower() != detail_total['from'][i]):
             trx_in_day = trx_in_day + value
             trx_hash = detail_total['hash'][i]
             funct = (df_decoded[df_decoded['hash'] == trx_hash])
@@ -399,18 +419,6 @@ def r_trx(trx_hash):
     abi = ast.literal_eval(abi)
 
     logger.info(f"Read Source Code file in {toc - tic:0.4f} seconds")
-    # tic = time.perf_counter()
-    # df_transaction = pd.read_json('./tmp/transactions.json')
-    # toc = time.perf_counter()
-    # logger.info(f"Read transfers file in {toc - tic:0.4f} seconds")
-    # tic = time.perf_counter()
-    # df_i = pd.read_json('./tmp/internals.json')
-    # toc = time.perf_counter()
-    # logger.info(f"Read transfers file in {toc - tic:0.4f} seconds")
-    # tic = time.perf_counter()
-    # df_t = pd.read_json('tmp/transfers.json')
-    # toc = time.perf_counter()
-    # logger.info(f"Read transfers file in {toc - tic:0.4f} seconds")
     tic = time.perf_counter()
     df_uni = pd.read_json('tmp/uni.json')
     toc = time.perf_counter()
@@ -634,7 +642,7 @@ def r_trans_creator():
     stat_con = len(json_tags) - stat_coo
 
     # Transations
-    df_creator = pd.read_sql_query("SELECT `from` || '-t' AS 'from', `to` || '-t' AS 'to', sum(value / 1e18) as sum_value, count(value) as qty FROM t_transactions_wallet GROUP BY 1, 2", connection)
+    df_creator = pd.read_sql_query("SELECT `from` || '-t' AS 'from', `to` || '-t' AS 'to', sum(value / 1e18) as sum_value, count(value) as qty FROM t_transactions_creator GROUP BY 1, 2", connection)
     # print("= TRANSACTIONS =============================================================")
     # print(df_creator.head(20))
     for i in df_creator.index: 
@@ -705,7 +713,7 @@ def r_trans_creator():
         links.append({"source": df_creator["from"][i], "target": df_creator["to"][i], "value": float(df_creator["sum_value"][i]), "qty": int(df_creator["qty"][i])})
 
     # Internals
-    df_creator = pd.read_sql_query("SELECT `from` || '-i' AS 'from', `to` || '-i' AS 'to', sum(value / 1e18) as sum_value, count(value) as qty FROM t_internals_wallet GROUP BY 1, 2", connection)
+    df_creator = pd.read_sql_query("SELECT `from` || '-i' AS 'from', `to` || '-i' AS 'to', sum(value / 1e18) as sum_value, count(value) as qty FROM t_internals_creator GROUP BY 1, 2", connection)
     # print("= INTERNALS ================================================================")
     # print(df_creator.head(20))
     for i in df_creator.index: 
@@ -774,7 +782,7 @@ def r_trans_creator():
         links.append({"source": df_creator["from"][i], "target": df_creator["to"][i], "value": float(df_creator["sum_value"][i]), "qty": int(df_creator["qty"][i])})
 
     # BEP20 - ERC20 - Tokens
-    df_creator = pd.read_sql_query("SELECT `from` || tokenSymbol AS 'from', `to` || tokenSymbol AS 'to', tokenSymbol, tokenName, sum(value / 1e18) as sum_value, count(value) as qty FROM t_transfers_wallet GROUP BY 1, 2", connection)
+    df_creator = pd.read_sql_query("SELECT `from` || tokenSymbol AS 'from', `to` || tokenSymbol AS 'to', tokenSymbol, tokenName, sum(value / 1e18) as sum_value, count(value) as qty FROM t_transfers_creator GROUP BY 1, 2", connection)
     # print("= BEP 20 ===================================================================")
     # print(df_creator.head(20))
     for i in df_creator.index: 
@@ -861,3 +869,71 @@ def r_trans_creator():
     return jsonify({"trans_creator": trans_creator, "stat": stat})
 
 
+################################################
+# Process file
+################################################
+@home.route('/upload_file', methods=['POST'])
+def upload_file():
+    file = request.files['file']
+
+    # TODO: Name validation
+    if file.filename == '':
+        return jsonify({"status": "error", "message": "The filename is empty"})
+
+    elif file.filename[-2:] != 'db':
+        return jsonify({"status": "error", "message": "The file must be SQlite extension"})
+
+    else:
+        temp_dir = os.path.join(current_app.root_path, 'temp_db')
+        os.makedirs(temp_dir, exist_ok=True)
+        file_path = os.path.join(temp_dir, file.filename)
+        current_app.config['file'] = file_path
+        file.save(file_path)
+        return jsonify({'status': 'ok', 'message': 'File uploaded successfully', 'file_id': file.filename})
+
+
+@home.route('/file_process', methods=['GET'])
+def r_process_file():
+    file_id = request.args.get('file_id')
+    if not file_id:
+        return jsonify({"status": "error", "message": "File ID is required"})
+    
+    temp_dir = os.path.join(current_app.root_path, 'temp_db')
+    os.makedirs(temp_dir, exist_ok=True)
+    file_path = os.path.join(temp_dir, file_id)
+
+    return Response(bchain.event_stream_data_file(file_path), mimetype='text/event-stream')
+
+
+################################################
+# Collect data
+################################################
+@home.route('/get_data_process', methods=['GET'])
+def r_get_data_process():
+    caddress = request.args.get('caddress')
+    bfrom = request.args.get('bfrom')
+    bto = request.args.get('bto')
+    network = request.args.get('network')
+
+    # TODO: Do validations
+    if not caddress:
+        return jsonify({"status": "error", "message": "You must specify Contract Address"})
+    
+    filename = f"contract-{network}-{caddress}.db"
+    temp_dir = os.path.join(current_app.root_path, 'temp_db')
+    os.makedirs(temp_dir, exist_ok=True)
+    file_path = os.path.join(temp_dir, filename)
+    current_app.config['file'] = file_path
+
+    key = current_app.config['key']
+
+    return Response(bchain.data_db_collect_event(network, caddress, key, file_path, bfrom, bto), mimetype='text/event-stream')
+
+
+################################################
+# Collect data
+################################################
+@home.route('/download_db')
+def download_investigation():
+    file_path = current_app.config['file']
+    return send_file(file_path, as_attachment=True)

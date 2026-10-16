@@ -27,7 +27,7 @@ export class TransfersComponent implements OnInit {
   constructor(private httpClient: HttpClient) { }
 
   ngOnInit(): void {
-    console.log("Init de Transfers");
+    console.log("Component Transfers - Init de Transfers");
     // const url = "http://127.0.0.1:5000/transfers"
     // this.httpClient
     //   .get(url)
@@ -45,8 +45,8 @@ export class TransfersComponent implements OnInit {
     this.httpClient
       .get(url)
       .subscribe(this.responseTransfers,
-                 err => console.error('Ops: ', err.message),
-                 () => console.log('Completed Transfers'),
+                 err => console.error('Component Transfers - Ops: ', err.message),
+                 () => console.log('Component Transfers - Completed Transfers'),
       );
 
     // this.responseTransfers(this.data);
@@ -54,7 +54,7 @@ export class TransfersComponent implements OnInit {
 
   private responseTransfers = (data: any): any => {
     this.transfers = data;
-    console.log(`Transfers: ${this.transfers}`)
+    console.log(`Component Transfers - Transfers: ${this.transfers}`)
     this.visibility = true;
 
     this.card = this.cardContainer.nativeElement;
@@ -63,28 +63,28 @@ export class TransfersComponent implements OnInit {
     // this.height = this.card.parentNode.clientHeight;
     this.height = this.h;
     this.diameter = this.height;
-    console.log(`Width: ${this.width} - Height: ${this.height} - Diameter: ${this.diameter}`)
-    console.log(`Screen Width: ${screen.availWidth} - Screen Height: ${screen.availHeight}`)
-    console.log(`Inner Width: ${window.innerWidth} - Inner Height: ${window.innerHeight}`)
+    // console.log(`Component Transfers - Width: ${this.width} - Height: ${this.height} - Diameter: ${this.diameter}`)
+    // console.log(`Component Transfers - Screen Width: ${screen.availWidth} - Screen Height: ${screen.availHeight}`)
+    // console.log(`Component Transfers - Inner Width: ${window.innerWidth} - Inner Height: ${window.innerHeight}`)
 
-    const CHILDREN_PROB_DECAY = 1;
-    const MAX_CHILDREN = 1000;
-    const MAX_VALUE = 100;
+    // const CHILDREN_PROB_DECAY = 1;
+    // const MAX_CHILDREN = 1000;
+    // const MAX_VALUE = 100;
 
-    function genNode(name='Schema', probOfChildren=1): any {
-      if (Math.random() < probOfChildren) {
-        return {
-          name,
-          children: [...Array(Math.round(Math.random() * MAX_CHILDREN))]
-            .map((_, i: any) => genNode(i, probOfChildren - CHILDREN_PROB_DECAY))
-        }
-      } else {
-        return {
-          name,
-          value: Math.round(Math.random() * MAX_VALUE)
-        }
-      }
-    }
+    // function genNode(name='Schema', probOfChildren=1): any {
+    //   if (Math.random() < probOfChildren) {
+    //     return {
+    //       name,
+    //       children: [...Array(Math.round(Math.random() * MAX_CHILDREN))]
+    //         .map((_, i: any) => genNode(i, probOfChildren - CHILDREN_PROB_DECAY))
+    //     }
+    //   } else {
+    //     return {
+    //       name,
+    //       value: Math.round(Math.random() * MAX_VALUE)
+    //     }
+    //   }
+    // }
 
     this.circle1 = CirclePack()
       .data(data)
@@ -93,18 +93,13 @@ export class TransfersComponent implements OnInit {
       .height(this.height)
       .size('size')
       .excludeRoot(true)
+      .minCircleRadius(1)
       .color(function(d: any) {
         if (d.name == "IN") {
-            // return "rgba(144, 213, 179, 0.4)";
-            // return "rgba(144, 213, 213, 0.4)";
-            // return "rgba(204, 255, 255, 0.2)"; // --> ESTE
-            return "rgba(204, 242, 255, 0.6)"; // --> ESTE
+            return "rgba(204, 242, 255, 0.6)";
         } else if (d.name == "OUT") {
-            return "rgba(102, 217, 255, 0.6)"; // --> ESTE
-            // return "rgba(254, 27, 37, 0.2)"; // --> ESTE
-            // return "rgba(190, 217, 255, 0.4)";
-            // return "rgba(209, 54, 8, 0.8)" ;
-        } else { 
+            return "rgba(102, 217, 255, 0.6)";
+        } else {
             return "rgba(0, 0, 0, 0.3)" ;
         }
        })
@@ -112,7 +107,7 @@ export class TransfersComponent implements OnInit {
       .padding(0)
       (this.card);
 
-      console.log(`Circle: ${this.circle1}`)
+      // console.log(`Component Transfers - Circle: ${this.circle1}`)
   }
 
   clicking = (data: any) => {

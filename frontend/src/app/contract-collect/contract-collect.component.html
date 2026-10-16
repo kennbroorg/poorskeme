@@ -1,0 +1,102 @@
+<div class="row">
+  <!-- Title -->
+  <div class="col-md-4 offset-md-4">
+
+    <nb-card style="height: 140px; margin-top: 60px;">
+      <nb-card-body class="shiny" style="overflow: hidden;">
+        <!-- <div style="font-weight: 300; font-size: 70px; color: rgba(255, 255, 255, 0.8); text-align: center;"> -->
+        <div class="extra-title">
+          Data Source
+        </div>
+          <div class="fixed-subtitle" style="color: rgba(255, 255, 255, 0.8); bottom: 20px;">
+            Collect or File
+        </div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+  <div class="col-md-4"></div>
+</div>
+
+<div class="row">
+  <div class="col-md-6">
+    <nb-card style="height: 50vh;">
+      <nb-card-body style="font-weight: 500; font-size: 20px;">
+
+        <!-- <ul #scrollableCard> -->
+        <!--   <li *ngFor="let line of logs"> <div [innerHTML]="line"></div></li> -->
+        <!-- </ul> -->
+        <contract-logs [data]="logs"></contract-logs>
+
+        <div class="fixed-subtitle">Log</div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+  <div class="col-md-6 bor">
+    <nb-card>
+      <nb-card-body style="font-weight: 500; font-size: 20px;">
+        <nb-accordion>
+          <nb-accordion-item expanded #internetItem>
+            <nb-accordion-item-header class="title" style="font-size: 15px;">
+              DATA FROM INTERNET
+            </nb-accordion-item-header>
+            <nb-accordion-item-body>
+              <div class="row">
+                <div class="col-md-10">
+                  <div class="form__group field">
+                    <input type="input" class="form__field" placeholder="Contract Address" #caddress name="caddress" id='caddress' required />
+                    <label for="name" class="form__label">Contract Address</label>
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <nb-select #network id="network" status="success" selected="1" size="small" style="padding: 0px; margin: auto; border: none;">
+                    <nb-option value="1" style="background-color: rgba(0, 0, 0, 0); color: rgba(102, 201, 255, 0.8); font-weight: 400;">ethereum</nb-option>
+                    <nb-option value="56" style="background-color: rgba(0, 0, 0, 0); color: rgba(102, 201, 255, 0.8); font-weight: 400;">binance</nb-option>
+                    <nb-option value="8453" style="background-color: rgba(0, 0, 0, 0); color: rgba(102, 201, 255, 0.8); font-weight: 400;">base</nb-option>
+                    <!-- <nb-option value="137" style="background-color: rgba(0, 0, 0, 0); color: rgba(102, 201, 255, 0.8); font-weight: 400;">polygon</nb-option> -->
+                    <!-- <nb-option value="1101" style="background-color: rgba(0, 0, 0, 0); color: rgba(102, 201, 255, 0.8); font-weight: 400;">zkEVM</nb-option> -->
+                    <!-- <nb-option value="42161" style="background-color: rgba(0, 0, 0, 0); color: rgba(102, 201, 255, 0.8); font-weight: 400;">arbitrum</nb-option> -->
+                  </nb-select>
+                </div>
+                <div class="col-md-4 offset-md-1" style="margin-top: 20px;">
+                  <div class="form__group field" style="width: 100%">
+                    <input type="input" class="form__field" placeholder="Block From" #bfrom name="bfrom" id='bfrom' value='0' required />
+                    <label for="name" class="form__label">Block From</label>
+                  </div>
+                </div>
+                <div class="col-md-4 offset-md-2" style="margin-top: 20px;">
+                  <div class="form__group field" style="width: 100%">
+                    <input type="input" class="form__field" placeholder="Block To" #bto name="bto" id='bto' value='99999999' required />
+                    <label for="name" class="form__label">Block To</label>
+                  </div>
+                </div>
+
+              </div>
+            </nb-accordion-item-body>
+          </nb-accordion-item>
+
+          <nb-accordion-item #fileItem>
+            <nb-accordion-item-header class="title" style="font-size: 15px;">
+              DATA FROM FILE
+            </nb-accordion-item-header>
+            <nb-accordion-item-body>
+              <form [formGroup]="demoForm">
+                <file-upload formControlName="files" [multiple]="multiple" [animation]="animation"></file-upload>
+              </form>`
+            </nb-accordion-item-body>
+          </nb-accordion-item>
+        </nb-accordion>
+        <div class="row">
+          <div class="col-md-6">
+            <button nbButton outline status="primary" class="proc" (click)="process(caddress.value, bfrom.value, bto.value, network.selected)">PROCESS</button>
+          </div>
+          <div class="col-md-6">
+            <button nbButton outline status="primary" class="proc" [disabled]="!download" (click)="downloadDB()">DOWNLOAD</button>
+          </div>
+        </div>
+      </nb-card-body>
+    </nb-card>
+
+  </div>
+
+</div>

@@ -1,0 +1,17 @@
+<!-- <div class="container" (click)="toggleVisibility()"> -->
+<!--   <nb-card id="scrollableCardDown" class="content" [class.hidden]="!isVisible"> -->
+<!--     <nb-card-header style="margin-left: 20px;"> -->
+<!--       <strong>Log</strong> -->
+<!--     </nb-card-header> -->
+<!--     <nb-card-body> -->
+<!--       <ul #scrollableCard> -->
+<!--         <li *ngFor="let line of data"> <div [innerHTML]="line"></div></li> -->
+<!--       </ul> -->
+<!--     </nb-card-body> -->
+<!--   </nb-card> -->
+<!-- </div> -->
+
+<ul #scrollableCard>
+  <li *ngFor="let line of data"> <div [innerHTML]="line"></div></li>
+</ul>
+

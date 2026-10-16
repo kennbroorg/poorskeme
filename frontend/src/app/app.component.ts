@@ -4,7 +4,8 @@ import { HttpClient } from '@angular/common/http';
 
 import { NbTabsetComponent, NbTabComponent } from '@nebular/theme/components/tabset/tabset.component';
 
-import * as d3 from 'd3';
+import { UpdateService } from './service/update.service';
+// import * as d3 from 'd3';
 
 @Component({
   selector: 'app-root',
@@ -16,15 +17,19 @@ export class AppComponent {
   @ViewChild("tabset") tabsetEl!: NbTabsetComponent;
   @ViewChild("trxTab") trxTabEl!: NbTabComponent;
 
+  // TODO: Refactor
   subject = new Subject<string>();
   trx = new Subject<string>();
+  proc = new Subject<string>();
   selected = false;
   height = 0;
   width = 0;
   contract: any;
   data: any
 
-  constructor(private httpClient: HttpClient) {}
+  process: boolean = false;
+
+  constructor(private httpClient: HttpClient, private updateService: UpdateService) {}
 
   ngOnInit(): void {
     this.subject.subscribe((text: string) => {
@@ -34,6 +39,27 @@ export class AppComponent {
       console.log(`Received from child component Distribution: ${text}`);
       this.tabsetEl.selectTab(this.trxTabEl);
     });
+    this.proc.subscribe((text: string) => {
+      console.log(`Received from child component: ${text}`);
+    });
+
+    // NOTE: New Update service
+    // this.updateService.update$.subscribe(() => {
+    this.updateService.update$.subscribe(valor => {
+      console.log('APP receive from collect :', valor);
+      if (valor == 'update') {
+        const url = "http://127.0.0.1:5000/contract"
+        this.httpClient
+          .get(url)
+          .subscribe(this.responseContract,
+                     err => console.error('Ops: ', err.message),
+                     () => console.log('Completed Contract Info'),
+          );
+      } else {
+        this.contract = null;
+
+      }
+    });
 
     var h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
     var w = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
@@ -41,14 +67,25 @@ export class AppComponent {
     this.height =  h - 102;
     // console.log(`h: ${this.height} - w: ${this.width}`)
 
-    const url = "http://127.0.0.1:5000/contract"
-    this.httpClient
-      .get(url)
-      .subscribe(this.responseContract,
-                 err => console.error('Ops: ', err.message),
-                 () => console.log('Completed Contract Info'),
-      );
   }
+
+  handleProc = (info: string) => {
+    this.proc.next(info);
+    console.log(`PROC: ${info}`);
+
+    if (info == "true") {
+      const url = "http://127.0.0.1:5000/contract"
+      this.httpClient
+        .get(url)
+        .subscribe(this.responseContract,
+                   err => console.error('Ops: ', err.message),
+                   () => console.log('Completed Contract Info'),
+        );
+      this.process == true;
+    } else {
+      this.process == false;
+    }
+  };
 
   handleInfo = (info: string) => {
     this.subject.next(info);
@@ -73,7 +110,7 @@ export class AppComponent {
     // this.volume = [{"name": "Volume", "value": this.contract["volume"]}]
     // this.wallets = [{"name": "Wallets", "value": this.contract["wallets"]}]
     // this.max_liq = [{"name": "Max Liquidity - " + this.contract['max_liq_date'], "value": this.contract["max_liq"]}]
-    // this.cardNumber = [{"name": "Wallets", "value": this.contract["wallets"]}, 
+    // this.cardNumber = [{"name": "Wallets", "value": this.contract["wallets"]},
     //                    {"name": "Max Liquidity", "value": this.contract["max_liq"]}]
     // this.code = this.contract['SourceCode']
   }

@@ -42,7 +42,7 @@
                     <nb-card>
                         <!-- <nb-card-body style="padding: 0px; overflow: hidden;"> -->
                         <nb-card-body class="shiny">
-                            <img src="/assets/Logo.png" alt="Logo" width="300" style="opacity: 0.5; display: block; margin: auto;"> 
+                            <img src="/assets/Logo.png" alt="Logo" width="300" style="opacity: 0.5; display: block; margin: auto;">
                         </nb-card-body>
                     </nb-card>
                     <!-- DISCLAIMER -->
@@ -84,38 +84,46 @@
 
 
           <!-- TAB2 -->
-          <nb-tab tabTitle="Resume">
-            <app-contract-resume [data]="contract" *ngIf="contract"></app-contract-resume>
+          <nb-tab tabTitle="Collect">
+            <!-- <app-contract-collect [data]="contract" *ngIf="contract"></app-contract-collect> -->
+            <!-- <app-contract-collect (onProcess)="handleProc($event)" [subject]="subject"></app-contract-collect> -->
+            <!-- <app-contract-collect (onProcess)="handleProc($event)"></app-contract-collect> -->
+            <app-contract-collect></app-contract-collect>
           </nb-tab>
 
 
           <!-- TAB3 -->
-          <nb-tab tabTitle="Detail">
-            <app-contract-detail [data]="contract" *ngIf="contract"></app-contract-detail>
+          <nb-tab tabTitle="Resume" *ngIf="contract">
+            <app-contract-resume [data]="contract"></app-contract-resume>
           </nb-tab>
 
 
           <!-- TAB4 -->
-          <nb-tab tabTitle="Code">
-            <app-contract-code [data]="contract" *ngIf="contract"></app-contract-code>
+          <nb-tab tabTitle="Detail" *ngIf="contract">
+            <app-contract-detail [data]="contract"></app-contract-detail>
           </nb-tab>
 
-          
+
           <!-- TAB5 -->
-          <nb-tab tabTitle="Diagram">
-              <app-diagram [data]="contract" *ngIf="contract"></app-diagram>
+          <nb-tab tabTitle="Code" *ngIf="contract">
+            <app-contract-code [data]="contract"></app-contract-code>
           </nb-tab>
 
-          
+
           <!-- TAB6 -->
-          <nb-tab tabTitle="Distribution">
+          <nb-tab tabTitle="Diagram" *ngIf="contract">
+              <app-diagram [data]="contract"></app-diagram>
+          </nb-tab>
+
+
+          <!-- TAB7 -->
+          <nb-tab tabTitle="Distribution" *ngIf="contract">
             <div class="row">
                 <div class="col-md-6">
                     <app-transfers (onInfo)="handleInfo($event)" [w]="width" [h]="height"></app-transfers>
                 </div>
 
                 <div class="col-md-6">
-                    <!-- <app-transfers-details [subject]="subject" [h]="height"></app-transfers-details> -->
                     <app-transfers-details (onTrx)="handleTrx($event)" [subject]="subject" [h]="height" mod="distribution">
                     </app-transfers-details>
                 </div>
@@ -123,9 +131,8 @@
           </nb-tab>
 
 
-          <!-- TAB7 -->
-          <!-- <nb-tab tabTitle="Transaction" active="{{setActiveTrx}}" id="addTab" name="addTab" #addTab> -->
-          <nb-tab tabTitle="Transaction" id="trxTab" name="trxTab" #trxTab>
+          <!-- TAB8 -->
+          <nb-tab tabTitle="Transaction" id="trxTab" name="trxTab" #trxTab *ngIf="contract">
             <div class="row">
                 <div class="col-md-12">
                     <app-trx-details [trx]="trx" ></app-trx-details>
@@ -134,30 +141,29 @@
           </nb-tab>
 
 
-          <!-- TAB8 -->
-          <nb-tab tabTitle="Anomalies">
-            <div class="row">
-                <div class="col-md-6">
-                    <app-transfers-details (onTrx)="handleTrx($event)" [subject]="subject" [h]="height" mod="anomalies">
-                    </app-transfers-details>
-                </div>
+          <!-- TAB9 -->
+          <!-- <nb-tab tabTitle="Anomalies" *ngIf="contract"> -->
+          <!--   <div class="row"> -->
+          <!--       <div class="col-md-6"> -->
+          <!--           <app-transfers-details (onTrx)="handleTrx($event)" [subject]="subject" [h]="height" mod="anomalies"> -->
+          <!--           </app-transfers-details> -->
+          <!--       </div> -->
 
-                <div class="col-md-6">
-                    <app-anomalies (onInfo)="handleInfo($event)"></app-anomalies>
-                    <!-- <app-anomalies></app-anomalies> -->
-                </div>
-            </div>
-          </nb-tab>
+          <!--       <div class="col-md-6"> -->
+          <!--           <app-anomalies (onInfo)="handleInfo($event)"></app-anomalies> -->
+          <!--       </div> -->
+          <!--   </div> -->
+          <!-- </nb-tab> -->
 
 
-          <!-- TAB8 -->
-          <nb-tab tabTitle="Creator">
-            <div class="row">
-                <div class="col-md-12">
-                    <app-creator></app-creator>
-                </div>
-            </div>
-          </nb-tab>
+          <!-- TAB10 -->
+          <!-- <nb-tab tabTitle="Creator" *ngIf="contract"> -->
+          <!--   <div class="row"> -->
+          <!--       <div class="col-md-12"> -->
+          <!--           <app-creator></app-creator> -->
+          <!--       </div> -->
+          <!--   </div> -->
+          <!-- </nb-tab> -->
 
 
         </nb-tabset>
