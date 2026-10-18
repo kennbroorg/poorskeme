@@ -9,12 +9,11 @@ import textwrap
 import multiprocessing
 import http.server
 import socketserver
+import uvicorn
 from termcolor import colored
 import coloredlogs, logging
 
 from api_poorSKeme import create_application
-from core import bsc
-from core import eth
 from core import bchain
 
 
@@ -32,12 +31,10 @@ __email__ = "kennbro <at> protonmail <dot> com"
 __status__ = "Development"
 
 
-def flaskServer(ip='127.0.0.1', port=5000, file=None, key=None):
-    app = create_application()
-    app.config['file'] = file
-    app.config['key'] = key
-    logger.info("Flask serving...")
-    app.run(port=port, debug=True, host=ip, use_reloader=False)
+def apiServer(ip='127.0.0.1', port=5000, file=None, key=None):
+    app = create_application(file=file, key=key)
+    logger.info("Uvicorn (FastAPI) serving...")
+    uvicorn.run(app, host=ip, port=port, log_level="info")
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
@@ -54,14 +51,14 @@ def httpServer():
 
 if __name__ == "__main__":
 
-    print("""
+    print(r"""
 $$$$$$$\                                       $$$$$$\  $$\   $$\                                  
 $$  __$$\                                     $$  __$$\ $$ | $$  |                                 
 $$ |  $$ | $$$$$$\   $$$$$$\   $$$$$$\        $$ /  \__|$$ |$$  / $$$$$$\  $$$$$$\$$$$\   $$$$$$\  
 $$$$$$$  |$$  __$$\ $$  __$$\ $$  __$$\       \$$$$$$\  $$$$$  / $$  __$$\ $$  _$$  _$$\ $$  __$$\ 
 $$  ____/ $$ /  $$ |$$ /  $$ |$$ |  \__|       \____$$\ $$  $$<  $$$$$$$$ |$$ / $$ / $$ |$$$$$$$$ |
 $$ |      $$ |  $$ |$$ |  $$ |$$ |            $$\   $$ |$$ |\$$\ $$   ____|$$ | $$ | $$ |$$   ____|
-$$ |      \$$$$$$  |\$$$$$$  |$$ |            \$$$$$$  |$$ | \$$\\\$$$$$$$\ $$ | $$ | $$ |\$$$$$$$\ 
+$$ |      \$$$$$$  |\$$$$$$  |$$ |            \$$$$$$  |$$ | \$$\\$$$$$$$\ $$ | $$ | $$ |\$$$$$$$\ 
 \__|       \______/  \______/ \__|             \______/ \__|  \__|\_______|\__| \__| \__| \_______|
 
     """)
@@ -191,19 +188,19 @@ $$ |      \$$$$$$  |\$$$$$$  |$$ |            \$$$$$$  |$$ | \$$\\\$$$$$$$\ $$ |
     # else:
     #     filename = filedb
     
-    kwargs_flask = {"ip": "127.0.0.1", "port": 5000, "key": key['ethscan']}
-    # kwargs_flask = {"ip": "127.0.0.1", "port": 5000, "file": filename}
-    flask_proc = multiprocessing.Process(name='flask',
-                                            target=flaskServer,
-                                            kwargs=kwargs_flask)
-    flask_proc.daemon = True
+    kwargs_api = {"ip": "127.0.0.1", "port": 5000, "key": key['ethscan']}
+    # kwargs_api = {"ip": "127.0.0.1", "port": 5000, "file": filename}
+    api_proc = multiprocessing.Process(name='api',
+                                            target=apiServer,
+                                            kwargs=kwargs_api)
+    api_proc.daemon = True
 
     sys.stdout.flush()
     httpd_proc = multiprocessing.Process(name='httpd',
                                             target=httpServer)
     httpd_proc.daemon = True
 
-    flask_proc.start()
+    api_proc.start()
     httpd_proc.start()
-    flask_proc.join()
+    api_proc.join()
     httpd_proc.join()
