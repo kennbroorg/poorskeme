@@ -23,8 +23,6 @@ import coloredlogs
 
 from web3_input_decoder import InputDecoder # , decode_constructor
 
-from core import eth  # TODO: Remove
-from core import bsc  # TODO: Remove
 from core import misc
 
 
@@ -2338,7 +2336,7 @@ def data_db_process(filename):
 
     # Anomalies
     df_anomalies = trx_total_asc[trx_total_asc['wallet'] != address_contract ]
-    df_anomalies = df_anomalies[trx_total_asc['Percentage'] >= 10]
+    df_anomalies = df_anomalies[df_anomalies['Percentage'] >= 10]
     df_anomalies['Percentage'] = df_anomalies['Percentage'].astype(int)
     with open('./tmp/anomalies.json', 'w') as outfile:
         df_anomalies_json = df_anomalies.to_json(outfile, orient="records")

@@ -23,6 +23,8 @@ OSINT - Data Visualization - Blockchain - Awareness - Scam
 Go to this [site](https://kennbroorg.gitlab.io/poorskeme-page/) and click on the downdload button
 Or go to release section. Download the ZIP file called poorSKeme.zip
 
+Requires Python >= 3.14 (backend runs on FastAPI + Uvicorn).
+
 Unzip it, install requeriments and execute it.
 
 ``` shell

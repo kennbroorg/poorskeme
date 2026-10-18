@@ -1,12 +1,12 @@
 # application.py
 # -*- encoding: utf-8 -*-
 
-from flask import Flask, current_app, request, Response
-from flask_cors import CORS
-from flask import Blueprint, jsonify, send_file
+from fastapi import FastAPI, APIRouter, Request, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse, FileResponse
 
 import os
-import uuid
+import shutil
 import time
 import json
 import pandas as pd
@@ -35,30 +35,42 @@ __email__ = "kennbro <at> protonmail <dot> com"
 __status__ = "Development"
 
 
-home = Blueprint('home_views', __name__)
+# NOTE: Module directory, replaces Flask's current_app.root_path
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+home = APIRouter()
 
 
-def create_application():
-    app = Flask(__name__)
-    CORS(app)
-    app.register_blueprint(home)
+def create_application(file=None, key=None):
+    app = FastAPI()
+    # NOTE: Fully open CORS, equivalent to flask_cors' CORS(app) defaults
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    app.state.file = file
+    app.state.key = key
+    app.include_router(home)
     return app
 
 
 ################################################
 # Testing
 ################################################
-@home.route("/testing", methods=["GET"])
-def r_testing():
-    file = current_app.config['file']
+@home.get("/testing")
+def r_testing(request: Request):
+    file = request.app.state.file
     logger.info(f"Read contract file in {file}")
-    return jsonify({"testing": "OK"})
+    return {"testing": "OK"}
 
 
 ################################################
 # Contract
 ################################################
-@home.route("/contract", methods=["GET"])
+@home.get("/contract")
 def r_contract():
 
     tic = time.perf_counter()
@@ -96,8 +108,8 @@ def r_contract():
     event = []
     funct = []
     for i in abi:
-        input = False 
-        output = False 
+        input = False
+        output = False
 
         input_content = []
         if ('inputs' in i):
@@ -141,41 +153,41 @@ def r_contract():
 
     stats = ast.literal_eval(stats)
 
-    return jsonify({'contract': contract['contract'],
-                    'block_from': contract['block_from'], 
-                    'block_to': contract['block_to'], 
-                    'first_block': contract['first_block'], 
-                    'first_trx': contract['transaction_creation'], 
-                    'chainid': contract['chain_id'], 
-                    'blockchain': contract['blockchain'], 
-                    'classification': contract['classification'], 
-                    'SourceCode': sc['SourceCode'], 
-                    # 'abi': {"name": sc['ContractName'], "children": abi_total},
-                    'abi': abi_org,
-                    'abiraw': abi,
-                    'ContractName': sc['ContractName'], 
-                    'CompilerVersion': sc['CompilerVersion'],
-                    'LicenseType': sc['LicenseType'],
-                    'fdate': stats['fdate'],
-                    'ldate': stats['ldate'],
-                    'token_name': stats['token_name'],
-                    'native': stats['native'],
-                    'creator': stats['creator'],
-                    'max_liq': stats['max_liq'],
-                    'max_liq_date': stats['max_liq_date'],
-                    'investments': stats['investments'],
-                    'funct_stats': stats['funct_stats'],
-                    'volume': stats['volume'],
-                    'wallets': stats['wallets'],
-                    'trx_out': stats['trx_out'],
-                    'trx_in': stats['trx_in']
-                    })
+    return {'contract': contract['contract'],
+            'block_from': contract['block_from'],
+            'block_to': contract['block_to'],
+            'first_block': contract['first_block'],
+            'first_trx': contract['transaction_creation'],
+            'chainid': contract['chain_id'],
+            'blockchain': contract['blockchain'],
+            'classification': contract['classification'],
+            'SourceCode': sc['SourceCode'],
+            # 'abi': {"name": sc['ContractName'], "children": abi_total},
+            'abi': abi_org,
+            'abiraw': abi,
+            'ContractName': sc['ContractName'],
+            'CompilerVersion': sc['CompilerVersion'],
+            'LicenseType': sc['LicenseType'],
+            'fdate': stats['fdate'],
+            'ldate': stats['ldate'],
+            'token_name': stats['token_name'],
+            'native': stats['native'],
+            'creator': stats['creator'],
+            'max_liq': stats['max_liq'],
+            'max_liq_date': stats['max_liq_date'],
+            'investments': stats['investments'],
+            'funct_stats': stats['funct_stats'],
+            'volume': stats['volume'],
+            'wallets': stats['wallets'],
+            'trx_out': stats['trx_out'],
+            'trx_in': stats['trx_in']
+            }
 
 
 ################################################
 # General Transactions
 ################################################
-@home.route("/trans_info", methods=["GET"])
+@home.get("/trans_info")
 def r_transaction_general():
 
     tic = time.perf_counter()
@@ -187,13 +199,13 @@ def r_transaction_general():
     # Fix JSON
     tr_resume = ast.literal_eval(tr)
 
-    return jsonify(tr_resume)
+    return tr_resume
 
 
 ################################################
 # General Transfers
 ################################################
-@home.route("/transfer_info", methods=["GET"])
+@home.get("/transfer_info")
 def r_transfers_general():
 
     tic = time.perf_counter()
@@ -205,13 +217,13 @@ def r_transfers_general():
     # Fix JSON
     tr_resume = ast.literal_eval(tr)
 
-    return jsonify(tr_resume)
+    return tr_resume
 
 
 ################################################
 # Liquidity
 ################################################
-@home.route("/liq", methods=["GET"])
+@home.get("/liq")
 def r_liq():
 
     tic = time.perf_counter()
@@ -223,13 +235,13 @@ def r_liq():
     # Fix JSON
     liquidity = ast.literal_eval(liq)
 
-    return jsonify(liquidity)
+    return liquidity
 
 
 ################################################
 # Trans volume by day
 ################################################
-@home.route("/tvd", methods=["GET"])
+@home.get("/tvd")
 def r_tvd():
 
     tic = time.perf_counter()
@@ -241,15 +253,15 @@ def r_tvd():
     # Fix JSON
     tvd = ast.literal_eval(trans)
 
-    return jsonify(tvd)
+    return tvd
 
 
 ################################################
 # Transfers
 ################################################
-@home.route("/transfers", methods=["GET"])
+@home.get("/transfers")
 def r_transfers():
-    
+
     tic = time.perf_counter()
     with open('tmp/bubbles.json', 'r') as f:
         trans = f.read()
@@ -258,15 +270,15 @@ def r_transfers():
 
     transfers = ast.literal_eval(trans)
 
-    return jsonify(transfers)
+    return transfers
 
 
 ################################################
 # Anomalies
 ################################################
-@home.route("/anomalies", methods=["GET"])
+@home.get("/anomalies")
 def r_anomalies():
-    
+
     tic = time.perf_counter()
     with open('tmp/anomalies.json', 'r') as f:
         anomalies = f.read()
@@ -275,15 +287,15 @@ def r_anomalies():
 
     anomalies_json = ast.literal_eval(anomalies)
 
-    return jsonify(anomalies_json)
+    return anomalies_json
 
 
 ################################################
 # Adress details
 ################################################
 # PERF: Use DB instead JSON
-@home.route("/details/<address>")
-def r_result(address):
+@home.get("/details/{address}")
+def r_result(address: str):
     # TODO: Verify if the address is the contract
     tic = time.perf_counter()
     with open('tmp/stats.json', 'r') as f:
@@ -313,24 +325,16 @@ def r_result(address):
     toc = time.perf_counter()
     logger.info(f"Read decoded functions file in {toc - tic:0.4f} seconds")
 
-    # print(f"ADDRESS: {address}")
     detail_from = df_t[df_t['from'] == address]
     from_sum = round(detail_from['value'].sum() / 1e+18, 2)
     from_count = len(detail_from)
-    # print(f"detail_from INFO\n{len(detail_from)}")
-    # print(f"detail_from HEAD\n{detail_from.head()}")
 
     detail_to = df_t[df_t['to'] == address]
     to_sum = round(detail_to['value'].sum() / 1e+18, 2)
     to_count = len(detail_to)
-    # print(f"detail_to INFO\n{len(detail_to)}")
-    # print(f"detail_to HEAD\n{detail_to.head()}")
 
     detail_total = pd.concat([detail_from, detail_to], axis=0)
     detail_total = detail_total.sort_values(["timeStamp"])
-    # print(detail_total.info())
-    # print(f"detail_total INFO\n{len(detail_total)}")
-    # print(f"detail_total HEAD\n{detail_total.head()}")
 
     first_date = detail_total['timeStamp'].iloc[0]
     last_date = detail_total['timeStamp'].iloc[-1]
@@ -342,7 +346,7 @@ def r_result(address):
     day_prev = day
     trx_in_series = []
     trx_out_series = []
-    for i in detail_total.index: 
+    for i in detail_total.index:
         value = round(detail_total['value'][i] / 1e+18, 2)
         day = detail_total['timeStamp'][i].strftime("%Y-%m-%d")
         if (day_prev == ''):
@@ -363,19 +367,19 @@ def r_result(address):
             trx_in_day = trx_in_day + value
             trx_hash = detail_total['hash'][i]
             funct = (df_decoded[df_decoded['hash'] == trx_hash])
-            moves.append({"date": detail_total['timeStamp'][i].strftime("%Y-%m-%d %H:%M:%S"), 
+            moves.append({"date": detail_total['timeStamp'][i].strftime("%Y-%m-%d %H:%M:%S"),
                           "hash": trx_hash,
                           "funct": (funct['funct']).to_string(index=False),
-                          "name": "IN", 
+                          "name": "IN",
                           "value": value})
-        else: 
+        else:
             trx_out_day = trx_out_day + value
             trx_hash = detail_total['hash'][i]
             funct = (df_decoded[df_decoded['hash'] == trx_hash])
-            moves.append({"date": detail_total['timeStamp'][i].strftime("%Y-%m-%d %H:%M:%S"), 
+            moves.append({"date": detail_total['timeStamp'][i].strftime("%Y-%m-%d %H:%M:%S"),
                           "hash": trx_hash,
                           "funct": (funct['funct']).to_string(index=False),
-                          "name": "OUT", 
+                          "name": "OUT",
                           "value": value})
 
     trx_in_series.append({"name": day,
@@ -387,22 +391,22 @@ def r_result(address):
                  {"name": "Trans IN",
                   "series": trx_in_series}]
 
-    return jsonify({"address": address,
-                    "fdate": first_date.strftime("%Y-%m-%d %H:%M:%S"),
-                    "ldate": last_date.strftime("%Y-%m-%d %H:%M:%S"),
-                    "from_sum": from_sum,
-                    "from_count": from_count,
-                    "to_sum": to_sum,
-                    "to_count": to_count,
-                    "trans_vol": trans_vol,
-                    "moves": moves})
+    return {"address": address,
+            "fdate": first_date.strftime("%Y-%m-%d %H:%M:%S"),
+            "ldate": last_date.strftime("%Y-%m-%d %H:%M:%S"),
+            "from_sum": from_sum,
+            "from_count": from_count,
+            "to_sum": to_sum,
+            "to_count": to_count,
+            "trans_vol": trans_vol,
+            "moves": moves}
 
 
 ################################################
 # Trx details
 ################################################
-@home.route("/trx_hash/<trx_hash>")
-def r_trx(trx_hash):
+@home.get("/trx_hash/{trx_hash}")
+def r_trx(trx_hash: str):
     tic = time.perf_counter()
     with open('tmp/sourcecode.json', 'r') as f:
         source_code = f.read()
@@ -430,15 +434,11 @@ def r_trx(trx_hash):
 
     # trx = (df_transaction[df_transaction['hash'] == trx_hash])
     trx = df_uni[(df_uni['hash'] == trx_hash) & (df_uni['file'] == "trx")]
-    # rslt_df = dataframe[(dataframe['Age'] == 21) & dataframe['Stream'].isin(options)]
-    # rslt_df = dataframe.loc[(dataframe['Age'] == 21) & dataframe['Stream'].isin(options)]
     # transfers = (df_t[df_t['hash'] == trx_hash])
     transfers = df_uni[(df_uni['hash'] == trx_hash) & ((df_uni['file'] == "tra") | (df_uni['file'] == "int"))]
 
     trx_date = pd.to_datetime(trx['timeStamp'], unit='ns')
-    # trx_date = trx['timeStamp'].dt.strftime('%Y/%m/%d %H:%M:%S')
     transfers_date = pd.to_datetime(transfers['timeStamp'], unit='ns')
-    # transfers_date = trx['timeStamp'].dt.strftime('%Y/%m/%d %H:%M:%S')
     trx['date'] = trx_date
     transfers['date'] = transfers_date
 
@@ -478,8 +478,8 @@ def r_trx(trx_hash):
         funct = []
         const = {}
         for i in abi:
-            input = False 
-            output = False 
+            input = False
+            output = False
 
             input_content = []
             if ('inputs' in i):
@@ -488,14 +488,14 @@ def r_trx(trx_hash):
                     for j in i['inputs']:
                         try:
                             value = values_const[j['name']]
-                        except:
+                        except Exception:
                             value = "none"
                         input_content.append({"name": j['name'] + ' ' + j['type'], "cssClass": "ngx-org-input", "image": "", "title": value, "childs": []})
                 elif (i['type'] == 'function' and i['name'] == func_name):
                     for j in i['inputs']:
                         try:
                             value = values[j['name']]
-                        except:
+                        except Exception:
                             value = "none"
                         input_content.append({"name": j['name'] + ' ' + j['type'], "cssClass": "ngx-org-input", "image": "", "title": value, "childs": []})
 
@@ -506,14 +506,14 @@ def r_trx(trx_hash):
                     for j in i['outputs']:
                         try:
                             value = values_const[j['name']]
-                        except:
+                        except Exception:
                             value = "none"
                         output_content.append({"name": j['name'] + ' ' + j['type'], "cssClass": "ngx-org-output", "image": "", "title": value, "childs": []})
                 elif (i['type'] == 'function' and i['name'] == func_name):
                     for j in i['outputs']:
                         try:
                             value = values[j['name']]
-                        except:
+                        except Exception:
                             value = "none"
                         output_content.append({"name": j['name'] + ' ' + j['type'], "cssClass": "ngx-org-output", "image": "", "title": value, "childs": []})
 
@@ -561,19 +561,18 @@ def r_trx(trx_hash):
                   "function": diagram,
                   "code": func_code}  # TODO : Return leyend
 
-    return jsonify(result)
+    return result
 
 
 ################################################
 # Contract Creator
 ################################################
-@home.route("/creator", methods=["GET"])
-def r_creator():
-    
+@home.get("/creator")
+def r_creator(request: Request):
+
     tic = time.perf_counter()
-    filedb = current_app.config['file']
+    filedb = request.app.state.file
     connection = sqlite3.connect(filedb)
-    cursor = connection.cursor()
 
     # Contract creator blocks
     df_creator = pd.read_sql_query("SELECT * FROM t_contract_creator", connection)
@@ -596,34 +595,30 @@ def r_creator():
     toc = time.perf_counter()
     logger.info(f"Read contract creator info in {toc - tic:0.4f} seconds")
 
-    return jsonify({"creator": json_creator, "balances": json_balances, "contracts": json_contracts})
+    return {"creator": json_creator, "balances": json_balances, "contracts": json_contracts}
 
 
 ################################################
 # Transactions Creator
 ################################################
-@home.route("/trans_creator", methods=["GET"])
-def r_trans_creator():
-    
+@home.get("/trans_creator")
+def r_trans_creator(request: Request):
+
     tic = time.perf_counter()
-    filedb = current_app.config['file']
+    filedb = request.app.state.file
     connection = sqlite3.connect(filedb)
     cursor = connection.cursor()
 
     # Get Contract and Creator
-    query = f"SELECT contract, creator, blockchain FROM t_contract"
+    query = "SELECT contract, creator, blockchain FROM t_contract"
     cursor.execute(query)
     contract, creator, blockchain = cursor.fetchone()
-    # print(f"contract: {contract}")
-    # print(f"creator: {creator}")
 
     # Get tags
     df_tags = pd.read_sql_query("SELECT * FROM t_tagging", connection)
 
     json_format = df_tags.to_json(orient='records')
     json_tags = json.loads(json_format)
-
-    # print(json_tags) # KKK
 
     nodes = []
     nodes_list = []
@@ -638,15 +633,12 @@ def r_trans_creator():
     cursor.execute("SELECT COUNT(*) FROM t_tagging WHERE tag = 'Contract Created'")
     stat_coo = int(cursor.fetchone()[0])
 
-    # stat_coo = 
     stat_con = len(json_tags) - stat_coo
 
     # Transations
     df_creator = pd.read_sql_query("SELECT `from` || '-t' AS 'from', `to` || '-t' AS 'to', sum(value / 1e18) as sum_value, count(value) as qty FROM t_transactions_creator GROUP BY 1, 2", connection)
-    # print("= TRANSACTIONS =============================================================")
-    # print(df_creator.head(20))
-    for i in df_creator.index: 
-        # Get Nodes 
+    for i in df_creator.index:
+        # Get Nodes
         stat_trx = stat_trx + df_creator["qty"][i]
         if (df_creator["from"][i] not in nodes_list):
             tag = ""
@@ -657,17 +649,13 @@ def r_trans_creator():
                 type = "creator"
             else:
                 type = "wallet"
-                # tag = [t["tag"] for t in json_tags if t["wallet"] == df_creator["from"][i][:-2]][0]
                 tag = next((t["tag"] for t in json_tags if t.get("wallet") == df_creator["from"][i][:-2]), "")
 
-                # print(f"wallet: {df_creator['from'][i][:-2]} - tag: {tag}")
-
-            nodes.append({"id": df_creator["from"][i], 
+            nodes.append({"id": df_creator["from"][i],
                           "address": df_creator["from"][i][:-2],
-                          "type": type, 
-                          "tag": tag, 
+                          "type": type,
+                          "tag": tag,
                           "trx": "Transactions",
-                          # "token": "Native",  # TODO:  Evalute after add blockchain
                           "token": "ETH" if blockchain == "eth" else "BNB",
                           "trx_in": 0,
                           "qty_in": 0,
@@ -687,18 +675,13 @@ def r_trans_creator():
                 type = "creator"
             else:
                 type = "wallet"
-                # tag = [t["tag"] for t in json_tags if t["wallet"] == df_creator["to"][i][:-2]][0]
                 tag = next((t["tag"] for t in json_tags if t.get("wallet") == df_creator["to"][i][:-2]), "")
 
-                # print(f"wallet: {df_creator['to'][i][:-2]} - tag: {tag}")
-
-            # nodes.append({"id": df_creator["to"][i], "type": type, "trx": "BEP-20 Token Transfers"})
-            nodes.append({"id": df_creator["to"][i], 
+            nodes.append({"id": df_creator["to"][i],
                           "address": df_creator["to"][i][:-2],
-                          "type": type, 
-                          "tag": tag, 
+                          "type": type,
+                          "tag": tag,
                           "trx": "Transactions",
-                          # "token": "Native",  # TODO:  Evalute after add blockchain
                           "token": "ETH" if blockchain == "eth" else "BNB",
                           "trx_out": 0,
                           "qty_out": 0,
@@ -714,11 +697,9 @@ def r_trans_creator():
 
     # Internals
     df_creator = pd.read_sql_query("SELECT `from` || '-i' AS 'from', `to` || '-i' AS 'to', sum(value / 1e18) as sum_value, count(value) as qty FROM t_internals_creator GROUP BY 1, 2", connection)
-    # print("= INTERNALS ================================================================")
-    # print(df_creator.head(20))
-    for i in df_creator.index: 
+    for i in df_creator.index:
         stat_int = stat_int + df_creator["qty"][i]
-        # Get Nodes 
+        # Get Nodes
         if (df_creator["from"][i] not in nodes_list):
             tag = ""
             nodes_list.append(df_creator["from"][i])
@@ -730,14 +711,11 @@ def r_trans_creator():
                 type = "wallet"
                 tag = next((t["tag"] for t in json_tags if t.get("wallet") == df_creator["from"][i][:-2]), "")
 
-                # print(f"wallet: {df_creator['from'][i][:-2]} - tag: {tag}")
-
-            nodes.append({"id": df_creator["from"][i], 
+            nodes.append({"id": df_creator["from"][i],
                           "address": df_creator["from"][i][:-2],
-                          "type": type, 
-                          "tag": tag, 
-                          "trx": "Internals", 
-                          # "token": "Native",  # TODO:  Evaluate after add blockchain
+                          "type": type,
+                          "tag": tag,
+                          "trx": "Internals",
                           "token": "ETH" if blockchain == "eth" else "BNB",
                           "trx_in": 0,
                           "qty_in": 0,
@@ -759,15 +737,11 @@ def r_trans_creator():
                 type = "wallet"
                 tag = next((t["tag"] for t in json_tags if t.get("wallet") == df_creator["to"][i][:-2]), "")
 
-                # print(f"wallet: {df_creator['to'][i][:-2]} - tag: {tag}")
-
-            # nodes.append({"id": df_creator["to"][i], "type": type, "trx": "BEP-20 Token Transfers"})
-            nodes.append({"id": df_creator["to"][i], 
+            nodes.append({"id": df_creator["to"][i],
                           "address": df_creator["to"][i][:-2],
-                          "type": type, 
-                          "tag": tag, 
-                          "trx": "Internals", 
-                          # "token": "Native",  # TODO:  Evaluate after add blockchain
+                          "type": type,
+                          "tag": tag,
+                          "trx": "Internals",
                           "token": "ETH" if blockchain == "eth" else "BNB",
                           "trx_out": 0,
                           "qty_out": 0,
@@ -783,19 +757,10 @@ def r_trans_creator():
 
     # BEP20 - ERC20 - Tokens
     df_creator = pd.read_sql_query("SELECT `from` || tokenSymbol AS 'from', `to` || tokenSymbol AS 'to', tokenSymbol, tokenName, sum(value / 1e18) as sum_value, count(value) as qty FROM t_transfers_creator GROUP BY 1, 2", connection)
-    # print("= BEP 20 ===================================================================")
-    # print(df_creator.head(20))
-    for i in df_creator.index: 
+    for i in df_creator.index:
         stat_tra = stat_tra + df_creator["qty"][i]
         len_tk_sym = len(df_creator["tokenSymbol"][i])
-        # print(f"from_id : {df_creator['from'][i]}")
-        # print(f"from : {df_creator['from'][i][:-(len_tk_sym)]}")
-        # print(f"to_id : {df_creator['to'][i]}")
-        # print(f"to : {df_creator['to'][i][:-(len_tk_sym)]}")
-        # print(f"Symbol : {df_creator['tokenSymbol'][i]}")
-        # print(f"Contract : {contract.lower()}")
-        # print(f"Creator : {creator.lower()}")
-        # Get Nodes 
+        # Get Nodes
         if (df_creator["from"][i] not in nodes_list):
             tag = ""
             nodes_list.append(df_creator["from"][i])
@@ -807,13 +772,10 @@ def r_trans_creator():
                 type = "wallet"
                 tag = next((t["tag"] for t in json_tags if t.get("wallet") == df_creator["from"][i][:-(len_tk_sym)]), "")
 
-                # print(f"wallet: {df_creator['from'][i][:-(len_tk_sym)]} - tag: {tag}")
-
-            nodes.append({"id": df_creator["from"][i], 
+            nodes.append({"id": df_creator["from"][i],
                           "address": df_creator["from"][i][:-(len_tk_sym)],
-                          "type": type, 
-                          "tag": tag, 
-                          # "trx": "BEP-20 Token Transfer",  # TODO:  Evaluate after add blockchain 
+                          "type": type,
+                          "tag": tag,
                           "trx": "ERC-20 Token" if blockchain == "eth" else "BEP-20 Token",
                           "token": str(df_creator["tokenSymbol"][i]),
                           "trx_in": 0,
@@ -836,14 +798,10 @@ def r_trans_creator():
                 type = "wallet"
                 tag = next((t["tag"] for t in json_tags if t.get("wallet") == df_creator["to"][i][:-(len_tk_sym)]), "")
 
-                # print(f"wallet: {df_creator['to'][i][:-(len_tk_sym)]} - tag: {tag}")
-
-            # nodes.append({"id": df_creator["to"][i], "type": type, "trx": "BEP-20 Token Transfers"})
-            nodes.append({"id": df_creator["to"][i], 
+            nodes.append({"id": df_creator["to"][i],
                           "address": df_creator["to"][i][:-(len_tk_sym)],
-                          "type": type, 
-                          "tag": tag, 
-                          # "trx": "BEP-20 Token Transfers",  # TODO:  Evaluate after add blockchain
+                          "type": type,
+                          "tag": tag,
                           "trx": "ERC-20 Token" if blockchain == "eth" else "BEP-20 Token",
                           "token": str(df_creator["tokenSymbol"][i]),
                           "trx_out": 0,
@@ -866,74 +824,75 @@ def r_trans_creator():
     toc = time.perf_counter()
     logger.info(f"Read contract creator info in {toc - tic:0.4f} seconds")
 
-    return jsonify({"trans_creator": trans_creator, "stat": stat})
+    return {"trans_creator": trans_creator, "stat": stat}
 
 
 ################################################
 # Process file
 ################################################
-@home.route('/upload_file', methods=['POST'])
-def upload_file():
-    file = request.files['file']
+@home.post('/upload_file')
+def upload_file(request: Request, file: UploadFile = File(...)):
 
     # TODO: Name validation
     if file.filename == '':
-        return jsonify({"status": "error", "message": "The filename is empty"})
+        return {"status": "error", "message": "The filename is empty"}
 
     elif file.filename[-2:] != 'db':
-        return jsonify({"status": "error", "message": "The file must be SQlite extension"})
+        return {"status": "error", "message": "The file must be SQlite extension"}
 
     else:
-        temp_dir = os.path.join(current_app.root_path, 'temp_db')
+        temp_dir = os.path.join(BASE_DIR, 'temp_db')
         os.makedirs(temp_dir, exist_ok=True)
         file_path = os.path.join(temp_dir, file.filename)
-        current_app.config['file'] = file_path
-        file.save(file_path)
-        return jsonify({'status': 'ok', 'message': 'File uploaded successfully', 'file_id': file.filename})
+        request.app.state.file = file_path
+        with open(file_path, 'wb') as out:
+            shutil.copyfileobj(file.file, out)
+        return {'status': 'ok', 'message': 'File uploaded successfully', 'file_id': file.filename}
 
 
-@home.route('/file_process', methods=['GET'])
-def r_process_file():
-    file_id = request.args.get('file_id')
+@home.get('/file_process')
+def r_process_file(request: Request, file_id: str = None):
     if not file_id:
-        return jsonify({"status": "error", "message": "File ID is required"})
-    
-    temp_dir = os.path.join(current_app.root_path, 'temp_db')
+        return {"status": "error", "message": "File ID is required"}
+
+    temp_dir = os.path.join(BASE_DIR, 'temp_db')
     os.makedirs(temp_dir, exist_ok=True)
     file_path = os.path.join(temp_dir, file_id)
 
-    return Response(bchain.event_stream_data_file(file_path), mimetype='text/event-stream')
+    return StreamingResponse(bchain.event_stream_data_file(file_path), media_type='text/event-stream')
 
 
 ################################################
 # Collect data
 ################################################
-@home.route('/get_data_process', methods=['GET'])
-def r_get_data_process():
-    caddress = request.args.get('caddress')
-    bfrom = request.args.get('bfrom')
-    bto = request.args.get('bto')
-    network = request.args.get('network')
+@home.get('/get_data_process')
+def r_get_data_process(request: Request, caddress: str = None, bfrom: str = None, bto: str = None, network: str = None):
 
     # TODO: Do validations
     if not caddress:
-        return jsonify({"status": "error", "message": "You must specify Contract Address"})
-    
+        return {"status": "error", "message": "You must specify Contract Address"}
+
     filename = f"contract-{network}-{caddress}.db"
-    temp_dir = os.path.join(current_app.root_path, 'temp_db')
+    temp_dir = os.path.join(BASE_DIR, 'temp_db')
     os.makedirs(temp_dir, exist_ok=True)
     file_path = os.path.join(temp_dir, filename)
-    current_app.config['file'] = file_path
+    request.app.state.file = file_path
 
-    key = current_app.config['key']
+    key = request.app.state.key
 
-    return Response(bchain.data_db_collect_event(network, caddress, key, file_path, bfrom, bto), mimetype='text/event-stream')
+    return StreamingResponse(bchain.data_db_collect_event(network, caddress, key, file_path, bfrom, bto), media_type='text/event-stream')
 
 
 ################################################
 # Collect data
 ################################################
-@home.route('/download_db')
-def download_investigation():
-    file_path = current_app.config['file']
-    return send_file(file_path, as_attachment=True)
+@home.get('/download_db')
+def download_investigation(request: Request):
+    file_path = request.app.state.file
+    return FileResponse(file_path, filename=os.path.basename(file_path))
+
+
+# NOTE: Module-level app instance for ad-hoc runs, e.g.
+#       uvicorn api_poorSKeme:app --port 5055
+# poorSKeme.py builds its own instance via create_application(file=..., key=...)
+app = create_application()

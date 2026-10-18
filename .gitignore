@@ -81,6 +81,7 @@ Thumbs.db
 # Another extensions #
 ######################
 *.txt
+!requirements*.txt
 *.cvs
 *.csv
 *.xls
